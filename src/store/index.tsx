@@ -346,8 +346,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  // Flag: when true the state change came from cloud, so onStateChange should not push it back
+  const isApplyingCloudRef = useRef(false);
+
   // Sync-safe updateState that won't overwrite currentUser from remote
   const syncApply = useCallback((updates: Partial<AppState>) => {
+    isApplyingCloudRef.current = true;
     setState(prev => {
       const merged = { ...prev, ...updates };
       // Never let remote sync overwrite local auth session
@@ -389,6 +393,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('astreda_erp_state', JSON.stringify(state));
     document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = state.language;
+    // Skip pushing back to Supabase when the update itself came from the cloud
+    if (isApplyingCloudRef.current) {
+      isApplyingCloudRef.current = false;
+      console.log('[store] cloud update applied — skipping onStateChange push');
+      return;
+    }
     onStateChange(state);
   }, [state]);
 
