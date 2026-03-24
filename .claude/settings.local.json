@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node fix-jsx.mjs)",
+      "Bash(npm run:*)",
+      "Bash(timeout 20 npx vite build)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(node retheme.mjs)",
+      "Bash(node retheme3.mjs)",
+      "Bash(node fix-modal-sizes.mjs)",
+      "Bash(node fix-modal-sizes2.mjs)",
+      "Bash(xargs wc:*)"
+    ]
+  }
+}

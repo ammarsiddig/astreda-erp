@@ -1,0 +1,267 @@
+export type Language = 'ar' | 'en';
+export type UserRole = 'manager' | 'staff';
+
+export type PageKey =
+  | 'dashboard' | 'inventory' | 'carLoading' | 'sales' | 'customers'
+  | 'payments' | 'expenses' | 'salaries' | 'generalTransfers'
+  | 'accountTransfers' | 'ledger' | 'reports' | 'capital' | 'settings';
+
+export interface PagePermission {
+  pageKey: PageKey;
+  canView: boolean;
+  canWrite: boolean;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  nameEn: string;
+  permissions: PagePermission[];
+  isSalesperson: boolean;
+  isDefault?: boolean;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  password: string;
+  roleId: string;
+  salespersonId?: string;
+  isActive: boolean;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+}
+
+export interface Salesperson {
+  id: string;
+  name: string;
+}
+
+export interface City {
+  id: string;
+  name: string;
+}
+
+export interface Car {
+  id: string;
+  name: string;
+}
+
+export interface BankAccount {
+  id: string;
+  name: string;
+  transferFee: number;
+  balance?: number;
+}
+
+export interface Shipment {
+  id: string;
+  name: string;
+  isActive: boolean;
+  shareholdersPercent?: number;      // % of gross profit going to shareholders (e.g. 40)
+  managementFeePercent?: number;     // % of partners' share going as management fee (e.g. 20)
+  managementFeeRecipientId?: string; // operating partner who receives the management fee
+}
+
+export interface Employee {
+  id: string;
+  name: string;
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  isOperatingPartner?: boolean;
+}
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  cityId: string;
+  salespersonId: string;
+  carId: string;
+  phone: string;
+  notes: string;
+  debt?: number;
+}
+
+export interface InventoryTransaction {
+  id: string;
+  date: string;
+  shipmentId: string;
+  productId: string;
+  type: 'receive' | 'load' | 'transfer' | 'sell' | 'return';
+  fromLocation: 'warehouse' | string; // string is carId
+  toLocation: 'warehouse' | string; // string is carId
+  qty: number;
+  referenceId?: string; // invoiceId, etc.
+  invoiceId?: string;
+  notes?: string;
+}
+
+export interface InvoiceLine {
+  productId: string;
+  qty: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Invoice {
+  id: string;
+  date: string;
+  customerId: string;
+  salespersonId: string;
+  cityId: string;
+  carId: string;
+  shipmentId: string;
+  lines: InvoiceLine[];
+  total: number;
+  paymentType: 'cash' | 'credit';
+  bankAccountId?: string; // if cash
+}
+
+export interface Payment {
+  id: string;
+  date: string;
+  customerId: string;
+  salespersonId?: string;
+  cityId?: string;
+  shipmentId: string;
+  bankAccountId: string;
+  amount: number;
+  notes: string;
+}
+
+export interface Expense {
+  id: string;
+  date: string;
+  categoryId: string;
+  description: string;
+  amount: number;
+  bankAccountId: string;
+  shipmentId: string;
+  carId?: string;
+  notes: string;
+  settled?: boolean;
+  settledDate?: string;
+}
+
+export interface Salary {
+  id: string;
+  date: string;
+  shipmentId: string;
+  employeeId: string;
+  type: 'salary' | 'allowance';
+  bankAccountId: string;
+  month: string;
+  amount: number;
+  notes: string;
+}
+
+export type GeneralTransferType = 'capital' | 'capital_contribution' | 'capital_return' | 'drawings' | 'profit_payment';
+
+export interface GeneralTransfer {
+  id: string;
+  date: string;
+  description: string;
+  shipmentId: string;
+  partnerId: string;
+  transferType?: GeneralTransferType;
+  beneficiaryPartnerId?: string; // for capital type: the investor/partner
+  amountSDG: number;
+  exchangeRate: number;
+  amountSAR: number;
+  splits: { bankAccountId: string; amount: number }[];
+}
+
+export interface AccountTransfer {
+  id: string;
+  date: string;
+  type: 'transfer' | 'opening_balance';
+  fromBankAccountId?: string;
+  toBankAccountId: string;
+  amount: number;
+  transferFee: number;
+  notes: string;
+}
+
+export interface LedgerEntry {
+  id: string;
+  date: string;
+  fromAccount?: string;
+  toAccount?: string;
+  description: string;
+  amountIn: number;
+  amountOut: number;
+  sourceModule: 'payment' | 'expense' | 'salary' | 'general_transfer' | 'account_transfer' | 'sale_cash';
+  linkedId: string;
+  referenceId?: string;
+  invoiceId?: string;
+  shipmentId?: string;
+}
+
+export interface SavedSettlement {
+  shipmentId: string;
+  savedAt: string;
+  profitByPartner: { partnerId: string; profitSAR: number }[];
+}
+
+export interface CapitalContribution {
+  id: string;
+  partnerId: string;
+  shipmentId: string;
+  amountSAR: number;
+  date: string;
+  notes?: string;
+}
+
+export interface SettlementResult {
+  shipmentId: string;
+  savedAt: string;
+  exchangeRate: number;
+  investorsProfitPercent: number;
+  managementFeePercent: number;
+  partnerProfits: { partnerId: string; profit: number }[];
+  investorProfits: { partnerId: string; profit: number }[];
+}
+
+export interface AppState {
+  language: Language;
+  userRole: UserRole;
+  exchangeRate: number;
+  managementFeePercent: number;
+  managementFeeRecipientId: string;
+  products: Product[];
+  salespeople: Salesperson[];
+  cities: City[];
+  cars: Car[];
+  bankAccounts: BankAccount[];
+  shipments: Shipment[];
+  employees: Employee[];
+  partners: Partner[];
+  expenseCategories: ExpenseCategory[];
+  customers: Customer[];
+  inventoryTransactions: InventoryTransaction[];
+  invoices: Invoice[];
+  payments: Payment[];
+  expenses: Expense[];
+  salaries: Salary[];
+  generalTransfers: GeneralTransfer[];
+  accountTransfers: AccountTransfer[];
+  ledger: LedgerEntry[];
+  savedSettlements: SavedSettlement[];
+  capitalContributions: CapitalContribution[];
+  settlementResults: { [shipmentId: string]: SettlementResult };
+  roles: Role[];
+  users: User[];
+  currentUser: User | null;
+}

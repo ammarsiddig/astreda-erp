@@ -1,0 +1,928 @@
+import React, { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
+import { useAppStore } from '../store';
+import { motion } from 'framer-motion';
+import { Plus, Edit2, Trash2, Shield, Users, Eye, EyeOff } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import Modal from '../components/Modal';
+import { generateSeedData } from '../lib/seedData';
+import { canWrite } from '../lib/permissions';
+import { ALL_PAGE_KEYS } from '../lib/permissions';
+import type { User, Role, PagePermission, PageKey } from '../types';
+
+const PAGE_LABELS: Record<PageKey, string> = {
+  dashboard: 'لوحة التحكم',
+  inventory: 'المخزون',
+  carLoading: 'تحميل السيارات',
+  sales: 'المبيعات',
+  customers: 'العملاء',
+  payments: 'المدفوعات',
+  expenses: 'المصروفات',
+  salaries: 'الرواتب',
+  generalTransfers: 'التحويلات',
+  accountTransfers: 'تحويل بين الحسابات',
+  ledger: 'الدفتر',
+  reports: 'التقارير',
+  capital: 'رأس المال',
+  settings: 'الإعدادات',
+};
+
+export default function Settings() {
+  const { t } = useTranslation();
+  const { state, updateState } = useAppStore();
+  const hasSettingsWrite = canWrite(state.currentUser, state.roles, 'settings');
+  const [activeTab, setActiveTab] = useState<'products' | 'salespeople' | 'cities' | 'cars' | 'bankAccounts' | 'expenseCategories' | 'partners' | 'shipments' | 'partnerSettings' | 'users' | 'roles'>('products');
+
+  // Profit distribution settings — which shipment is being configured
+  const [profitShipmentId, setProfitShipmentId] = useState<string>(
+    () => state.shipments.find(s => s.isActive)?.id || state.shipments[0]?.id || ''
+  );
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+
+  // ─── User Management State ─────────────────────────────────────
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userForm, setUserForm] = useState<{ name: string; username: string; password: string; roleId: string; salespersonId: string; isActive: boolean }>({
+    name: '', username: '', password: '', roleId: '', salespersonId: '', isActive: true,
+  });
+  const [showUserPassword, setShowUserPassword] = useState(false);
+
+  // ─── Role Management State ─────────────────────────────────────
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [roleForm, setRoleForm] = useState<{ name: string; nameEn: string; isSalesperson: boolean; permissions: PagePermission[] }>({
+    name: '', nameEn: '', isSalesperson: false,
+    permissions: ALL_PAGE_KEYS.map(k => ({ pageKey: k, canView: false, canWrite: false })),
+  });
+
+  const tabs = [
+    { id: 'products', label: t('products') },
+    { id: 'salespeople', label: t('salespeople') },
+    { id: 'cities', label: t('cities') },
+    { id: 'cars', label: t('cars') },
+    { id: 'bankAccounts', label: t('bankAccounts') },
+    { id: 'expenseCategories', label: t('expenseCategories') },
+    { id: 'partners', label: t('partners') },
+    { id: 'shipments', label: t('shipments') },
+    { id: 'partnerSettings', label: 'إعدادات الشركاء' },
+    ...(hasSettingsWrite ? [
+      { id: 'users', label: 'إدارة المستخدمين' },
+      { id: 'roles', label: 'إدارة الأدوار' },
+    ] : []),
+  ];
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasSettingsWrite) return;
+    if (activeTab === 'partnerSettings') return;
+    const list = state[activeTab as keyof typeof state] as any[];
+
+    if (editingItem) {
+      let updatedList = list.map(item => item.id === editingItem.id ? { ...item, ...formData } : item);
+      if (activeTab === 'shipments' && formData.isActive) {
+        updatedList = updatedList.map((item: any) => ({
+          ...item,
+          isActive: item.id === editingItem.id ? true : false,
+        }));
+      }
+      updateState({ [activeTab]: updatedList });
+    } else {
+      const newItem = { id: uuidv4(), ...formData };
+      let newList = [...list, newItem];
+      if (activeTab === 'shipments' && formData.isActive) {
+        newList = newList.map((item: any) => ({
+          ...item,
+          isActive: item.id === newItem.id ? true : false,
+        }));
+      }
+      updateState({ [activeTab]: newList });
+    }
+
+    setShowModal(false);
+    setEditingItem(null);
+    setFormData({});
+  };
+
+  const handleDelete = (id: string) => {
+    if (!hasSettingsWrite) return;
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      const list = state[activeTab as keyof typeof state] as any[];
+      updateState({ [activeTab]: list.filter(item => item.id !== id) });
+    }
+  };
+
+  const openModal = (item?: any) => {
+    if (!hasSettingsWrite) return;
+    if (item) {
+      setEditingItem(item);
+      setFormData(item);
+    } else {
+      setEditingItem(null);
+      setFormData({});
+    }
+    setShowModal(true);
+  };
+
+  const handleLoadSeedData = () => {
+    if (!hasSettingsWrite) return;
+    const ok = window.confirm('سيتم استبدال كل بيانات النظام الحالية ببيانات تجريبية. هل تريد المتابعة؟');
+    if (!ok) return;
+    updateState(generateSeedData());
+    setActiveTab('products');
+    setProfitShipmentId('4');
+  };
+
+  const renderFormFields = () => {
+    switch (activeTab) {
+      case 'bankAccounts':
+        return (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('name')}</label>
+              <input
+                type="text"
+                required
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('transferFee')}</label>
+              <input
+                type="number"
+                required
+                min="0"
+                step="0.01"
+                value={formData.transferFee || 0}
+                onChange={(e) => setFormData({ ...formData, transferFee: Number(e.target.value) })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              />
+            </div>
+          </>
+        );
+      case 'shipments':
+        return (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('name')}</label>
+              <input
+                type="text"
+                required
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              />
+            </div>
+            <div className="flex items-center mt-4">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={formData.isActive || false}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+              />
+              <label htmlFor="isActive" className="ml-2 rtl:mr-2 text-sm font-medium text-slate-700">
+                {t('active')}
+              </label>
+            </div>
+          </>
+        );
+      case 'partners':
+        return (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('name')}</label>
+              <input
+                type="text"
+                required
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              />
+            </div>
+            <div className="flex items-center mt-4">
+              <input
+                type="checkbox"
+                id="isOperatingPartner"
+                checked={formData.isOperatingPartner || false}
+                onChange={(e) => setFormData({ ...formData, isOperatingPartner: e.target.checked })}
+                className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+              />
+              <label htmlFor="isOperatingPartner" className="ml-2 rtl:mr-2 rtl:ml-0 text-sm font-medium text-slate-700">
+                {t('isOperatingPartner')}
+              </label>
+            </div>
+          </>
+        );
+      default:
+        return (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('name')}</label>
+            <input
+              type="text"
+              required
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+            />
+          </div>
+        );
+    }
+  };
+
+  // ─── User Handlers ──────────────────────────────────────────────
+  const openUserModal = (user?: User) => {
+    if (!hasSettingsWrite) return;
+    if (user) {
+      setEditingUser(user);
+      setUserForm({ name: user.name, username: user.username, password: user.password, roleId: user.roleId, salespersonId: user.salespersonId || '', isActive: user.isActive });
+    } else {
+      setEditingUser(null);
+      setUserForm({ name: '', username: '', password: '', roleId: '', salespersonId: '', isActive: true });
+    }
+    setShowUserPassword(false);
+    setShowUserModal(true);
+  };
+
+  const handleSaveUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasSettingsWrite) return;
+    if (!userForm.name || !userForm.username || !userForm.password || !userForm.roleId) return;
+    const selectedRole = state.roles.find(r => r.id === userForm.roleId);
+    const newUser: User = {
+      id: editingUser ? editingUser.id : uuidv4(),
+      name: userForm.name,
+      username: userForm.username,
+      password: userForm.password,
+      roleId: userForm.roleId,
+      salespersonId: selectedRole?.isSalesperson ? userForm.salespersonId || undefined : undefined,
+      isActive: userForm.isActive,
+    };
+    updateState({
+      users: editingUser
+        ? state.users.map(u => u.id === editingUser.id ? newUser : u)
+        : [...state.users, newUser],
+    });
+    setShowUserModal(false);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    if (!hasSettingsWrite) return;
+    if (state.currentUser?.id === userId) return;
+    if (userId === 'user-sysadmin') return;
+    if (window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+      updateState({ users: state.users.filter(u => u.id !== userId) });
+    }
+  };
+
+  // ─── Role Handlers ──────────────────────────────────────────────
+  const openRoleModal = (role?: Role) => {
+    if (!hasSettingsWrite) return;
+    if (role) {
+      setEditingRole(role);
+      setRoleForm({
+        name: role.name, nameEn: role.nameEn, isSalesperson: role.isSalesperson,
+        permissions: ALL_PAGE_KEYS.map(k => {
+          const existing = role.permissions.find(p => p.pageKey === k);
+          return existing || { pageKey: k, canView: false, canWrite: false };
+        }),
+      });
+    } else {
+      setEditingRole(null);
+      setRoleForm({
+        name: '', nameEn: '', isSalesperson: false,
+        permissions: ALL_PAGE_KEYS.map(k => ({ pageKey: k, canView: false, canWrite: false })),
+      });
+    }
+    setShowRoleModal(true);
+  };
+
+  const handleSaveRole = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasSettingsWrite) return;
+    if (!roleForm.name || !roleForm.nameEn) return;
+    const newRole: Role = {
+      id: editingRole ? editingRole.id : uuidv4(),
+      name: roleForm.name,
+      nameEn: roleForm.nameEn,
+      isSalesperson: roleForm.isSalesperson,
+      permissions: roleForm.permissions,
+    };
+    updateState({
+      roles: editingRole
+        ? state.roles.map(r => r.id === editingRole.id ? newRole : r)
+        : [...state.roles, newRole],
+    });
+    setShowRoleModal(false);
+  };
+
+  const handleDeleteRole = (roleId: string) => {
+    if (!hasSettingsWrite) return;
+    if (roleId === 'role-sysadmin') return;
+    const usersWithRole = state.users.filter(u => u.roleId === roleId);
+    if (usersWithRole.length > 0) {
+      window.alert('لا يمكن حذف هذا الدور لأنه مرتبط بمستخدمين');
+      return;
+    }
+    if (window.confirm('هل أنت متأكد من حذف هذا الدور؟')) {
+      updateState({ roles: state.roles.filter(r => r.id !== roleId) });
+    }
+  };
+
+  const toggleRolePerm = (pageKey: PageKey, field: 'canView' | 'canWrite') => {
+    if (!hasSettingsWrite) return;
+    setRoleForm(prev => ({
+      ...prev,
+      permissions: prev.permissions.map(p => {
+        if (p.pageKey !== pageKey) return p;
+        const newVal = !p[field];
+        if (field === 'canWrite' && newVal) return { ...p, canView: true, canWrite: true };
+        if (field === 'canView' && !newVal) return { ...p, canView: false, canWrite: false };
+        return { ...p, [field]: newVal };
+      }),
+    }));
+  };
+
+  const list = (activeTab !== 'partnerSettings' && activeTab !== 'users' && activeTab !== 'roles') ? (state[activeTab as keyof typeof state] as any[]) : [];
+
+  const operatingPartners = state.partners.filter(p => p.isOperatingPartner);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold text-slate-800">{t('settings')}</h1>
+          {!hasSettingsWrite && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Sidebar Tabs */}
+        <div className="w-full md:w-64 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+          <div className="p-4 border-b border-slate-100 bg-slate-50 font-bold text-slate-700">
+            {t('masterLists')}
+          </div>
+          <div className="flex flex-col">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-4 py-3 text-left rtl:text-right text-sm font-medium transition-colors border-l-4 rtl:border-r-4 rtl:border-l-0 ${
+                  activeTab === tab.id
+                    ? 'border-teal-600 bg-blue-50 text-teal-600'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 min-w-0">
+
+          {/* Partner Settings Tab */}
+          {activeTab === 'partnerSettings' ? (
+            <div className="space-y-6">
+              {/* Section — Profit Distribution Settings (per shipment) */}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 className="text-lg font-bold text-slate-800 mb-5">إعدادات توزيع الأرباح</h2>
+                <p className="text-xs text-slate-400 mb-4">هذه الإعدادات مرتبطة بكل رسالة على حدة — يمكن أن تختلف النسب بين الرسائل</p>
+
+                {/* Shipment selector */}
+                <div className="mb-5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">الرسالة</label>
+                  <select
+                    value={profitShipmentId}
+                    onChange={e => setProfitShipmentId(e.target.value)}
+                    className="w-full sm:w-64 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  >
+                    {state.shipments.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}{s.isActive ? ' (نشطة)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {(() => {
+                  const shipment = state.shipments.find(s => s.id === profitShipmentId);
+                  if (!shipment) return null;
+                  const shareholdersPercent = shipment.shareholdersPercent ?? 40;
+                  const partnersPercent = 100 - shareholdersPercent;
+                  const mgmtFeePercent = shipment.managementFeePercent ?? 0;
+                  const mgmtFeeRecipientId = shipment.managementFeeRecipientId ?? '';
+
+                  const updateShipmentSettings = (updates: Partial<typeof shipment>) => {
+                    if (!hasSettingsWrite) return;
+                    updateState({
+                      shipments: state.shipments.map(s =>
+                        s.id === profitShipmentId ? { ...s, ...updates } : s
+                      ),
+                    });
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {/* نسبة المساهمين */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">نسبة المساهمين من الربح</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={shareholdersPercent}
+                            onChange={e => updateShipmentSettings({ shareholdersPercent: Number(e.target.value) })}
+                            className="w-full px-3 py-2.5 pr-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                          />
+                          <span className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">مثال: 40%</p>
+                      </div>
+
+                      {/* نسبة الشركاء (تلقائي) */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">نسبة الشركاء من الربح</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            readOnly
+                            value={partnersPercent}
+                            className="w-full px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed outline-none"
+                          />
+                          <span className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">تلقائي = 100% − نسبة المساهمين</p>
+                      </div>
+
+                      {/* نسبة الإدارة */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">نسبة إدارة عصام</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={mgmtFeePercent}
+                            onChange={e => updateShipmentSettings({ managementFeePercent: Number(e.target.value) })}
+                            className="w-full px-3 py-2.5 pr-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                          />
+                          <span className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">من حصة الشركاء فقط — مثال: 20%</p>
+                      </div>
+
+                      {/* مستلم نسبة الإدارة */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">مستلم نسبة الإدارة</label>
+                        <select
+                          value={mgmtFeeRecipientId}
+                          onChange={e => updateShipmentSettings({ managementFeeRecipientId: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                        >
+                          <option value="">{t('select')}</option>
+                          {operatingPartners.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-slate-400 mt-1">الشركاء المشغلون فقط</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Summary preview */}
+                {(() => {
+                  const shipment = state.shipments.find(s => s.id === profitShipmentId);
+                  if (!shipment) return null;
+                  const sp = shipment.shareholdersPercent ?? 40;
+                  const pp = 100 - sp;
+                  const mf = shipment.managementFeePercent ?? 0;
+                  const remainingPct = pp * (1 - mf / 100);
+                  const perPartnerPct = operatingPartners.length > 0 ? remainingPct / operatingPartners.length : 0;
+                  return (
+                    <div className="mt-5 pt-5 border-t border-slate-100">
+                      <p className="text-sm font-medium text-slate-700 mb-3">ملخص التوزيع (من الربح الخام)</p>
+                      <div className="flex flex-wrap gap-3">
+                        <div className="flex-1 min-w-[120px] p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
+                          <p className="text-xs text-blue-600 mb-1">حصة المساهمين</p>
+                          <p className="text-xl font-bold text-blue-700">{sp}%</p>
+                        </div>
+                        <div className="flex-1 min-w-[120px] p-3 bg-teal-50 rounded-lg border border-teal-200 text-center">
+                          <p className="text-xs text-teal-600 mb-1">حصة الشركاء</p>
+                          <p className="text-xl font-bold text-teal-700">{pp}%</p>
+                        </div>
+                        {mf > 0 && (
+                          <div className="flex-1 min-w-[120px] p-3 bg-amber-50 rounded-lg border border-amber-200 text-center">
+                            <p className="text-xs text-amber-600 mb-1">نسبة الإدارة</p>
+                            <p className="text-xl font-bold text-amber-700">{(pp * mf / 100).toFixed(1)}%</p>
+                            <p className="text-xs text-amber-500">({mf}% من {pp}%)</p>
+                          </div>
+                        )}
+                        {operatingPartners.map(p => (
+                          <div key={p.id} className="flex-1 min-w-[120px] p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                            <p className="text-xs text-slate-600 mb-1">{p.name}</p>
+                            <p className="text-xl font-bold text-slate-700">{perPartnerPct.toFixed(1)}%</p>
+                            <p className="text-xs text-slate-400">كشريك</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Section B — Partners List with Operating Flag */}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="flex justify-between items-center mb-5">
+                  <h2 className="text-lg font-bold text-slate-800">قائمة الشركاء</h2>
+                  {hasSettingsWrite && <button
+                    onClick={() => { setActiveTab('partners'); openModal(); }}
+                    className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                  >
+                    <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0" />
+                    {t('add')}
+                  </button>}
+                </div>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3">{t('name')}</th>
+                        <th className="px-4 py-3 text-center">{t('isOperatingPartner')}</th>
+                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {state.partners.map((partner) => (
+                        <tr key={partner.id} className="hover:bg-teal-50 transition-colors">
+                          <td className="px-4 py-3 font-medium text-slate-900">{partner.name}</td>
+                          <td className="px-4 py-3 text-center">
+                            {partner.isOperatingPartner ? (
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">شريك مشغِّل</span>
+                            ) : (
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex justify-center gap-2">
+                              {hasSettingsWrite && <button
+                                onClick={() => { setActiveTab('partners'); openModal(partner); }}
+                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>}
+                              {hasSettingsWrite && <button
+                                onClick={() => {
+                                  if (window.confirm('هل أنت متأكد؟')) {
+                                    updateState({ partners: state.partners.filter(p => p.id !== partner.id) });
+                                  }
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === 'users' ? (
+            /* ─── Users Management Tab ─── */
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Users className="w-5 h-5 text-teal-600"/>إدارة المستخدمين</h2>
+                  {hasSettingsWrite && <button onClick={() => openUserModal()} className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">
+                    <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
+                  </button>}
+                </div>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3">الاسم</th>
+                        <th className="px-4 py-3">اسم المستخدم</th>
+                        <th className="px-4 py-3">الدور</th>
+                        <th className="px-4 py-3">المندوب</th>
+                        <th className="px-4 py-3 text-center">الحالة</th>
+                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {state.users.map(user => {
+                        const role = state.roles.find(r => r.id === user.roleId);
+                        const sp = user.salespersonId ? state.salespeople.find(s => s.id === user.salespersonId) : null;
+                        return (
+                          <tr key={user.id} className="hover:bg-teal-50 transition-colors">
+                            <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
+                            <td className="px-4 py-3 font-mono text-xs text-slate-500">{user.username}</td>
+                            <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{role?.name || '-'}</span></td>
+                            <td className="px-4 py-3 text-slate-500">{sp?.name || '-'}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                {user.isActive ? 'نشط' : 'معطل'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                {hasSettingsWrite && (user.id !== 'user-sysadmin' || state.currentUser?.id === 'user-sysadmin') && <button onClick={() => openUserModal(user)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                                {hasSettingsWrite && state.currentUser?.id !== user.id && user.id !== 'user-sysadmin' && (
+                                  <button onClick={() => handleDeleteUser(user.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === 'roles' ? (
+            /* ─── Roles Management Tab ─── */
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Shield className="w-5 h-5 text-teal-600"/>إدارة الأدوار</h2>
+                  {hasSettingsWrite && <button onClick={() => openRoleModal()} className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">
+                    <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
+                  </button>}
+                </div>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3">الاسم</th>
+                        <th className="px-4 py-3">الاسم (EN)</th>
+                        <th className="px-4 py-3 text-center">دور مندوب</th>
+                        <th className="px-4 py-3 text-center">المستخدمون</th>
+                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {state.roles.map(role => {
+                        const userCount = state.users.filter(u => u.roleId === role.id).length;
+                        return (
+                          <tr key={role.id} className="hover:bg-teal-50 transition-colors">
+                            <td className="px-4 py-3 font-medium text-slate-900">{role.name}</td>
+                            <td className="px-4 py-3 text-slate-500">{role.nameEn}</td>
+                            <td className="px-4 py-3 text-center">
+                              {role.isSalesperson ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">نعم</span> : <span className="text-slate-400">-</span>}
+                            </td>
+                            <td className="px-4 py-3 text-center font-medium">{userCount}</td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => openRoleModal(role)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                                {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => handleDeleteRole(role.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Standard List Tab */
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-bold text-slate-800">
+                  {tabs.find(t => t.id === activeTab)?.label}
+                </h2>
+                {hasSettingsWrite && <button
+                  onClick={() => openModal()}
+                  className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                >
+                  <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0" />
+                  {t('add')}
+                </button>}
+              </div>
+
+              <div className="border border-slate-200 rounded-lg overflow-hidden">
+                <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                  <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3">{t('name')}</th>
+                      {activeTab === 'bankAccounts' && <th className="px-4 py-3">{t('transferFee')}</th>}
+                      {activeTab === 'shipments' && <th className="px-4 py-3">{t('status')}</th>}
+                      {activeTab === 'partners' && <th className="px-4 py-3 text-center">{t('isOperatingPartner')}</th>}
+                      <th className="px-4 py-3 text-center w-24">{t('action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {list.length > 0 ? list.map((item) => (
+                      <tr key={item.id} className="hover:bg-teal-50 transition-colors">
+                        <td className="px-4 py-3 font-medium text-slate-900">{item.name}</td>
+                        {activeTab === 'bankAccounts' && <td className="px-4 py-3">{item.transferFee}</td>}
+                        {activeTab === 'shipments' && (
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                              {item.isActive ? t('active') : t('inactive')}
+                            </span>
+                          </td>
+                        )}
+                        {activeTab === 'partners' && (
+                          <td className="px-4 py-3 text-center">
+                            {item.isOperatingPartner ? (
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">شريك مشغِّل</span>
+                            ) : (
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
+                            )}
+                          </td>
+                        )}
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex justify-center gap-2">
+                            {hasSettingsWrite && <button
+                              onClick={() => openModal(item)}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>}
+                            {hasSettingsWrite && <button
+                              onClick={() => handleDelete(item.id)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>}
+                          </div>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 className="text-lg font-bold text-slate-800 mb-2">بيانات النظام</h2>
+            <p className="text-sm text-slate-500 mb-5">
+              يمكنك تحميل مجموعة بيانات تجريبية جاهزة لتجربة النظام بالكامل (الرسالة15).
+            </p>
+            {hasSettingsWrite && <button
+              type="button"
+              onClick={handleLoadSeedData}
+              className="px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-semibold transition-colors"
+            >
+              🔄 تحميل بيانات تجريبية
+            </button>}
+          </div>
+        </div>
+      </div>
+
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingItem ? t('edit') : t('add')} size="2xl">
+        <form onSubmit={handleSave} className="space-y-4">
+          {renderFormFields()}
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+            >
+              {t('save')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ─── User Modal ─── */}
+      <Modal isOpen={showUserModal} onClose={() => setShowUserModal(false)} title={editingUser ? 'تعديل مستخدم' : 'إضافة مستخدم'} size="2xl">
+        <form onSubmit={handleSaveUser} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">الاسم الكامل</label>
+              <input type="text" required value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">اسم المستخدم</label>
+              <input type="text" required value={userForm.username} onChange={e => setUserForm({ ...userForm, username: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none font-mono" dir="ltr"/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">كلمة المرور</label>
+              <div className="relative">
+                <input type={showUserPassword ? 'text' : 'password'} required value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                  className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none font-mono" dir="ltr"/>
+                <button type="button" onClick={() => setShowUserPassword(!showUserPassword)} className="absolute left-2 rtl:right-2 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showUserPassword ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">الدور</label>
+              <select required value={userForm.roleId} onChange={e => setUserForm({ ...userForm, roleId: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                <option value="">{t('select')}</option>
+                {state.roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </div>
+            {state.roles.find(r => r.id === userForm.roleId)?.isSalesperson && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">المندوب المرتبط</label>
+                <select value={userForm.salespersonId} onChange={e => setUserForm({ ...userForm, salespersonId: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                  <option value="">{t('select')}</option>
+                  {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            )}
+            <div className="flex items-center pt-6">
+              <input type="checkbox" id="userActive" checked={userForm.isActive} onChange={e => setUserForm({ ...userForm, isActive: e.target.checked })}
+                className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+              <label htmlFor="userActive" className="mr-2 rtl:ml-2 text-sm font-medium text-slate-700">حساب نشط</label>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button type="button" onClick={() => setShowUserModal(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('cancel')}</button>
+            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ─── Role Modal ─── */}
+      <Modal isOpen={showRoleModal} onClose={() => setShowRoleModal(false)} title={editingRole ? 'تعديل دور' : 'إضافة دور'} size="2xl">
+        <form onSubmit={handleSaveRole} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">اسم الدور (عربي)</label>
+              <input type="text" required value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">اسم الدور (English)</label>
+              <input type="text" required value={roleForm.nameEn} onChange={e => setRoleForm({ ...roleForm, nameEn: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" dir="ltr"/>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <input type="checkbox" id="roleSp" checked={roleForm.isSalesperson} onChange={e => setRoleForm({ ...roleForm, isSalesperson: e.target.checked })}
+              className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+            <label htmlFor="roleSp" className="mr-2 rtl:ml-2 text-sm font-medium text-slate-700">دور مندوب (يُفلتر البيانات حسب المندوب المرتبط)</label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">صلاحيات الصفحات</label>
+            <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-2 text-right rtl:text-right font-medium text-slate-700">الصفحة</th>
+                    <th className="px-4 py-2 text-center font-medium text-slate-700">عرض</th>
+                    <th className="px-4 py-2 text-center font-medium text-slate-700">تعديل</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {roleForm.permissions.map(perm => (
+                    <tr key={perm.pageKey} className="hover:bg-slate-50">
+                      <td className="px-4 py-2 text-slate-700">{PAGE_LABELS[perm.pageKey]}</td>
+                      <td className="px-4 py-2 text-center">
+                        <input type="checkbox" checked={perm.canView} onChange={() => toggleRolePerm(perm.pageKey, 'canView')}
+                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <input type="checkbox" checked={perm.canWrite} onChange={() => toggleRolePerm(perm.pageKey, 'canWrite')}
+                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button type="button" onClick={() => setShowRoleModal(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('cancel')}</button>
+            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
+          </div>
+        </form>
+      </Modal>
+    </motion.div>
+  );
+}
