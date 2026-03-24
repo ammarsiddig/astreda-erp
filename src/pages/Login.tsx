@@ -8,13 +8,19 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const result = login(username, password);
-    if (!result.success) {
-      setError(result.error || 'خطأ غير معروف');
+    setLoading(true);
+    try {
+      const result = await login(username, password);
+      if (!result.success) {
+        setError(result.error || 'خطأ غير معروف');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,10 +80,11 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-semibold transition-colors shadow-sm text-sm"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-semibold transition-colors shadow-sm text-sm disabled:opacity-60"
             >
               <LogIn className="w-4 h-4" />
-              دخول
+              {loading ? 'جاري التحقق...' : 'دخول'}
             </button>
           </form>
         </div>

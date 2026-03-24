@@ -229,6 +229,33 @@ function getMappingPk(table: string): string {
   return m?.pkField ?? 'id'
 }
 
+// ─── Echo Suppression ────────────────────────────────────────────
+// When we write to Supabase, the realtime subscription echoes the
+// change back. We suppress those echoes to avoid redundant state
+// updates and potential write loops.
+
+const recentWrites = new Map<string, number>() // "table:pk" → timestamp
+const ECHO_TTL = 3000 // ignore echoes within 3s of our own write
+
+function markWritten(table: string, pk: string) {
+  recentWrites.set(`${table}:${pk}`, Date.now())
+  // Cleanup old entries periodically
+  if (recentWrites.size > 500) {
+    const now = Date.now()
+    for (const [key, ts] of recentWrites) {
+      if (now - ts > ECHO_TTL) recentWrites.delete(key)
+    }
+  }
+}
+
+function isEcho(table: string, pk: string): boolean {
+  const ts = recentWrites.get(`${table}:${pk}`)
+  if (!ts) return false
+  if (Date.now() - ts < ECHO_TTL) return true
+  recentWrites.delete(`${table}:${pk}`)
+  return false
+}
+
 // ─── Flush offline queue (queue → Supabase) ───────────────────────
 
 export const flushQueue = async (): Promise<void> => {
@@ -285,6 +312,7 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
             try {
               const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: mapping.pkField ?? 'id' })
               if (error) throw error
+              markWritten(mapping.table, sid)
             } catch { enqueue({ table: mapping.table, pk: sid, op: 'UPSERT', data: row }) }
           } else {
             enqueue({ table: mapping.table, pk: sid, op: 'UPSERT', data: row })
@@ -297,6 +325,7 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
             try {
               const { error } = await supabase!.from(mapping.table).delete().eq(mapping.pkField ?? 'shipment_id', sid)
               if (error) throw error
+              markWritten(mapping.table, sid)
             } catch { enqueue({ table: mapping.table, pk: sid, op: 'DELETE', data: {} }) }
           } else {
             enqueue({ table: mapping.table, pk: sid, op: 'DELETE', data: {} })
@@ -319,6 +348,7 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
             try {
               const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
               if (error) throw error
+              markWritten(mapping.table, pk)
             } catch { enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row }) }
           } else {
             enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
@@ -334,6 +364,7 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
             try {
               const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
               if (error) throw error
+              markWritten(mapping.table, pk)
             } catch { enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} }) }
           } else {
             enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
@@ -344,9 +375,33 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
   }
 }
 
-// ─── Debounced state change handler (Cloud-First) ──────────────────
+// ─── Scalar settings keys tracked for cloud sync ────────────────────
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+const SCALAR_KEYS: (keyof AppState)[] = [
+  'language', 'userRole', 'exchangeRate',
+  'managementFeePercent', 'managementFeeRecipientId',
+]
+
+const pushScalarSettings = async (state: AppState): Promise<void> => {
+  if (!navigator.onLine || !isSupabaseConfigured()) return
+  try {
+    const { error } = await supabase!.from('app_settings').upsert({
+      id: 'singleton',
+      language: state.language,
+      user_role: state.userRole,
+      exchange_rate: state.exchangeRate,
+      management_fee_percent: state.managementFeePercent,
+      management_fee_recipient_id: state.managementFeeRecipientId,
+    }, { onConflict: 'id' })
+    if (error) console.warn('[sync] scalar settings push failed:', error)
+    else markWritten('app_settings', 'singleton')
+  } catch (e) {
+    console.warn('[sync] scalar settings push error:', e)
+  }
+}
+
+// ─── Immediate state change handler (Cloud-First) ──────────────────
+
 let prevState: AppState | null = null
 
 export const onStateChange = (state: AppState) => {
@@ -357,13 +412,16 @@ export const onStateChange = (state: AppState) => {
 
   if (!prev) return // first call, just store reference
 
-  // Debounce the cloud-first diff
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    cloudFirstDiff(prev, state).then(() => {
-      updateStatus({ lastSynced: new Date().toISOString() })
-    }).catch(() => {})
-  }, 1500)
+  // Write array diffs to Supabase immediately — no debounce
+  cloudFirstDiff(prev, state).then(() => {
+    updateStatus({ lastSynced: new Date().toISOString() })
+  }).catch(() => {})
+
+  // Push scalar settings if any changed
+  const scalarChanged = SCALAR_KEYS.some(k => (prev as any)[k] !== (state as any)[k])
+  if (scalarChanged) {
+    pushScalarSettings(state).catch(() => {})
+  }
 }
 
 // ─── Pull (Supabase → local) — full table download ────────────────
@@ -469,6 +527,7 @@ export const setupRealtimeSync = (
 
   const channel = supabase!.channel('astrida_realtime')
 
+  // Subscribe to all data tables
   for (const mapping of TABLE_MAPPINGS) {
     channel.on(
       'postgres_changes',
@@ -476,34 +535,40 @@ export const setupRealtimeSync = (
       (payload) => {
         const state = getState()
         const key = mapping.stateKey
+        const pkField = mapping.pkField ?? 'id'
 
         if (payload.eventType === 'DELETE') {
+          const deletedPk = (payload.old as any)?.[pkField]
+          if (!deletedPk) return
+          // Suppress echo from our own write
+          if (isEcho(mapping.table, String(deletedPk))) return
+
           if (key === 'settlementResults') {
             const record = { ...(state.settlementResults || {}) }
-            const pk = (payload.old as any)?.shipment_id
-            if (pk) delete record[pk]
+            delete record[deletedPk]
             applyToState({ settlementResults: record })
           } else {
             const arr = ((state as any)[key] || []) as any[]
-            const pkField = mapping.pkField ?? 'id'
-            const deletedPk = (payload.old as any)?.[pkField]
-            if (deletedPk) {
-              const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
-              applyToState({ [key]: arr.filter(i => pkGetter(i) !== deletedPk) } as any)
-            }
+            const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
+            applyToState({ [key]: arr.filter(i => pkGetter(i) !== deletedPk) } as any)
           }
           return
         }
 
         // INSERT or UPDATE
         const newItem = mapping.fromRow(payload.new)
+        const pkGetter = (item: any) => (pkField === 'shipment_id') ? item.shipmentId : item.id
+        const pk = pkGetter(newItem)
+
+        // Suppress echo from our own write
+        if (isEcho(mapping.table, String(pk))) return
+
+        console.log(`[realtime] ${payload.eventType} ${mapping.table}/${pk}`)
 
         if (key === 'settlementResults') {
           applyToState({ settlementResults: { ...(state.settlementResults || {}), [newItem.shipmentId]: newItem } })
         } else {
           const arr = ((state as any)[key] || []) as any[]
-          const pkGetter = (item: any) => (mapping.pkField === 'shipment_id') ? item.shipmentId : item.id
-          const pk = pkGetter(newItem)
           const idx = arr.findIndex(i => pkGetter(i) === pk)
           if (idx === -1) {
             applyToState({ [key]: [...arr, newItem] } as any)
@@ -517,9 +582,45 @@ export const setupRealtimeSync = (
     )
   }
 
-  channel.subscribe()
+  // Subscribe to app_settings changes (scalar settings like language, exchangeRate)
+  channel.on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'app_settings' },
+    (payload) => {
+      if (payload.eventType === 'DELETE') return
+      const data = payload.new as any
+      if (!data || data.id !== 'singleton') return
+      if (isEcho('app_settings', 'singleton')) return
+      console.log('[realtime] app_settings updated')
+      applyToState({
+        language: data.language ?? 'ar',
+        userRole: data.user_role ?? 'manager',
+        exchangeRate: data.exchange_rate ?? 1,
+        managementFeePercent: data.management_fee_percent ?? 0,
+        managementFeeRecipientId: data.management_fee_recipient_id ?? '1',
+      })
+    }
+  )
+
+  channel.subscribe((status) => {
+    console.log(`[realtime] channel status: ${status}`)
+  })
 
   return () => { supabase!.removeChannel(channel) }
+}
+
+// ─── Fetch users from Supabase (for login) ─────────────────────────
+
+export const fetchUsersFromCloud = async (): Promise<import('../types').User[] | null> => {
+  if (!isSupabaseConfigured() || !navigator.onLine) return null
+  try {
+    const mapping = TABLE_MAPPINGS.find(m => m.stateKey === 'users')!
+    const { data, error } = await supabase!.from(mapping.table).select('*')
+    if (error || !data || data.length === 0) return null
+    return data.map(mapping.fromRow)
+  } catch {
+    return null
+  }
 }
 
 // ─── Network Monitoring ───────────────────────────────────────────

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
-import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud } from '../lib/syncEngine';
+import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -220,7 +220,7 @@ interface AppContextType {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   updateState: (updates: Partial<AppState>) => void;
   activeShipmentId: string | undefined;
-  login: (username: string, password: string) => { success: boolean; error?: string };
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   manualSync: () => Promise<void>;
   fullPush: () => Promise<void>;
@@ -398,8 +398,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const activeShipmentId = state.shipments.find((s) => s.isActive)?.id;
 
-  const login = (username: string, password: string): { success: boolean; error?: string } => {
-    const users = state.users || [];
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // Cloud-First: fetch fresh users from Supabase before authenticating
+    let users = state.users || [];
+    try {
+      const cloudUsers = await fetchUsersFromCloud();
+      if (cloudUsers && cloudUsers.length > 0) {
+        users = cloudUsers;
+        // Update local state with fresh users
+        setState(prev => ({ ...prev, users: cloudUsers }));
+      }
+    } catch {
+      // Fallback to local users if Supabase is unreachable
+    }
+
     const user = users.find(u => u.username === username && u.password === password);
     if (!user) return { success: false, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     if (!user.isActive) return { success: false, error: 'هذا الحساب غير نشط — تواصل مع المدير' };
