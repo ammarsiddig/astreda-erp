@@ -77,9 +77,14 @@ export default function Layout() {
   const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => (
     <>
       {/* Logo */}
-      <div className="px-6 pt-6 pb-4 flex-shrink-0">
-        <h1 className="text-2xl font-bold tracking-wide text-amber-400">أستريدا</h1>
-        <p className="text-xs text-slate-400 mt-0.5">نظام التوزيع</p>
+      <div className="px-5 pt-5 pb-4 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <img src="/logo-header.png" alt="أستريدا" className="w-9 h-9 object-contain" />
+          <div>
+            <h1 className="text-xl font-bold tracking-wide text-amber-400 leading-tight">أستريدا</h1>
+            <p className="text-[10px] text-slate-400">نظام التوزيع</p>
+          </div>
+        </div>
         <div className="border-t border-slate-700 mt-4" />
       </div>
       {/* Nav */}
@@ -136,10 +141,13 @@ export default function Layout() {
                 lang === 'ar' ? 'right-0' : 'left-0'
               )}
             >
-              <div className="flex items-center justify-between px-6 pt-5 pb-3 flex-shrink-0">
-                <div>
-                  <h1 className="text-xl font-bold tracking-wide text-amber-400">أستريدا</h1>
-                  <p className="text-xs text-slate-400">نظام التوزيع</p>
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <img src="/logo-header.png" alt="أستريدا" className="w-8 h-8 object-contain" />
+                  <div>
+                    <h1 className="text-lg font-bold tracking-wide text-amber-400 leading-tight">أستريدا</h1>
+                    <p className="text-[10px] text-slate-400">نظام التوزيع</p>
+                  </div>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-300 hover:text-white">
                   <X className="w-5 h-5" />

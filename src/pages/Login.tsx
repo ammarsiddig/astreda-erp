@@ -29,7 +29,8 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-amber-400 tracking-wide">أستريدا</h1>
+          <img src="/logo-medium.png" alt="أستريدا" className="w-24 h-24 mx-auto mb-3 object-contain" />
+          <h1 className="text-3xl font-bold text-amber-400 tracking-wide">أستريدا</h1>
           <p className="text-slate-400 mt-1 text-sm">نظام التوزيع</p>
         </div>
 

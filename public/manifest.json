@@ -1,0 +1,23 @@
+{
+  "name": "أستريدا ERP",
+  "short_name": "أستريدا",
+  "description": "نظام أستريدا لإدارة التوزيع",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/android-chrome-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0891b2",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "any"
+}
