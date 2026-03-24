@@ -410,29 +410,52 @@ const pushScalarSettings = async (state: AppState): Promise<void> => {
   }
 }
 
-// ─── Immediate state change handler (Cloud-First) ──────────────────
+// ─── Debounced auto-push (Cloud-First) ─────────────────────────────
+// Batches rapid state changes and flushes after DEBOUNCE_MS of idle time.
+// debouncedBase tracks the state at the START of the current debounce window.
+// When the timer fires we diff base vs latest, then advance the base.
 
-let prevState: AppState | null = null
+const DEBOUNCE_MS = 500
+
+let debouncedBase: AppState | null = null
+let pushTimeout: ReturnType<typeof setTimeout> | null = null
+
+/** Can also be called externally to re-arm the debounce flush. */
+export const autoPush = (): void => {
+  if (!debouncedBase) return
+  scheduleDebouncedPush(debouncedBase)
+}
+
+function scheduleDebouncedPush(base: AppState) {
+  if (pushTimeout) clearTimeout(pushTimeout)
+  pushTimeout = setTimeout(() => {
+    pushTimeout = null
+    const curr = debouncedBase
+    if (!curr || curr === base) return
+    debouncedBase = curr  // advance base for next window
+    console.log('[sync] debounced push firing')
+    runDiffSerialized(base, curr)
+    const scalarChanged = SCALAR_KEYS.some(k => (base as any)[k] !== (curr as any)[k])
+    if (scalarChanged) {
+      pushScalarSettings(curr).catch((e) => console.warn('[sync] scalar push error:', e))
+    }
+  }, DEBOUNCE_MS)
+}
 
 export const onStateChange = (state: AppState) => {
   if (!isSupabaseConfigured()) return
 
-  const prev = prevState
-  prevState = state
-
-  if (!prev) return // first call, just store reference
-
-  // Write array diffs to Supabase immediately — no debounce
-  runDiffSerialized(prev, state)
-
-  // Push scalar settings if any changed
-  const scalarChanged = SCALAR_KEYS.some(k => (prev as any)[k] !== (state as any)[k])
-  if (scalarChanged) {
-    pushScalarSettings(state).catch((e) => console.warn('[sync] scalar push error:', e))
+  if (!debouncedBase) {
+    debouncedBase = state  // first call: initialise base, nothing to diff yet
+    return
   }
+
+  const base = debouncedBase
+  debouncedBase = state  // always keep latest so the timer closure sees it
+  scheduleDebouncedPush(base)
 }
 
-// Serialize diffs so rapid state changes don’t race
+// Serialize diffs so concurrent flushes don't race each other
 let diffQueue: Promise<void> = Promise.resolve()
 function runDiffSerialized(prev: AppState, curr: AppState) {
   diffQueue = diffQueue.then(() =>
@@ -542,6 +565,9 @@ export const setupRealtimeSync = (
   getState: () => AppState
 ): (() => void) => {
   if (!isSupabaseConfigured()) return () => {}
+
+  const tables = TABLE_MAPPINGS.map(m => m.table)
+  console.log('[realtime] subscribing to tables:', tables)
 
   const channel = supabase!.channel('astrida_realtime')
 
