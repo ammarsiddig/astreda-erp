@@ -9,6 +9,7 @@ import { generateSeedData } from '../lib/seedData';
 import { canWrite } from '../lib/permissions';
 import { ALL_PAGE_KEYS } from '../lib/permissions';
 import type { User, Role, PagePermission, PageKey } from '../types';
+import { upsertRecord, deleteRecord } from '../lib/syncEngine';
 
 const PAGE_LABELS: Record<PageKey, string> = {
   dashboard: 'لوحة التحكم',
@@ -267,6 +268,8 @@ export default function Settings() {
         ? state.users.map(u => u.id === editingUser.id ? newUser : u)
         : [...state.users, newUser],
     });
+    // Direct Supabase write — don't rely only on background diff
+    upsertRecord('users', newUser);
     setShowUserModal(false);
   };
 
@@ -276,6 +279,7 @@ export default function Settings() {
     if (userId === 'user-sysadmin') return;
     if (window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
       updateState({ users: state.users.filter(u => u.id !== userId) });
+      deleteRecord('users', userId);
     }
   };
 
@@ -317,6 +321,7 @@ export default function Settings() {
         ? state.roles.map(r => r.id === editingRole.id ? newRole : r)
         : [...state.roles, newRole],
     });
+    upsertRecord('roles', newRole);
     setShowRoleModal(false);
   };
 
@@ -330,6 +335,7 @@ export default function Settings() {
     }
     if (window.confirm('هل أنت متأكد من حذف هذا الدور؟')) {
       updateState({ roles: state.roles.filter(r => r.id !== roleId) });
+      deleteRecord('roles', roleId);
     }
   };
 

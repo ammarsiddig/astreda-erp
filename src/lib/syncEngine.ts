@@ -301,6 +301,7 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
     const prevVal = key === 'settlementResults' ? prev.settlementResults : (prev as any)[key]
     const currVal = key === 'settlementResults' ? curr.settlementResults : (curr as any)[key]
     if (prevVal === currVal) continue // reference equality = no change
+    console.log(`[sync] diff detected: ${mapping.table} (${key})`)
 
     if (key === 'settlementResults') {
       const prevMap = (prevVal || {}) as Record<string, any>
@@ -344,13 +345,22 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
         const prevItem = prevArr.find(p => pkGetter(p) === pk)
         if (!prevItem || prevItem !== item) {
           const row = mapping.toRow(item)
+          console.log(`[sync] UPSERT ${mapping.table}/${pk}`, row)
           if (navigator.onLine && isSupabaseConfigured()) {
             try {
               const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
-              if (error) throw error
+              if (error) {
+                console.error(`[sync] ❌ UPSERT ${mapping.table}/${pk} failed:`, error.message, error)
+                throw error
+              }
+              console.log(`[sync] ✅ UPSERT ${mapping.table}/${pk} OK`)
               markWritten(mapping.table, pk)
-            } catch { enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row }) }
+            } catch (e: any) {
+              console.error(`[sync] ❌ ${mapping.table}/${pk} catch:`, e?.message || e)
+              enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
+            }
           } else {
+            console.log(`[sync] ⏳ offline, queued ${mapping.table}/${pk}`)
             enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
           }
         }
@@ -413,15 +423,23 @@ export const onStateChange = (state: AppState) => {
   if (!prev) return // first call, just store reference
 
   // Write array diffs to Supabase immediately — no debounce
-  cloudFirstDiff(prev, state).then(() => {
-    updateStatus({ lastSynced: new Date().toISOString() })
-  }).catch(() => {})
+  runDiffSerialized(prev, state)
 
   // Push scalar settings if any changed
   const scalarChanged = SCALAR_KEYS.some(k => (prev as any)[k] !== (state as any)[k])
   if (scalarChanged) {
-    pushScalarSettings(state).catch(() => {})
+    pushScalarSettings(state).catch((e) => console.warn('[sync] scalar push error:', e))
   }
+}
+
+// Serialize diffs so rapid state changes don’t race
+let diffQueue: Promise<void> = Promise.resolve()
+function runDiffSerialized(prev: AppState, curr: AppState) {
+  diffQueue = diffQueue.then(() =>
+    cloudFirstDiff(prev, curr).then(() => {
+      updateStatus({ lastSynced: new Date().toISOString() })
+    })
+  ).catch((e) => console.error('[sync] diff error:', e))
 }
 
 // ─── Pull (Supabase → local) — full table download ────────────────
@@ -607,6 +625,69 @@ export const setupRealtimeSync = (
   })
 
   return () => { supabase!.removeChannel(channel) }
+}
+
+// ─── Direct record helpers (for explicit writes from components) ───
+
+/**
+ * Directly upsert a single record to Supabase.
+ * Use this for critical writes (e.g. user edits) that must not be lost.
+ */
+export const upsertRecord = async (stateKey: keyof AppState, item: any): Promise<boolean> => {
+  const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
+  if (!mapping) { console.error(`[sync] no mapping for ${String(stateKey)}`); return false }
+  const row = mapping.toRow(item)
+  const pkField = mapping.pkField ?? 'id'
+  const pk = row[pkField]
+  console.log(`[sync] direct UPSERT ${mapping.table}/${pk}`, row)
+  if (!navigator.onLine || !isSupabaseConfigured()) {
+    enqueue({ table: mapping.table, pk: String(pk), op: 'UPSERT', data: row })
+    return false
+  }
+  try {
+    const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
+    if (error) {
+      console.error(`[sync] direct UPSERT ${mapping.table}/${pk} failed:`, error.message)
+      enqueue({ table: mapping.table, pk: String(pk), op: 'UPSERT', data: row })
+      return false
+    }
+    console.log(`[sync] ✅ direct UPSERT ${mapping.table}/${pk} OK`)
+    markWritten(mapping.table, String(pk))
+    return true
+  } catch (e: any) {
+    console.error(`[sync] direct UPSERT ${mapping.table}/${pk} catch:`, e?.message || e)
+    enqueue({ table: mapping.table, pk: String(pk), op: 'UPSERT', data: row })
+    return false
+  }
+}
+
+/**
+ * Directly delete a single record from Supabase.
+ */
+export const deleteRecord = async (stateKey: keyof AppState, pk: string): Promise<boolean> => {
+  const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
+  if (!mapping) { console.error(`[sync] no mapping for ${String(stateKey)}`); return false }
+  const pkField = mapping.pkField ?? 'id'
+  console.log(`[sync] direct DELETE ${mapping.table}/${pk}`)
+  if (!navigator.onLine || !isSupabaseConfigured()) {
+    enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
+    return false
+  }
+  try {
+    const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
+    if (error) {
+      console.error(`[sync] direct DELETE ${mapping.table}/${pk} failed:`, error.message)
+      enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
+      return false
+    }
+    console.log(`[sync] ✅ direct DELETE ${mapping.table}/${pk} OK`)
+    markWritten(mapping.table, pk)
+    return true
+  } catch (e: any) {
+    console.error(`[sync] direct DELETE ${mapping.table}/${pk} catch:`, e?.message || e)
+    enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
+    return false
+  }
 }
 
 // ─── Fetch users from Supabase (for login) ─────────────────────────
