@@ -186,7 +186,7 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Top bar */}
-        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm flex-shrink-0 z-10">
+        <header className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between shadow-sm flex-shrink-0 z-10 sticky top-0">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
@@ -194,39 +194,39 @@ export default function Layout() {
             >
               <Menu className="w-5 h-5" />
             </button>
-          </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Shipment selector */}
-            <div className="hidden sm:flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 gap-1.5">
-              <span className="text-xs text-amber-600 font-medium whitespace-nowrap">{t('activeShipment')}:</span>
+            {/* Shipment selector — visible on all sizes */}
+            <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 gap-1 sm:gap-1.5">
+              <span className="text-[10px] sm:text-xs text-amber-600 font-medium whitespace-nowrap hidden sm:inline">{t('activeShipment')}:</span>
               <select
                 value={activeShipment?.id || ''}
                 onChange={handleShipmentChange}
-                className="bg-transparent text-sm font-semibold text-amber-700 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs sm:text-sm font-semibold text-amber-700 focus:outline-none cursor-pointer max-w-[100px] sm:max-w-none"
               >
                 {state.shipments.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
             </div>
+          </div>
 
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Sync Status */}
             <SyncStatusIndicator onManualSync={manualSync} />
 
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center bg-teal-50 text-teal-700 border border-teal-200 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors"
+              className="flex items-center bg-teal-50 text-teal-700 border border-teal-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-teal-100 transition-colors"
             >
-              <Globe className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+              <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 rtl:ml-1 rtl:mr-0" />
               <span>{lang === 'ar' ? 'EN' : 'AR'}</span>
             </button>
 
             {/* Role badge */}
             {role && currentUser && (
-              <div className={cn('flex items-center px-3 py-1.5 rounded-lg text-sm font-medium gap-1.5', getRoleBadgeColor(role.name))}>
-                <UserCircle className="w-4 h-4" />
+              <div className={cn('flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium gap-1', getRoleBadgeColor(role.name))}>
+                <UserCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">
                   {currentUser.name}
                   {salespersonName ? ` (${salespersonName})` : ''}
@@ -239,10 +239,10 @@ export default function Layout() {
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="flex items-center bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors gap-1.5"
+              className="flex items-center bg-red-50 text-red-600 border border-red-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-100 transition-colors gap-1"
               title="تسجيل الخروج"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">خروج</span>
             </button>
           </div>

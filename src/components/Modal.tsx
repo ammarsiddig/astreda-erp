@@ -32,7 +32,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4"
           onClick={onClose}
         >
           <motion.div
@@ -40,7 +40,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.15 }}
-            className={`bg-white rounded-2xl shadow-2xl w-full ${maxW} max-h-[90vh] overflow-y-auto`}
+            className={`bg-white sm:rounded-2xl shadow-2xl w-full ${maxW} h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-y-auto`}
             dir={lang === 'ar' ? 'rtl' : 'ltr'}
             onClick={(e) => e.stopPropagation()}
           >

@@ -288,7 +288,7 @@ export default function Sales() {
                 </div>
               </div>
               {/* Customer info */}
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 px-6 py-4 border-b border-slate-100">
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">العميل / Customer</p>
                   <p className="text-sm font-bold text-slate-800">{state.customers.find(c => c.id === viewInvoice.customerId)?.name}</p>
@@ -305,7 +305,8 @@ export default function Sales() {
                 </div>
               </div>
               {/* Lines table */}
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[400px]">
                 <thead>
                   <tr className="bg-slate-800 text-white text-xs uppercase">
                     <th className="px-4 py-2.5 text-right">المنتج</th>
@@ -325,6 +326,7 @@ export default function Sales() {
                   ))}
                 </tbody>
               </table>
+              </div>
               {/* Total */}
               <div className="flex justify-between items-center px-6 py-4 bg-slate-50 border-t-2 border-slate-200">
                 <span className="text-sm font-bold text-slate-700">الإجمالي / Total</span>

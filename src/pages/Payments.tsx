@@ -237,7 +237,7 @@ export default function Payments() {
       size="md"
       >
         <form onSubmit={handleSavePayment} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)}
@@ -297,7 +297,7 @@ export default function Payments() {
       <Modal isOpen={!!showViewModal} onClose={() => setShowViewModal(null)} title={t('view')} size="md">
         {showViewModal && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('receiptNumber')}</label>
                 <p className="font-medium">{showViewModal.id}</p>

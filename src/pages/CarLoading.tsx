@@ -295,7 +295,7 @@ export default function CarLoading() {
       <Modal isOpen={!!showViewModal} onClose={() => setShowViewModal(null)} title={t('viewDetails')} size="md">
         {showViewModal && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-slate-500">{t('date')}</label>
                 <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>

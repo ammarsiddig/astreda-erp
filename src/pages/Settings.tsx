@@ -558,8 +558,8 @@ export default function Settings() {
                     {t('add')}
                   </button>}
                 </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[500px]">
                     <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-4 py-3">{t('name')}</th>
@@ -615,8 +615,8 @@ export default function Settings() {
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
                   </button>}
                 </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[500px]">
                     <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-4 py-3">الاسم</th>
@@ -668,8 +668,8 @@ export default function Settings() {
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
                   </button>}
                 </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[500px]">
                     <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-4 py-3">الاسم</th>
@@ -720,8 +720,8 @@ export default function Settings() {
                 </button>}
               </div>
 
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+              <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
+                <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[400px]">
                   <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
                     <tr>
                       <th className="px-4 py-3">{t('name')}</th>
@@ -820,7 +820,7 @@ export default function Settings() {
       {/* ─── User Modal ─── */}
       <Modal isOpen={showUserModal} onClose={() => setShowUserModal(false)} title={editingUser ? 'تعديل مستخدم' : 'إضافة مستخدم'} size="2xl">
         <form onSubmit={handleSaveUser} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">الاسم الكامل</label>
               <input type="text" required value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })}
@@ -875,7 +875,7 @@ export default function Settings() {
       {/* ─── Role Modal ─── */}
       <Modal isOpen={showRoleModal} onClose={() => setShowRoleModal(false)} title={editingRole ? 'تعديل دور' : 'إضافة دور'} size="2xl">
         <form onSubmit={handleSaveRole} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">اسم الدور (عربي)</label>
               <input type="text" required value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })}

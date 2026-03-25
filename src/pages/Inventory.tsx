@@ -459,7 +459,7 @@ export default function Inventory() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('from')}</label>
               <select required value={transferFrom} onChange={(e) => setTransferFrom(e.target.value)}
@@ -541,7 +541,7 @@ export default function Inventory() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input type="date" required value={carTransferDate} onChange={(e) => setCarTransferDate(e.target.value)}
@@ -556,7 +556,7 @@ export default function Inventory() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('fromCar')}</label>
               <select required value={carTransferFrom} onChange={(e) => setCarTransferFrom(e.target.value)}
@@ -645,7 +645,7 @@ export default function Inventory() {
       {/* Edit Transaction Modal */}
       <Modal isOpen={!!showEditModal} onClose={() => setShowEditModal(null)} title={t('edit')} size="md">
         <form onSubmit={handleUpdateTransaction} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input
@@ -736,7 +736,7 @@ export default function Inventory() {
       <Modal isOpen={!!showViewModal} onClose={() => setShowViewModal(null)} title={t('view')} size="md">
         {showViewModal && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('date')}</label>
                 <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>

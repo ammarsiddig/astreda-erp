@@ -56,7 +56,7 @@ export default function Dashboard() {
       </div>
 
       {/* Top Row - KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <KPICard title={t('totalCash')} value={totalCash} icon={Wallet} color="bg-emerald-500" border="border-t-emerald-500" />
         <KPICard title={t('totalDebt')} value={totalDebt} icon={Users} color="bg-red-500" border="border-t-red-500" />
         <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-blue-500" border="border-t-blue-500" />
@@ -85,7 +85,8 @@ export default function Dashboard() {
           <div className="px-5 py-3.5 border-b border-slate-100">
             <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{t('topDebtors')}</h2>
           </div>
-          <table className="w-full text-sm text-left rtl:text-right text-slate-500">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left rtl:text-right text-slate-500 min-w-[400px]">
             <thead>
               <tr className="bg-[#1E293B] text-white text-xs uppercase">
                 <th className="px-4 py-3">{t('customer')}</th>
@@ -109,6 +110,7 @@ export default function Dashboard() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Active Shipment Stats */}
@@ -119,15 +121,15 @@ export default function Dashboard() {
           <div className="p-6 grid grid-cols-2 gap-6">
             <div className="flex flex-col">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{t('soldUnits')}</span>
-              <span className="text-3xl font-bold text-slate-800">{new Intl.NumberFormat('en-US').format(totalSoldUnits)}</span>
+              <span className="text-xl sm:text-3xl font-bold text-slate-800">{new Intl.NumberFormat('en-US').format(totalSoldUnits)}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{t('totalInvoices')}</span>
-              <span className="text-3xl font-bold text-slate-800">{new Intl.NumberFormat('en-US').format(activeShipmentInvoices.length)}</span>
+              <span className="text-xl sm:text-3xl font-bold text-slate-800">{new Intl.NumberFormat('en-US').format(activeShipmentInvoices.length)}</span>
             </div>
             <div className="flex flex-col col-span-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{t('daysRunning')}</span>
-              <span className="text-3xl font-bold text-slate-800">
+              <span className="text-xl sm:text-3xl font-bold text-slate-800">
                 {new Intl.NumberFormat('en-US').format(activeShipmentInvoices.length > 0
                   ? Math.max(1, Math.ceil((new Date().getTime() - new Date(activeShipmentInvoices[0].date).getTime()) / (1000 * 3600 * 24)))
                   : 0)}
@@ -142,14 +144,14 @@ export default function Dashboard() {
 
 function KPICard({ title, value, icon: Icon, color, border }: { title: string; value: number; icon: any; color: string; border: string }) {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-slate-100 border-t-4 ${border} p-5`}>
+    <div className={`bg-white rounded-xl shadow-sm border border-slate-100 border-t-4 ${border} p-4 sm:p-5`}>
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{title}</p>
-          <p className="text-2xl font-bold text-slate-800">{formatCurrency(value)}</p>
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{title}</p>
+          <p className="text-lg sm:text-2xl font-bold text-slate-800 truncate">{formatCurrency(value)}</p>
         </div>
-        <div className={`p-2.5 rounded-lg ${color} text-white flex-shrink-0`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-2 sm:p-2.5 rounded-lg ${color} text-white flex-shrink-0`}>
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
       </div>
     </div>

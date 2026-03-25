@@ -327,7 +327,7 @@ export default function GeneralTransfers() {
           {/* Transfer Type */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('capitalType')}</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setTransferType('capital_return')}
@@ -354,7 +354,7 @@ export default function GeneralTransfers() {
           </div>
 
           {/* Conditional partner/beneficiary fields */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {transferType === 'drawings' ? (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الشريك</label>
@@ -435,7 +435,7 @@ export default function GeneralTransfers() {
           </div>
 
           {/* Exchange rate + SAR amount */}
-          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('exchangeRate')}</label>
               <input
@@ -489,7 +489,7 @@ export default function GeneralTransfers() {
       <Modal isOpen={!!showViewModal} onClose={() => setShowViewModal(null)} title={t('view')} size="lg">
         {showViewModal && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('receiptNumber')}</label>
                 <p className="font-medium">{showViewModal.id}</p>
