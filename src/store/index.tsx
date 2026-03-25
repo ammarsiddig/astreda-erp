@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
-import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud } from '../lib/syncEngine';
+import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -381,6 +381,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (e) {
         console.warn('[cloud-first] ⚠️ فشل السحب من Supabase — استخدام localStorage', e);
       } finally {
+        // Now allow onStateChange to push diffs — cloud data is authoritative
+        markCloudReady();
         setIsCloudLoading(false);
       }
     })();

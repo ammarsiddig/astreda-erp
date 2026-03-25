@@ -384,6 +384,35 @@ CREATE POLICY "allow_all" ON app_settings FOR ALL USING (true) WITH CHECK (true)
 CREATE POLICY "allow_all" ON sync_queue FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================
+-- Set REPLICA IDENTITY FULL on all tables
+-- (Required for Supabase Realtime DELETE events to include the full OLD row)
+-- =============================================
+ALTER TABLE products REPLICA IDENTITY FULL;
+ALTER TABLE salespeople REPLICA IDENTITY FULL;
+ALTER TABLE cities REPLICA IDENTITY FULL;
+ALTER TABLE cars REPLICA IDENTITY FULL;
+ALTER TABLE bank_accounts REPLICA IDENTITY FULL;
+ALTER TABLE shipments REPLICA IDENTITY FULL;
+ALTER TABLE employees REPLICA IDENTITY FULL;
+ALTER TABLE partners REPLICA IDENTITY FULL;
+ALTER TABLE expense_categories REPLICA IDENTITY FULL;
+ALTER TABLE roles REPLICA IDENTITY FULL;
+ALTER TABLE users REPLICA IDENTITY FULL;
+ALTER TABLE customers REPLICA IDENTITY FULL;
+ALTER TABLE inventory_transactions REPLICA IDENTITY FULL;
+ALTER TABLE invoices REPLICA IDENTITY FULL;
+ALTER TABLE payments REPLICA IDENTITY FULL;
+ALTER TABLE expenses REPLICA IDENTITY FULL;
+ALTER TABLE salaries REPLICA IDENTITY FULL;
+ALTER TABLE general_transfers REPLICA IDENTITY FULL;
+ALTER TABLE account_transfers REPLICA IDENTITY FULL;
+ALTER TABLE ledger REPLICA IDENTITY FULL;
+ALTER TABLE saved_settlements REPLICA IDENTITY FULL;
+ALTER TABLE capital_contributions REPLICA IDENTITY FULL;
+ALTER TABLE settlement_results REPLICA IDENTITY FULL;
+ALTER TABLE app_settings REPLICA IDENTITY FULL;
+
+-- =============================================
 -- Enable Realtime on transactional tables
 -- =============================================
 ALTER PUBLICATION supabase_realtime ADD TABLE products;

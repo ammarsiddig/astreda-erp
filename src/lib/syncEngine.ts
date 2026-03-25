@@ -412,6 +412,11 @@ const pushScalarSettings = async (state: AppState): Promise<void> => {
 
 // ─── Debounced auto-push (Cloud-First) ─────────────────────────────
 // Batches rapid state changes and flushes after DEBOUNCE_MS of idle time.
+// Gate: don't push state changes back to cloud until the initial pull completes.
+// This prevents stale localStorage data from overwriting freshly-pulled cloud data.
+let cloudReady = false
+export const markCloudReady = () => { cloudReady = true }
+
 // debouncedBase tracks the state at the START of the current debounce window.
 // When the timer fires we diff base vs latest, then advance the base.
 
@@ -444,6 +449,11 @@ function scheduleDebouncedPush(base: AppState) {
 
 export const onStateChange = (state: AppState) => {
   if (!isSupabaseConfigured()) return
+  // Don't push until cloud pull is done — avoids re-uploading stale localStorage
+  if (!cloudReady) {
+    debouncedBase = state  // keep tracking latest, but don't diff/push
+    return
+  }
 
   if (!debouncedBase) {
     debouncedBase = state  // first call: initialise base, nothing to diff yet
@@ -478,7 +488,7 @@ export const pullFromCloud = async (
     try {
       const { data, error } = await supabase!.from(mapping.table).select('*')
       if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); continue }
-      if (!data || data.length === 0) continue
+      if (!data) continue
 
       pulledAny = true
       const mapped = data.map(mapping.fromRow)
@@ -582,10 +592,15 @@ export const setupRealtimeSync = (
         const pkField = mapping.pkField ?? 'id'
 
         if (payload.eventType === 'DELETE') {
+          console.log(`[realtime] DELETE ${mapping.table}`, payload.old)
           const deletedPk = (payload.old as any)?.[pkField]
-          if (!deletedPk) return
+          if (!deletedPk) {
+            console.warn(`[realtime] DELETE ${mapping.table}: no PK in payload.old — ensure REPLICA IDENTITY FULL is set`)
+            return
+          }
           // Suppress echo from our own write
           if (isEcho(mapping.table, String(deletedPk))) return
+          console.log(`[realtime] applying DELETE ${mapping.table}/${deletedPk}`)
 
           if (key === 'settlementResults') {
             const record = { ...(state.settlementResults || {}) }
