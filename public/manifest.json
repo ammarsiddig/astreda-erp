@@ -1,9 +1,12 @@
 {
-  "name": "أستريدا ERP",
+  "name": "أستريدا - نظام التوزيع",
   "short_name": "أستريدا",
-  "description": "نظام أستريدا لإدارة التوزيع",
+  "description": "نظام ERP لتوزيع الأغذية المجمدة",
   "start_url": "/",
-  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0891b2",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/android-chrome-192.png",
@@ -15,9 +18,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "theme_color": "#0891b2",
-  "background_color": "#ffffff",
-  "display": "standalone",
-  "orientation": "any"
+  ]
 }
