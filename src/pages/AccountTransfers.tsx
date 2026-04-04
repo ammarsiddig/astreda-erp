@@ -63,41 +63,16 @@ export default function AccountTransfers() {
       notes,
     };
 
-    let newBankAccounts = [...state.bankAccounts];
     let newLedger = [...state.ledger];
 
     if (isEditing) {
-      // Reverse old effects
-      const oldTransfer = showEditModal!;
-      if (oldTransfer.type === 'transfer' && oldTransfer.fromBankAccountId) {
-        newBankAccounts = newBankAccounts.map(b =>
-          b.id === oldTransfer.fromBankAccountId ? { ...b, balance: b.balance + oldTransfer.amount + oldTransfer.transferFee } :
-          b.id === oldTransfer.toBankAccountId ? { ...b, balance: b.balance - oldTransfer.amount } : b
-        );
-      } else {
-        newBankAccounts = newBankAccounts.map(b =>
-          b.id === oldTransfer.toBankAccountId ? { ...b, balance: b.balance - oldTransfer.amount } : b
-        );
-      }
-      newLedger = newLedger.filter(l => l.linkedId !== oldTransfer.id);
+      // Reverse old ledger entries
+      newLedger = newLedger.filter(l => l.linkedId !== showEditModal!.id);
     }
 
     // Apply new effects
     const transferAmount = Number(amount);
-    const fee = Number(transferFee) || 0;
-
-    if (type === 'transfer' && fromBankAccountId) {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === fromBankAccountId ? { ...b, balance: b.balance - (transferAmount + fee) } :
-        b.id === toBankAccountId ? { ...b, balance: b.balance + transferAmount } : b
-      );
-    } else {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === toBankAccountId ? { ...b, balance: b.balance + transferAmount } : b
-      );
-    }
-
-    const newLedgerEntries = [];
+    const fee = Number(transferFee) || 0;    const newLedgerEntries = [];
     if (type === 'transfer' && fromBankAccountId) {
       newLedgerEntries.push({
         id: uuidv4(),
@@ -139,7 +114,6 @@ export default function AccountTransfers() {
         ? state.accountTransfers.map(t => t.id === transferId ? newTransfer : t)
         : [...state.accountTransfers, newTransfer],
       ledger: [...newLedger, ...newLedgerEntries],
-      bankAccounts: newBankAccounts,
     });
 
     setShowAddModal(false);
@@ -172,22 +146,9 @@ export default function AccountTransfers() {
     if (!showDeleteConfirm) return;
     const transfer = showDeleteConfirm;
 
-    let newBankAccounts = [...state.bankAccounts];
-    if (transfer.type === 'transfer' && transfer.fromBankAccountId) {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === transfer.fromBankAccountId ? { ...b, balance: b.balance + transfer.amount + transfer.transferFee } :
-        b.id === transfer.toBankAccountId ? { ...b, balance: b.balance - transfer.amount } : b
-      );
-    } else {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === transfer.toBankAccountId ? { ...b, balance: b.balance - transfer.amount } : b
-      );
-    }
-
     updateState({
       accountTransfers: state.accountTransfers.filter(t => t.id !== transfer.id),
       ledger: state.ledger.filter(l => l.linkedId !== transfer.id),
-      bankAccounts: newBankAccounts,
     });
 
     setShowDeleteConfirm(null);
@@ -221,7 +182,7 @@ export default function AccountTransfers() {
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             <option value="transfer">{t('transfer')}</option>
             <option value="opening_balance">{t('openingBalance')}</option>
           </select>
@@ -362,7 +323,7 @@ export default function AccountTransfers() {
                   }}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
                 >
-                  <option value>{t('select')}</option>
+                  <option value="">{t('select')}</option>
                   {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
@@ -373,7 +334,7 @@ export default function AccountTransfers() {
               <select required value={toBankAccountId} onChange={(e) => setToBankAccountId(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>

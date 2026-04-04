@@ -502,7 +502,7 @@ export default function Inventory() {
                   }}
                   className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value>{t('select')}</option>
+                  <option value="">{t('select')}</option>
                   {state.products.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -565,7 +565,7 @@ export default function Inventory() {
               <select required value={transferTo} onChange={(e) => setTransferTo(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 <option value="warehouse">{t('warehouse')}</option>
                 {state.cars.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -585,7 +585,7 @@ export default function Inventory() {
                   }}
                   className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
                 >
-                  <option value>{t('select')}</option>
+                  <option value="">{t('select')}</option>
                   {state.products.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -651,7 +651,7 @@ export default function Inventory() {
               <select required value={carTransferFrom} onChange={(e) => setCarTransferFrom(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.cars.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -662,7 +662,7 @@ export default function Inventory() {
               <select required value={carTransferTo} onChange={(e) => setCarTransferTo(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.cars.filter(c => c.id !== carTransferFrom).map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -681,7 +681,7 @@ export default function Inventory() {
                   }}
                   className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
-                  <option value>{t('select')}</option>
+                  <option value="">{t('select')}</option>
                   {state.products.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}

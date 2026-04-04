@@ -60,23 +60,15 @@ export default function Expenses() {
       notes,
     };
 
-    let newBankAccounts = [...state.bankAccounts];
     let newLedger = [...state.ledger];
 
     if (isEditing) {
       // Reverse old effects
       const oldExpense = showEditModal!;
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === oldExpense.bankAccountId ? { ...b, balance: b.balance + oldExpense.amount } : b
-      );
       newLedger = newLedger.filter(l => l.linkedId !== oldExpense.id);
     }
 
     // Apply new effects
-    newBankAccounts = newBankAccounts.map(b =>
-      b.id === bankAccountId ? { ...b, balance: b.balance - expenseAmount } : b
-    );
-
     const newLedgerEntry = {
       id: uuidv4(),
       date,
@@ -94,7 +86,6 @@ export default function Expenses() {
         ? state.expenses.map(e => e.id === expenseId ? newExpense : e)
         : [...state.expenses, newExpense],
       ledger: [...newLedger, newLedgerEntry],
-      bankAccounts: newBankAccounts,
     });
 
     showToast(isEditing ? t('updatedSuccessfully') : t('addedSuccessfully'));
@@ -125,14 +116,9 @@ export default function Expenses() {
     if (!showDeleteConfirm) return;
     const expense = showDeleteConfirm;
 
-    const newBankAccounts = state.bankAccounts.map(b =>
-      b.id === expense.bankAccountId ? { ...b, balance: b.balance + expense.amount } : b
-    );
-
     updateState({
       expenses: state.expenses.filter(e => e.id !== expense.id),
       ledger: state.ledger.filter(l => l.linkedId !== expense.id),
-      bankAccounts: newBankAccounts,
     });
 
     showToast(t('deletedSuccessfully'));
@@ -167,7 +153,7 @@ export default function Expenses() {
           <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             {state.expenseCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
@@ -293,7 +279,7 @@ export default function Expenses() {
               <select required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.expenseCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
@@ -308,7 +294,7 @@ export default function Expenses() {
               <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>

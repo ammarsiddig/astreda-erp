@@ -375,7 +375,7 @@ export default function Ledger() {
             onChange={(e) => setFilterAccount(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </div>
@@ -386,7 +386,7 @@ export default function Ledger() {
             onChange={(e) => setFilterModule(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             <option value="sale_cash">{t('sales')}</option>
             <option value="payment">{t('payments')}</option>
             <option value="expense">{t('expenses')}</option>

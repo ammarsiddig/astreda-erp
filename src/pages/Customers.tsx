@@ -270,7 +270,7 @@ export default function Customers() {
             <select required value={cityId} onChange={(e) => setCityId(e.target.value)}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
-              <option value>{t('select')}</option>
+              <option value="">{t('select')}</option>
               {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
@@ -279,7 +279,7 @@ export default function Customers() {
             <select required value={salespersonId} onChange={(e) => setSalespersonId(e.target.value)}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
-              <option value>{t('select')}</option>
+              <option value="">{t('select')}</option>
               {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
@@ -288,7 +288,7 @@ export default function Customers() {
             <select value={carId} onChange={(e) => setCarId(e.target.value)}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
-              <option value>{t('select')}</option>
+              <option value="">{t('select')}</option>
               {state.cars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>

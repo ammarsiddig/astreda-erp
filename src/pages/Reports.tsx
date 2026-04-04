@@ -541,19 +541,19 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
               <select value={debtCityFilter} onChange={e => setDebtCityFilter(e.target.value)}
                 className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
-                <option value>{t('allCities')}</option>
+                <option value="">{t('allCities')}</option>
                 {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <select value={debtShipmentFilter} onChange={e => setDebtShipmentFilter(e.target.value)}
                 className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
-                <option value>{t('allShipments')}</option>
+                <option value="">{t('allShipments')}</option>
                 {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
               <select value={debtSalespersonFilter} onChange={e => setDebtSalespersonFilter(e.target.value)}
                 className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
-                <option value>{t('allSalespeople')}</option>
+                <option value="">{t('allSalespeople')}</option>
                 {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
@@ -620,7 +620,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 <select value={dailyDebtCity} onChange={e => setDailyDebtCity(e.target.value)}
                   className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
                 >
-                  <option value>اختر المدينة...</option>
+                  <option value="">اختر المدينة...</option>
                   {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>

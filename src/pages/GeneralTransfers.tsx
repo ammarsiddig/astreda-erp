@@ -95,24 +95,11 @@ export default function GeneralTransfers() {
       shipmentId: activeShipmentId,
     };
 
-    let newBankAccounts = [...state.bankAccounts];
     let newLedger = [...state.ledger];
 
     if (isEditing) {
-      const oldTransfer = showEditModal!;
-      oldTransfer.splits.forEach(split => {
-        newBankAccounts = newBankAccounts.map(b =>
-          b.id === split.bankAccountId ? { ...b, balance: b.balance + split.amount } : b
-        );
-      });
-      newLedger = newLedger.filter(l => l.linkedId !== oldTransfer.id);
+      newLedger = newLedger.filter(l => l.linkedId !== showEditModal!.id);
     }
-
-    validSplits.forEach(split => {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === split.bankAccountId ? { ...b, balance: b.balance - split.amount } : b
-      );
-    });
 
     const partnerLabel = transferType === 'drawings'
       ? state.partners.find(p => p.id === partnerId)?.name
@@ -137,7 +124,6 @@ export default function GeneralTransfers() {
         ? state.generalTransfers.map(t => t.id === transferId ? newTransfer : t)
         : [...state.generalTransfers, newTransfer],
       ledger: [...newLedger, ...newLedgerEntries],
-      bankAccounts: newBankAccounts,
     });
 
     setShowAddModal(false);
@@ -170,17 +156,9 @@ export default function GeneralTransfers() {
     if (!showDeleteConfirm) return;
     const transfer = showDeleteConfirm;
 
-    let newBankAccounts = [...state.bankAccounts];
-    transfer.splits.forEach(split => {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === split.bankAccountId ? { ...b, balance: b.balance + split.amount } : b
-      );
-    });
-
     updateState({
       generalTransfers: state.generalTransfers.filter(t => t.id !== transfer.id),
       ledger: state.ledger.filter(l => l.linkedId !== transfer.id),
-      bankAccounts: newBankAccounts,
     });
 
     setShowDeleteConfirm(null);

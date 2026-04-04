@@ -41,7 +41,7 @@ Additional capabilities:
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or later
+- [Node.js](https://nodejs.org/) **20 or later** (see `engines` in `package.json`)
 - A [Supabase](https://supabase.com) project (free tier works fine)
 - A [Google Gemini API key](https://aistudio.google.com/app/apikey) (optional, for AI features)
 
@@ -94,6 +94,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run build` | Create an optimized production build in `dist/` |
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | Type-check the project with TypeScript (`tsc --noEmit`) |
+| `npm test` | Run unit tests with Vitest (59 tests) |
+| `npm run test:watch` | Run tests in watch mode during development |
 | `npm run clean` | Remove the `dist/` folder |
 
 ---
