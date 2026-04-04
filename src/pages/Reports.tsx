@@ -246,7 +246,7 @@ export default function Reports() {
   tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #134e4a; font-size: 12px; font-weight: 900; color: #134e4a; text-align: center; }
   tfoot td.name { text-align: right; } tfoot td.debt { color: #e11d48 !important; }
 </style></head><body>
-  <div class="title">تقرير أداء المناديب</div>
+  <div class="title">تقرير أداء مناديب المبيعات</div>
   <div class="subtitle">الرسالة: ${shipmentName}</div>
   <table>
     <thead><tr>
