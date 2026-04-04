@@ -6,6 +6,7 @@ import { Receipt, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import { useToast } from '../components/Toast';
 import { formatCurrency, generateId } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
@@ -13,6 +14,7 @@ import { canWrite } from '../lib/permissions';
 export default function Expenses() {
   const { t } = useTranslation();
   const { state, updateState, activeShipmentId } = useAppStore();
+  const { showToast } = useToast();
   const hasWriteAccess = canWrite(state.currentUser, state.roles, 'expenses');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<Expense | null>(null);
@@ -95,6 +97,7 @@ export default function Expenses() {
       bankAccounts: newBankAccounts,
     });
 
+    showToast(isEditing ? t('updatedSuccessfully') : t('addedSuccessfully'));
     setShowAddModal(false);
     setShowEditModal(null);
     // Reset form
@@ -132,6 +135,7 @@ export default function Expenses() {
       bankAccounts: newBankAccounts,
     });
 
+    showToast(t('deletedSuccessfully'));
     setShowDeleteConfirm(null);
   };
 
