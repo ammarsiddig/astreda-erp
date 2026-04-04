@@ -245,7 +245,7 @@ export default function CustomerDetail() {
           <h3 className="text-sm font-medium text-slate-500 mb-1">{t('totalPayments')}</h3>
           <p className="text-2xl font-bold text-[#F59E0B]">{formatCurrency(totalPaid)}</p>
         </div>
-        <div className="bg-[#0F2444] p-6 rounded-xl shadow-sm text-white">
+        <div className="bg-[#134e4a] p-6 rounded-xl shadow-sm text-white">
           <h3 className="text-sm font-medium text-slate-300 mb-1">{t('totalDebt')}</h3>
           <p className={`text-2xl font-bold ${totalDebt > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
             {formatCurrency(totalDebt)}
@@ -258,7 +258,7 @@ export default function CustomerDetail() {
         <button onClick={() => setActiveTab('invoices')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'invoices'
-              ? 'border-teal-600 text-teal-600'
+              ? 'border-[#134e4a] text-[#134e4a]'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
@@ -267,7 +267,7 @@ export default function CustomerDetail() {
         <button onClick={() => setActiveTab('payments')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'payments'
-              ? 'border-teal-600 text-teal-600'
+              ? 'border-[#134e4a] text-[#134e4a]'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
@@ -291,7 +291,7 @@ export default function CustomerDetail() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {invoices.length > 0 ? invoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-teal-50 transition-colors">
+                  <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                     <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3">
@@ -304,13 +304,13 @@ export default function CustomerDetail() {
                     </td>
                     <td className="px-4 py-3 text-center flex justify-center gap-2">
                       <button onClick={() => handleOpenEditInvoice(invoice)}
-                        className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                         title={t('edit')}
                       >
                         <Edit className="w-4 h-4"/>
                       </button>
                       <button onClick={() => setShowPrintModal(invoice.id)}
-                        className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                         title={t('print')}
                       >
                         <Printer className="w-4 h-4"/>
@@ -337,7 +337,7 @@ export default function CustomerDetail() {
           <div>
             <div className="p-4 border-b border-slate-200 flex justify-end">
               <button onClick={() => setShowPaymentModal(true)}
-                className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm"
+                className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm"
               >
                 <Plus className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0"/>
                 {t('addPayment')}
@@ -357,7 +357,7 @@ export default function CustomerDetail() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paymentsWithBalance.length > 0 ? paymentsWithBalance.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-teal-50 transition-colors">
+                    <tr key={payment.id} className="hover:bg-[#f0fdfa] transition-colors">
                       <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</td>
                       <td className="px-4 py-3">{payment.notes}</td>
@@ -416,7 +416,7 @@ export default function CustomerDetail() {
                 window.open(`/print/invoice/${showPrintModal}`, '_blank');
                 setShowPrintModal(null);
               }}
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors flex items-center"
+              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors flex items-center"
             >
               <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0"/>
               {t('print')}
@@ -452,19 +452,19 @@ export default function CustomerDetail() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
             <input type="date" required value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
             <input type="number" required min="0.01" step="0.01" value={paymentAmount || ''} onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
             <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
               <option value>{t('select')}</option>
               {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -473,7 +473,7 @@ export default function CustomerDetail() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
             <textarea value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               rows={3}
             />
           </div>
@@ -487,7 +487,7 @@ export default function CustomerDetail() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>

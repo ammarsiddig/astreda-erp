@@ -115,7 +115,7 @@ export default function Customers() {
             setNotes('');
             setShowAddModal(true);
           }}
-          className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm"
+          className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
           {t('addCustomer')}
@@ -127,7 +127,7 @@ export default function Customers() {
         <div className="relative max-w-md">
           <Search className="absolute top-1/2 -translate-y-1/2 left-3 rtl:right-3 rtl:left-auto w-5 h-5 text-slate-400"/>
           <input type="text" placeholder={t('search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
           />
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function Customers() {
                 const debt = getCustomerDebt(customer.id);
                 const totalSales = getCustomerTotalSales(customer.id);
                 return (
-                  <tr key={customer.id} className="hover:bg-teal-50 transition-colors">
+                  <tr key={customer.id} className="hover:bg-[#f0fdfa] transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
                     <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>
@@ -168,7 +168,7 @@ export default function Customers() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => navigate(`/customers/${customer.id}`)}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
@@ -205,19 +205,19 @@ export default function Customers() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('name')}</label>
             <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('phone')}</label>
             <input type="tel" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('city')}</label>
             <select required value={cityId} onChange={(e) => setCityId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
               <option value>{t('select')}</option>
               {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -226,7 +226,7 @@ export default function Customers() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('salesperson')}</label>
             <select required value={salespersonId} onChange={(e) => setSalespersonId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
               <option value>{t('select')}</option>
               {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -235,7 +235,7 @@ export default function Customers() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('car')}</label>
             <select value={carId} onChange={(e) => setCarId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
               <option value>{t('select')}</option>
               {state.cars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -244,7 +244,7 @@ export default function Customers() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none h-20"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none resize-none h-20"
             />
           </div>
 
@@ -261,7 +261,7 @@ export default function Customers() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>

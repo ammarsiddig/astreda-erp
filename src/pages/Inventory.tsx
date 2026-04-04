@@ -260,7 +260,7 @@ export default function Inventory() {
             {t('receiveNewStock')}
           </button>
           <button onClick={() => setShowTransferModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            className="flex items-center px-4 py-2 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] transition-colors shadow-sm"
           >
             <ArrowRightLeft className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
             {t('transferStock')}
@@ -300,7 +300,7 @@ export default function Inventory() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {inventoryData.map((row) => (
-                <tr key={row.product.id} className={`hover:bg-teal-50 transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+                <tr key={row.product.id} className={`hover:bg-[#f0fdfa] transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-slate-900 flex items-center">
                     {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 mr-2 rtl:ml-2 rtl:mr-0"/>}
                     {row.product.name}
@@ -351,7 +351,7 @@ export default function Inventory() {
                 .filter(t => t.shipmentId === activeShipmentId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} className="hover:bg-teal-50">
+                  <tr key={log.id} className="hover:bg-[#f0fdfa]">
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium text-slate-500">{log.referenceId || '-'}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
@@ -367,7 +367,7 @@ export default function Inventory() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => setShowViewModal(log)}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
@@ -455,7 +455,7 @@ export default function Inventory() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
             <input type="date" required value={transferDate} onChange={(e) => setTransferDate(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             />
           </div>
 
@@ -463,7 +463,7 @@ export default function Inventory() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('from')}</label>
               <select required value={transferFrom} onChange={(e) => setTransferFrom(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
                 <option value="warehouse">{t('warehouse')}</option>
                 {state.cars.map(c => (
@@ -474,7 +474,7 @@ export default function Inventory() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('to')}</label>
               <select required value={transferTo} onChange={(e) => setTransferTo(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
                 <option value>{t('select')}</option>
                 <option value="warehouse">{t('warehouse')}</option>
@@ -494,7 +494,7 @@ export default function Inventory() {
                     newItems[index].productId = e.target.value;
                     setTransferItems(newItems);
                   }}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
                 >
                   <option value>{t('select')}</option>
                   {state.products.map(p => (
@@ -506,7 +506,7 @@ export default function Inventory() {
                     newItems[index].qty = parseInt(e.target.value) || 0;
                     setTransferItems(newItems);
                   }}
-                  className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
                   placeholder={t('qty')}
                 />
                 {index === transferItems.length - 1 && (
@@ -526,7 +526,7 @@ export default function Inventory() {
             >
               {t('cancel')}
             </button>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button type="submit" className="px-4 py-2 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] transition-colors">
               {t('save')}
             </button>
           </div>
@@ -653,7 +653,7 @@ export default function Inventory() {
                 required
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               />
             </div>
             <div>
@@ -662,7 +662,7 @@ export default function Inventory() {
                 required
                 value={editProductId}
                 onChange={(e) => setEditProductId(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
                 {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -675,7 +675,7 @@ export default function Inventory() {
                 min="1"
                 value={editQty}
                 onChange={(e) => setEditQty(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               />
             </div>
             <div>
@@ -693,7 +693,7 @@ export default function Inventory() {
                 required
                 value={editFrom}
                 onChange={(e) => setEditFrom(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
                 <option value="warehouse">{t('warehouse')}</option>
                 <option value="supplier">{t('supplier')}</option>
@@ -706,7 +706,7 @@ export default function Inventory() {
                 required
                 value={editTo}
                 onChange={(e) => setEditTo(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
               >
                 <option value="warehouse">{t('warehouse')}</option>
                 <option value="customer">{t('customer')}</option>
@@ -724,7 +724,7 @@ export default function Inventory() {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] transition-colors"
             >
               {t('save')}
             </button>

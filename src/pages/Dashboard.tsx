@@ -59,7 +59,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <KPICard title={t('totalCash')} value={totalCash} icon={Wallet} color="bg-emerald-500" border="border-t-emerald-500" />
         <KPICard title={t('totalDebt')} value={totalDebt} icon={Users} color="bg-red-500" border="border-t-red-500" />
-        <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-blue-500" border="border-t-blue-500" />
+        <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-[#f0fdfa]0" border="border-t-blue-500" />
         <KPICard title={t('totalExpenses')} value={activeShipmentExpenses} icon={Receipt} color="bg-amber-500" border="border-t-amber-500" />
       </div>
 
@@ -96,7 +96,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {debtors.length > 0 ? debtors.map((debtor) => (
-                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-teal-50 transition-colors">
+                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-[#f0fdfa] transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{debtor.name}</td>
                   <td className="px-4 py-3">{state.cities.find(c => c.id === debtor.cityId)?.name}</td>
                   <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">
