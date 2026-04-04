@@ -68,10 +68,10 @@ export default function Settings() {
     { id: 'expenseCategories', label: t('expenseCategories') },
     { id: 'partners', label: t('partners') },
     { id: 'shipments', label: t('shipments') },
-    { id: 'partnerSettings', label: 'إعدادات الشركاء' },
+    { id: 'partnerSettings', label: t('partnerSettings') },
     ...(hasSettingsWrite ? [
-      { id: 'users', label: 'إدارة المستخدمين' },
-      { id: 'roles', label: 'إدارة الأدوار' },
+      { id: 'users', label: t('manageUsers') },
+      { id: 'roles', label: t('manageRoles') },
     ] : []),
   ];
 
@@ -362,7 +362,7 @@ export default function Settings() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('settings')}</h1>
-          {!hasSettingsWrite && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
+          {!hasSettingsWrite && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>}
         </div>
       </div>
 

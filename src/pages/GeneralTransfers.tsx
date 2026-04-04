@@ -118,7 +118,7 @@ export default function GeneralTransfers() {
       ? state.partners.find(p => p.id === partnerId)?.name
       : state.partners.find(p => p.id === beneficiaryPartnerId)?.name;
 
-    const typeLabel = transferType === 'drawings' ? 'منصرفات الشركاء' : 'إرجاع رأس مال وأرباح';
+    const typeLabel = transferType === 'drawings' ? t('capitalTypeDrawings') : t('capitalReturn');
 
     const newLedgerEntries = validSplits.map(split => ({
       id: uuidv4(),
@@ -188,12 +188,12 @@ export default function GeneralTransfers() {
 
   const getTypeBadge = (type?: GeneralTransferType) => {
     if (type === 'capital_return' || type === 'capital') {
-      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ccfbf1] text-[#134e4a]">إرجاع رأس مال وأرباح</span>;
+      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ccfbf1] text-[#134e4a]">{t('capitalReturn')}</span>;
     }
     if (type === 'drawings') {
-      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">منصرفات</span>;
+      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">{t('capitalTypeDrawings')}</span>;
     }
-    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">عام</span>;
+    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">{t('general')}</span>;
   };
 
   return (
@@ -201,7 +201,7 @@ export default function GeneralTransfers() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('generalTransfers')}</h1>
-          {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
+          {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>}
         </div>
         {hasWriteAccess && <button onClick={() => setShowAddModal(true)}
           className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm"
@@ -234,7 +234,7 @@ export default function GeneralTransfers() {
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
             <option value="">{t('all')}</option>
-            <option value="capital_return">إرجاع رأس مال وأرباح</option>
+            <option value="capital_return">{t('capitalReturn')}</option>
             <option value="drawings">{t('capitalTypeDrawings')}</option>
           </select>
         </div>
