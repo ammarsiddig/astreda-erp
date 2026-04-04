@@ -72,7 +72,9 @@ export default function AccountTransfers() {
 
     // Apply new effects
     const transferAmount = Number(amount);
-    const fee = Number(transferFee) || 0;    const newLedgerEntries = [];
+    const fee = Number(transferFee) || 0;
+
+    const newLedgerEntries = [];
     if (type === 'transfer' && fromBankAccountId) {
       newLedgerEntries.push({
         id: uuidv4(),
