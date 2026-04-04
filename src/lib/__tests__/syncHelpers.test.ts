@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
-// The sync engine helpers are not exported, so we replicate them here
-// to verify the camelCase ↔ snake_case logic that underpins all data sync.
+// These helpers are private to syncEngine.ts and intentionally not exported
+// to keep the module's public API minimal. We replicate them here to verify
+// the camelCase ↔ snake_case conversion logic that underpins all Supabase sync.
+// If the implementation changes, these tests should be updated to match.
 
 const camel2snake = (s: string) =>
   s.replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
