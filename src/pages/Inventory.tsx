@@ -249,7 +249,7 @@ export default function Inventory() {
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('inventory')}</h1>
           {!hasWriteAccess && (
-            <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>
+            <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>
           )}
         </div>
         {hasWriteAccess && <div className="flex space-x-3 rtl:space-x-reverse">

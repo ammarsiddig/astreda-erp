@@ -173,7 +173,7 @@ export default function CustomerDetail() {
       id: uuidv4(),
       date: paymentDate,
       toAccount: bankAccountId,
-      description: `سداد دفعة من عميل / Payment from ${customer.name}${paymentNotes ? ` (${paymentNotes})` : ''}`,
+      description: `سداد دفعة من عميل - ${customer.name}${paymentNotes ? ` (${paymentNotes})` : ''}`,
       amountIn: paymentAmount,
       amountOut: 0,
       sourceModule: 'payment' as const,
