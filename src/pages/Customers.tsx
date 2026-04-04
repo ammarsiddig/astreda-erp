@@ -150,6 +150,7 @@ export default function Customers() {
                     <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
                     <p className="text-xs text-slate-500" dir="ltr">{customer.phone}</p>
                     <p className="text-xs text-slate-400">{state.cities.find(c => c.id === customer.cityId)?.name}</p>
+                    <p className="text-xs text-slate-400">{t('salesperson')}: {state.salespeople.find(s => s.id === customer.salespersonId)?.name || '-'}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className={`text-sm font-bold ${debt > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
@@ -189,6 +190,7 @@ export default function Customers() {
                 <th className="px-4 py-3">{t('name')}</th>
                 <th className="px-4 py-3">{t('phone')}</th>
                 <th className="px-4 py-3">{t('city')}</th>
+                <th className="px-4 py-3">{t('salesperson')}</th>
                 <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
                 <th className="px-4 py-3 text-right rtl:text-left">{t('totalPayments')}</th>
                 <th className="px-4 py-3 text-right rtl:text-left">{t('debt')}</th>
@@ -204,6 +206,7 @@ export default function Customers() {
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
                     <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>
+                    <td className="px-4 py-3 text-slate-600">{state.salespeople.find(s => s.id === customer.salespersonId)?.name || '-'}</td>
                     <td className="px-4 py-3 font-semibold text-slate-700 text-right rtl:text-left">
                       {formatCurrency(totalSales)}
                     </td>
@@ -233,7 +236,7 @@ export default function Customers() {
                 );
               }) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                 </tr>
               )}
             </tbody>
