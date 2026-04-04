@@ -614,7 +614,7 @@ export const translations = {
     customerDebt: 'مديونية العملاء',
     totalRevenue: 'إجمالي الإيرادات',
     salespersonPerformance: 'أداء المندوبين',
-    collections: 'المتحصلات',
+    collections: 'التحصيلات',
     recordSalary: 'تسجيل راتب',
     active: 'نشط',
     inactive: 'غير نشط',
