@@ -79,22 +79,22 @@ export default function Sales() {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Cairo', sans-serif; direction: rtl; font-size: 11px; color: #1e293b; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; }
-    .company-name { font-size: 24px; font-weight: 800; color: #0f2444; }
+    .company-name { font-size: 24px; font-weight: 800; color: #134e4a; }
     .company-sub { font-size: 10px; color: #64748b; margin-top: 3px; }
     .inv-meta { text-align: left; }
-    .inv-num { font-size: 15px; font-weight: 700; color: #0f2444; }
+    .inv-num { font-size: 15px; font-weight: 700; color: #134e4a; }
     .inv-date { font-size: 10px; color: #64748b; margin-top: 3px; }
     .customer-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f8fafc; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
     .info-label { font-size: 9px; color: #64748b; font-weight: 600; margin-bottom: 3px; letter-spacing: 0.3px; text-transform: uppercase; }
     .info-value { font-size: 13px; font-weight: 600; color: #1e293b; }
     .info-item { margin-bottom: 8px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-    thead tr { background: #0f2444; }
+    thead tr { background: #134e4a; }
     th { padding: 8px 10px; font-size: 11px; font-weight: 600; color: white; }
     td { font-size: 11px; color: #334155; }
     .total-section { display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #e2e8f0; padding-top: 12px; margin-bottom: 24px; }
-    .total-label { font-size: 13px; font-weight: 700; color: #0f2444; }
-    .total-value { font-size: 16px; font-weight: 800; color: #0f2444; }
+    .total-label { font-size: 13px; font-weight: 700; color: #134e4a; }
+    .total-value { font-size: 16px; font-weight: 800; color: #134e4a; }
     .footer { text-align: center; font-size: 10px; color: #64748b; padding-top: 12px; border-top: 1px solid #e2e8f0; }
   </style>
 </head><body>
@@ -165,7 +165,7 @@ export default function Sales() {
             <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">👁 وضع القراءة فقط</span>
           )}
         </div>
-        {hasWriteAccess && <button onClick={handleOpenNewInvoice} className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm">
+        {hasWriteAccess && <button onClick={handleOpenNewInvoice} className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm">
           <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
           {t('newInvoice')}
         </button>}
@@ -176,13 +176,13 @@ export default function Sales() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('city')}</label>
           <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -191,7 +191,7 @@ export default function Sales() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('salesperson')}</label>
           <select value={filterSalesperson} onChange={(e) => setFilterSalesperson(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -200,7 +200,7 @@ export default function Sales() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('paymentType')}</label>
           <select value={filterPaymentType} onChange={(e) => setFilterPaymentType(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
             <option value>{t('all')}</option>
             <option value="cash">{t('cash')}</option>
@@ -226,7 +226,7 @@ export default function Sales() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.customers.find(c => c.id === invoice.customerId)?.name}</td>
@@ -241,13 +241,13 @@ export default function Sales() {
                   </td>
                   <td className="px-4 py-3 text-center flex justify-center gap-2">
                     {hasWriteAccess && <button onClick={() => handleOpenEditInvoice(invoice)}
-                      className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                       title={t('edit')}
                     >
                       <Edit className="w-4 h-4"/>
                     </button>}
                     <button onClick={() => setShowViewModal(invoice.id)}
-                      className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                       title={t('print')}
                     >
                       <Printer className="w-4 h-4"/>
@@ -277,7 +277,7 @@ export default function Sales() {
             {/* Preview */}
             <div className="border border-slate-200 rounded-xl overflow-hidden">
               {/* Header */}
-              <div className="flex justify-between items-start bg-[#0F2444] text-white px-6 py-4">
+              <div className="flex justify-between items-start bg-[#134e4a] text-white px-6 py-4">
                 <div>
                   <h1 className="text-xl font-extrabold tracking-wide">ASTREDA</h1>
                   <p className="text-xs text-slate-300 mt-0.5">Frozen Food Distribution</p>
@@ -308,7 +308,7 @@ export default function Sales() {
               <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[400px]">
                 <thead>
-                  <tr className="bg-slate-800 text-white text-xs uppercase">
+                  <tr className="bg-[#134e4a] text-white text-xs uppercase">
                     <th className="px-4 py-2.5 text-right">المنتج</th>
                     <th className="px-4 py-2.5 text-center">الكمية</th>
                     <th className="px-4 py-2.5 text-center">سعر الوحدة</th>
@@ -330,7 +330,7 @@ export default function Sales() {
               {/* Total */}
               <div className="flex justify-between items-center px-6 py-4 bg-slate-50 border-t-2 border-slate-200">
                 <span className="text-sm font-bold text-slate-700">الإجمالي / Total</span>
-                <span className="text-lg font-extrabold text-[#0F2444]">{formatCurrency(viewInvoice.total)} SDG</span>
+                <span className="text-lg font-extrabold text-[#134e4a]">{formatCurrency(viewInvoice.total)} SDG</span>
               </div>
             </div>
 
@@ -341,7 +341,7 @@ export default function Sales() {
                 {t('close')}
               </button>
               <button onClick={() => handlePrintInvoice(viewInvoice)}
-                className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+                className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
               >
                 <Printer className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
                 {t('print')}

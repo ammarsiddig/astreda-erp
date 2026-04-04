@@ -142,7 +142,7 @@ export default function Payments() {
           {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
         </div>
         {hasWriteAccess && <button onClick={() => setShowAddModal(true)}
-          className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm"
+          className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
           {t('recordPayment')}
@@ -154,13 +154,13 @@ export default function Payments() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('customer')}</label>
           <select value={filterCustomer} onChange={(e) => setFilterCustomer(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -185,7 +185,7 @@ export default function Payments() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredPayments.length > 0 ? filteredPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={payment.id} className="hover:bg-[#f0fdfa] transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{payment.id}</td>
                   <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.customers.find(c => c.id === payment.customerId)?.name}</td>
@@ -197,7 +197,7 @@ export default function Payments() {
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center gap-2">
                       <button onClick={() => setShowViewModal(payment)}
-                        className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                         title={t('view')}
                       >
                         <Eye className="w-4 h-4"/>
@@ -241,13 +241,13 @@ export default function Payments() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('customer')}</label>
               <select required value={customerId} onChange={(e) => setCustomerId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
                 <option value>{t('select')}</option>
                 {state.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -256,13 +256,13 @@ export default function Payments() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
               <input type="number" required min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
               <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
                 <option value>{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -271,7 +271,7 @@ export default function Payments() {
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none h-20"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none resize-none h-20"
               />
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function Payments() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>
