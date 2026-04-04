@@ -1,4 +1,4 @@
-const CACHE_NAME = 'astrida-v2';
+const CACHE_NAME = 'astrida-v3';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
