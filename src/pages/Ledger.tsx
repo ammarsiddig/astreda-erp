@@ -499,7 +499,7 @@ export default function Ledger() {
             <div className="px-6 py-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">من تاريخ <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('fromDate')} <span className="text-red-500">*</span></label>
                   <input
                     type="date"
                     value={stmtFromDate}
@@ -508,7 +508,7 @@ export default function Ledger() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">إلى تاريخ <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('toDate')} <span className="text-red-500">*</span></label>
                   <input
                     type="date"
                     value={stmtToDate}
@@ -519,24 +519,24 @@ export default function Ledger() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">الحساب البنكي</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
                 <select
                   value={stmtAccount}
                   onChange={(e) => setStmtAccount(e.target.value)}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
                 >
-                  <option value="">جميع الحسابات</option>
+                  <option value="">{t('allAccounts')}</option>
                   {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">نوع الكشف</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('statementType')}</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { value: 'all', label: 'كل المعاملات' },
-                    { value: 'in',  label: 'مدخلات فقط' },
-                    { value: 'out', label: 'مخرجات فقط' },
+                    { value: 'all', label: t('allTransactions') },
+                    { value: 'in',  label: t('inOnly') },
+                    { value: 'out', label: t('outOnly') },
                   ].map(opt => (
                     <button
                       key={opt.value}
@@ -558,19 +558,19 @@ export default function Ledger() {
               {stmtFromDate && stmtToDate && (
                 <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 text-xs text-slate-500 space-y-1">
                   <div className="flex justify-between">
-                    <span>الحساب:</span>
+                    <span>{t('account')}:</span>
                     <span className="font-medium text-slate-700">
-                      {stmtAccount ? state.bankAccounts.find(b => b.id === stmtAccount)?.name : 'جميع الحسابات'}
+                      {stmtAccount ? state.bankAccounts.find(b => b.id === stmtAccount)?.name : t('allAccounts')}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>الفترة:</span>
+                    <span>{t('period')}:</span>
                     <span className="font-medium text-slate-700">
                       {format(new Date(stmtFromDate), 'dd/MM/yyyy')} → {format(new Date(stmtToDate), 'dd/MM/yyyy')}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>الرسالة:</span>
+                    <span>{t('shipment')}:</span>
                     <span className="font-medium text-slate-700">
                       {state.shipments.find(s => s.id === activeShipmentId)?.name || '—'}
                     </span>
@@ -584,17 +584,13 @@ export default function Ledger() {
               <button
                 onClick={() => setShowStatementModal(false)}
                 className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold text-sm transition-colors"
-              >
-                إغلاق
-              </button>
+              >{t('close')}</button>
               <button
                 onClick={printAccountStatement}
                 disabled={!stmtFromDate || !stmtToDate}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
               >
-                <Printer className="w-4 h-4" />
-                طباعة / Print
-              </button>
+                <Printer className="w-4 h-4" />{t('print')}</button>
             </div>
           </div>
         </div>

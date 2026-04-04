@@ -422,7 +422,7 @@ export default function Capital() {
             <h1 className="text-2xl font-bold text-slate-800">رأس المال والتصفية</h1>
             <p className="text-sm text-slate-500">{activeShipment?.name || 'لا توجد رسالة نشطة'}</p>
           </div>
-          {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
+          {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>}
         </div>
       </div>
 

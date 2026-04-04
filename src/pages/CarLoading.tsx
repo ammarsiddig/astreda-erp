@@ -126,7 +126,7 @@ export default function CarLoading() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('carLoading')}</h1>
-          {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
+          {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>}
         </div>
         <div className="flex items-center space-x-4 rtl:space-x-reverse">
           <select value={selectedCarId} onChange={(e) => setSelectedCarId(e.target.value)}

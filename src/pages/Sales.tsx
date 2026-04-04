@@ -111,38 +111,38 @@ export default function Sales() {
   <div class="customer-section">
     <div>
       <div class="info-item">
-        <div class="info-label">العميل / Customer</div>
+        <div class="info-label">العميل</div>
         <div class="info-value">${customer?.name || ''}</div>
       </div>
     </div>
     <div>
       <div class="info-item">
-        <div class="info-label">المدينة / City</div>
+        <div class="info-label">المدينة</div>
         <div class="info-value">${city?.name || ''}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">المندوب / Salesperson</div>
+        <div class="info-label">المندوب</div>
         <div class="info-value">${salesperson?.name || ''}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">نوع الدفع / Payment Type</div>
-        <div class="info-value">${invoice.paymentType === 'cash' ? 'نقدي / Cash' : 'آجل / Credit'}</div>
+        <div class="info-label">نوع الدفع</div>
+        <div class="info-value">${invoice.paymentType === 'cash' ? 'نقدي' : 'آجل'}</div>
       </div>
     </div>
   </div>
   <table>
     <thead>
       <tr>
-        <th style="text-align:right">المنتج / Product</th>
-        <th style="text-align:center">الكمية / Qty</th>
-        <th style="text-align:center">سعر الوحدة / Unit Price</th>
-        <th style="text-align:left">الإجمالي / Total</th>
+        <th style="text-align:right">المنتج</th>
+        <th style="text-align:center">الكمية</th>
+        <th style="text-align:center">سعر الوحدة</th>
+        <th style="text-align:left">الإجمالي</th>
       </tr>
     </thead>
     <tbody>${linesHtml}</tbody>
   </table>
   <div class="total-section">
-    <span class="total-label">الإجمالي / Total</span>
+    <span class="total-label">الإجمالي</span>
     <span class="total-value">${new Intl.NumberFormat('en-US').format(invoice.total)} SDG</span>
   </div>
   <div class="footer">شكراً لتعاملكم معنا — Thank you for your business</div>
@@ -162,7 +162,7 @@ export default function Sales() {
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('sales')}</h1>
           {!hasWriteAccess && (
-            <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">👁 وضع القراءة فقط</span>
+            <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">👁 {t('readOnlyMode')}</span>
           )}
         </div>
         {hasWriteAccess && <button onClick={handleOpenNewInvoice} className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm">
@@ -328,16 +328,16 @@ export default function Sales() {
               {/* Customer info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 px-6 py-4 border-b border-slate-100">
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">العميل / Customer</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{t('customer')}</p>
                   <p className="text-sm font-bold text-slate-800">{state.customers.find(c => c.id === viewInvoice.customerId)?.name}</p>
                 </div>
                 <div className="space-y-2">
                   <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">المدينة / City</p>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('city')}</p>
                     <p className="text-sm font-semibold text-slate-800">{state.cities.find(c => c.id === viewInvoice.cityId)?.name}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">المندوب / Salesperson</p>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('salesperson')}</p>
                     <p className="text-sm font-semibold text-slate-800">{state.salespeople.find(s => s.id === viewInvoice.salespersonId)?.name}</p>
                   </div>
                 </div>
@@ -347,10 +347,10 @@ export default function Sales() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[#134e4a] text-white text-xs uppercase">
-                    <th className="px-4 py-2.5 text-right">المنتج</th>
-                    <th className="px-4 py-2.5 text-center">الكمية</th>
-                    <th className="px-4 py-2.5 text-center">سعر الوحدة</th>
-                    <th className="px-4 py-2.5 text-left">الإجمالي</th>
+                    <th className="px-4 py-2.5 text-right">{t('product')}</th>
+                    <th className="px-4 py-2.5 text-center">{t('qty')}</th>
+                    <th className="px-4 py-2.5 text-center">{t('unitPrice')}</th>
+                    <th className="px-4 py-2.5 text-left">{t('total')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -367,7 +367,7 @@ export default function Sales() {
               </div>
               {/* Total */}
               <div className="flex justify-between items-center px-6 py-4 bg-slate-50 border-t-2 border-slate-200">
-                <span className="text-sm font-bold text-slate-700">الإجمالي / Total</span>
+                <span className="text-sm font-bold text-slate-700">{t('total')}</span>
                 <span className="text-lg font-extrabold text-[#134e4a]">{formatCurrency(viewInvoice.total)} SDG</span>
               </div>
             </div>
