@@ -230,7 +230,37 @@ export default function AccountTransfers() {
 
       {/* Transfers Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
+            <div key={transfer.id} className="p-4 space-y-2">
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm">{transfer.id}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(transfer.date), 'dd/MM/yyyy')}</p>
+                  <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${transfer.type === 'opening_balance' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#ccfbf1] text-[#134e4a]'}`}>
+                    {t(transfer.type === 'opening_balance' ? 'openingBalance' : 'transfer')}
+                  </span>
+                </div>
+                <span className="font-bold text-slate-900 text-sm flex-shrink-0">{formatCurrency(transfer.amount)}</span>
+              </div>
+              <div className="text-xs text-slate-500 space-y-0.5">
+                {transfer.fromBankAccountId && <p>{t('fromAccount')}: {state.bankAccounts.find(b => b.id === transfer.fromBankAccountId)?.name}</p>}
+                <p>{t('toAccount')}: {state.bankAccounts.find(b => b.id === transfer.toBankAccountId)?.name}</p>
+                {Number(transfer.transferFee) > 0 && <p>{t('transferFee')}: {formatCurrency(transfer.transferFee)}</p>}
+              </div>
+              <div className="flex gap-1 pt-1">
+                <button onClick={() => setShowViewModal(transfer)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
+                {hasWriteAccess && <button onClick={() => openEditModal(transfer)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(transfer)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+              </div>
+            </div>
+          )) : (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>

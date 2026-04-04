@@ -242,7 +242,39 @@ export default function GeneralTransfers() {
 
       {/* Transfers Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => {
+            const displayPartner = (transfer.transferType === 'capital_return' || transfer.transferType === 'capital')
+              ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
+              : state.partners.find(p => p.id === transfer.partnerId)?.name;
+            return (
+              <div key={transfer.id} className="p-4 space-y-2">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm">{displayPartner || transfer.id}</p>
+                    <p className="text-xs text-slate-400">{format(new Date(transfer.date), 'dd/MM/yyyy')}</p>
+                    <div className="mt-1">{getTypeBadge(transfer.transferType)}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-slate-900 text-sm">{formatCurrency(transfer.amountSDG)}</p>
+                    <p className="text-xs text-emerald-600 font-mono">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(transfer.amountSAR)}</p>
+                  </div>
+                </div>
+                {transfer.description && <p className="text-xs text-slate-500 truncate">{transfer.description}</p>}
+                <div className="flex gap-1 pt-1">
+                  <button onClick={() => setShowViewModal(transfer)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
+                  {hasWriteAccess && <button onClick={() => openEditModal(transfer)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                  {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(transfer)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                </div>
+              </div>
+            );
+          }) : (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
