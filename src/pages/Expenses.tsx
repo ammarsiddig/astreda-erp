@@ -143,7 +143,7 @@ export default function Expenses() {
           {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
         </div>
         {hasWriteAccess && <button onClick={() => setShowAddModal(true)}
-          className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm"
+          className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
           {t('recordExpense')}
@@ -155,13 +155,13 @@ export default function Expenses() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('category')}</label>
           <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.expenseCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -173,7 +173,7 @@ export default function Expenses() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#003D6B]">
               <tr>
                 <th className="px-4 py-3">{t('receiptNumber')}</th>
                 <th className="px-4 py-3">{t('date')}</th>
@@ -186,7 +186,7 @@ export default function Expenses() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={expense.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{expense.id}</td>
                   <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.expenseCategories.find(c => c.id === expense.categoryId)?.name}</td>
@@ -198,7 +198,7 @@ export default function Expenses() {
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center gap-2">
                       <button onClick={() => setShowViewModal(expense)}
-                        className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                         title={t('view')}
                       >
                         <Eye className="w-4 h-4"/>
@@ -242,13 +242,13 @@ export default function Expenses() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('category')}</label>
               <select required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value>{t('select')}</option>
                 {state.expenseCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -257,13 +257,13 @@ export default function Expenses() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
               <input type="number" required min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
               <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value>{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -272,7 +272,7 @@ export default function Expenses() {
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none h-20"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none h-20"
               />
             </div>
           </div>
@@ -287,7 +287,7 @@ export default function Expenses() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>

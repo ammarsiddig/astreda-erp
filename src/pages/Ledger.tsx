@@ -183,10 +183,10 @@ export default function Ledger() {
 
   /* Header */
   .header { text-align: center; margin-bottom: 8px; }
-  .company  { font-size: 22px; font-weight: 900; color: #0F2444; letter-spacing: -0.5px; }
+  .company  { font-size: 22px; font-weight: 900; color: #003D6B; letter-spacing: -0.5px; }
   .stmt-title { font-size: 13px; font-weight: 700; color: #1e40af; margin: 2px 0 6px; }
   .meta { font-size: 10.5px; color: #334155; margin-bottom: 2px; }
-  .divider { border: none; border-top: 3px solid #0F2444; margin: 8px 0; }
+  .divider { border: none; border-top: 3px solid #003D6B; margin: 8px 0; }
 
   /* Opening balance */
   .opening-row {
@@ -199,11 +199,11 @@ export default function Ledger() {
 
   /* Table */
   table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
-  thead tr { background-color: #0F2444 !important; }
+  thead tr { background-color: #003D6B !important; }
   th {
     padding: 5px 4px; font-weight: 700; text-align: center;
-    border: 1px solid #0F2444; color: #fff;
-    background-color: #0F2444 !important; font-size: 9.5px;
+    border: 1px solid #003D6B; color: #fff;
+    background-color: #003D6B !important; font-size: 9.5px;
   }
   th.desc-h { text-align: right; }
   td { padding: 3px 4px; border: 1px solid #e2e8f0; vertical-align: middle; }
@@ -216,7 +216,7 @@ export default function Ledger() {
   td.num    { text-align: center; font-weight: 600; white-space: nowrap; }
   td.in     { color: #059669; }
   td.out    { color: #dc2626; }
-  td.bal    { color: #0F2444; font-weight: 700; }
+  td.bal    { color: #003D6B; font-weight: 700; }
 
   .badge {
     display: inline-block;
@@ -227,9 +227,9 @@ export default function Ledger() {
 
   /* Footer totals row */
   tfoot tr td {
-    background-color: #1e293b !important;
+    background-color: #003D6B !important;
     color: #fff;
-    border: 1px solid #0F2444;
+    border: 1px solid #003D6B;
     font-size: 10px;
     font-weight: 900;
     text-align: center;
@@ -243,7 +243,7 @@ export default function Ledger() {
   /* Closing box */
   .closing-box {
     display: flex; justify-content: space-between; align-items: center;
-    background: #0F2444; color: #fff;
+    background: #003D6B; color: #fff;
     border-radius: 8px; padding: 8px 14px;
     margin-top: 8px;
   }
@@ -330,7 +330,7 @@ export default function Ledger() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowStatementModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[#0F2444] text-white rounded-lg hover:bg-[#1a3a6e] transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[#003D6B] text-white rounded-lg hover:bg-[#005a9e] transition-colors shadow-sm"
           >
             <FileText className="w-4 h-4" />
             كشف حساب
@@ -339,7 +339,7 @@ export default function Ledger() {
             onClick={() => setShowAllShipments(v => !v)}
             className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
               showAllShipments
-                ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700'
+                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
                 : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
             }`}
           >
@@ -356,7 +356,7 @@ export default function Ledger() {
             type="date"
             value={filterStartDate}
             onChange={(e) => setFilterStartDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
@@ -365,7 +365,7 @@ export default function Ledger() {
             type="date"
             value={filterEndDate}
             onChange={(e) => setFilterEndDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
@@ -373,7 +373,7 @@ export default function Ledger() {
           <select
             value={filterAccount}
             onChange={(e) => setFilterAccount(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -384,7 +384,7 @@ export default function Ledger() {
           <select
             value={filterModule}
             onChange={(e) => setFilterModule(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             <option value="sale_cash">{t('sales')}</option>
@@ -401,7 +401,7 @@ export default function Ledger() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#003D6B]">
               <tr>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('description')}</th>
@@ -413,7 +413,7 @@ export default function Ledger() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {ledgerData.length > 0 ? ledgerData.map((entry) => (
-                <tr key={entry.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={entry.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3 text-slate-900 font-medium">{entry.description}</td>
                   <td className="px-4 py-3">
@@ -453,7 +453,7 @@ export default function Ledger() {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#0F2444]" />
+                <FileText className="w-5 h-5 text-[#003D6B]" />
                 <h2 className="text-base font-bold text-slate-800">كشف حساب / Account Statement</h2>
               </div>
               <button
@@ -473,7 +473,7 @@ export default function Ledger() {
                     type="date"
                     value={stmtFromDate}
                     onChange={(e) => setStmtFromDate(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -482,7 +482,7 @@ export default function Ledger() {
                     type="date"
                     value={stmtToDate}
                     onChange={(e) => setStmtToDate(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function Ledger() {
                 <select
                   value={stmtAccount}
                   onChange={(e) => setStmtAccount(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                 >
                   <option value="">جميع الحسابات</option>
                   {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -513,7 +513,7 @@ export default function Ledger() {
                       onClick={() => setStmtType(opt.value as any)}
                       className={`py-2 px-3 text-xs font-medium rounded-lg border transition-colors ${
                         stmtType === opt.value
-                          ? 'bg-[#0F2444] text-white border-[#0F2444]'
+                          ? 'bg-[#003D6B] text-white border-[#003D6B]'
                           : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
                       }`}
                     >
@@ -559,7 +559,7 @@ export default function Ledger() {
               <button
                 onClick={printAccountStatement}
                 disabled={!stmtFromDate || !stmtToDate}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#0F2444] text-white rounded-lg hover:bg-[#1a3a6e] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#003D6B] text-white rounded-lg hover:bg-[#005a9e] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
               >
                 <Printer className="w-4 h-4" />
                 طباعة / Print

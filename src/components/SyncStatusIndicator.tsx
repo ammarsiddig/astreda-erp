@@ -50,7 +50,7 @@ export const SyncStatusIndicator: React.FC<{ onManualSync?: () => void }> = ({ o
         <button
           onClick={() => { console.log('[sync] manual sync triggered'); onManualSync(); }}
           disabled={!status.isOnline || status.isSyncing}
-          className="p-1 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="مزامنة يدوية"
         >
           <RefreshCw className="w-3.5 h-3.5" />

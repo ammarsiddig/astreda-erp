@@ -88,7 +88,7 @@ export default function Dashboard() {
           <div className="overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-500 min-w-[400px]">
             <thead>
-              <tr className="bg-[#1E293B] text-white text-xs uppercase">
+              <tr className="bg-[#003D6B] text-white text-xs uppercase">
                 <th className="px-4 py-3">{t('customer')}</th>
                 <th className="px-4 py-3">{t('city')}</th>
                 <th className="px-4 py-3 text-right rtl:text-left">{t('amountOwed')}</th>
@@ -96,7 +96,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {debtors.length > 0 ? debtors.map((debtor) => (
-                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-teal-50 transition-colors">
+                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{debtor.name}</td>
                   <td className="px-4 py-3">{state.cities.find(c => c.id === debtor.cityId)?.name}</td>
                   <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">
