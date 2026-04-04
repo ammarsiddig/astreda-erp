@@ -248,11 +248,11 @@ export default function Reports() {
   @page { size: A4 landscape; margin: 10mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .title { font-size: 16px; font-weight: 900; color: #0F2444; text-align: center; margin-bottom: 3px; }
+  .title { font-size: 16px; font-weight: 900; color: #0078d4; text-align: center; margin-bottom: 3px; }
   .subtitle { font-size: 12px; color: #1e293b; text-align: center; margin-bottom: 10px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  thead tr { background-color: #0F2444 !important; color: #fff; }
-  th { padding: 6px 8px; font-weight: 700; text-align: center; border: 1px solid #0F2444; color: #fff; background-color: #0F2444 !important; }
+  thead tr { background-color: #0078d4 !important; color: #fff; }
+  th { padding: 6px 8px; font-weight: 700; text-align: center; border: 1px solid #0078d4; color: #fff; background-color: #0078d4 !important; }
   td { padding: 5px 8px; border: 1px solid #cbd5e1; background-color: #fff; }
   tr.alt td { background-color: #f8fafc !important; }
   td.name { text-align: right; font-weight: 600; }
@@ -260,7 +260,7 @@ export default function Reports() {
   td.num { text-align: center; font-weight: 600; }
   td.teal { color: #0d9488 !important; }
   td.debt { color: #e11d48 !important; font-weight: 700; }
-  tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #0F2444; font-size: 12px; font-weight: 900; color: #0F2444; text-align: center; }
+  tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #0078d4; font-size: 12px; font-weight: 900; color: #0078d4; text-align: center; }
   tfoot td.name { text-align: right; } tfoot td.debt { color: #e11d48 !important; }
 </style></head><body>
   <div class="title">تقرير أداء المناديب</div>
@@ -304,16 +304,16 @@ export default function Reports() {
   @page { size: A4 portrait; margin: 8mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Cairo','Arial',sans-serif; direction: rtl; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .title { font-size: 16px; font-weight: 900; color: #0F2444; text-align: center; margin-bottom: 3px; }
+  .title { font-size: 16px; font-weight: 900; color: #0078d4; text-align: center; margin-bottom: 3px; }
   .subtitle { font-size: 12px; color: #1e293b; text-align: center; margin-bottom: 7px; }
   table { width: 70%; margin: 0 auto; border-collapse: collapse; font-size: 10px; }
-  thead tr { background-color: #0F2444 !important; color: #fff; }
-  th { padding: 5px 8px; font-size: 11px; font-weight: 700; text-align: center; border: 1px solid #0F2444; color: #fff; background-color: #0F2444 !important; }
+  thead tr { background-color: #0078d4 !important; color: #fff; }
+  th { padding: 5px 8px; font-size: 11px; font-weight: 700; text-align: center; border: 1px solid #0078d4; color: #fff; background-color: #0078d4 !important; }
   td { padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 10px; background-color: #fff; }
   tr.alt td { background-color: #f8fafc !important; }
   td.name { text-align: right; font-weight: 600; } td.num { text-align: center; }
   td.debt { color: #e11d48 !important; font-weight: 700; }
-  tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #0F2444; font-size: 11px; font-weight: 900; color: #0F2444; }
+  tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #0078d4; font-size: 11px; font-weight: 900; color: #0078d4; }
   tfoot td.name { font-weight: 900; } tfoot td.debt { color: #e11d48 !important; font-weight: 900; }
 </style></head><body>
   <div class="title">تقرير المديونية اليومي</div>
@@ -354,14 +354,14 @@ export default function Reports() {
 <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
 @page{size:A4 landscape;margin:10mm;}*{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Cairo',Arial,sans-serif;direction:rtl;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.title{font-size:16px;font-weight:900;color:#0F2444;text-align:center;margin-bottom:8px;}
-table{width:100%;border-collapse:collapse;font-size:11px;}thead tr{background-color:#0F2444!important;color:#fff;}
-th{padding:6px 8px;font-weight:700;text-align:center;border:1px solid #0F2444;color:#fff;background-color:#0F2444!important;}
+.title{font-size:16px;font-weight:900;color:#0078d4;text-align:center;margin-bottom:8px;}
+table{width:100%;border-collapse:collapse;font-size:11px;}thead tr{background-color:#0078d4!important;color:#fff;}
+th{padding:6px 8px;font-weight:700;text-align:center;border:1px solid #0078d4;color:#fff;background-color:#0078d4!important;}
 td{padding:5px 8px;border:1px solid #cbd5e1;background-color:#fff;}tr.alt td{background-color:#f8fafc!important;}
 td.name{text-align:right;font-weight:600;}td.center{text-align:center;}
 td.zero{color:#e11d48!important;font-weight:700;background-color:#fee2e2!important;}
 td.low{color:#d97706!important;font-weight:700;background-color:#fef3c7!important;}
-tfoot tr td{background-color:#e2e8f0!important;border:1px solid #0F2444;font-size:12px;font-weight:900;color:#0F2444;text-align:center;}
+tfoot tr td{background-color:#e2e8f0!important;border:1px solid #0078d4;font-size:12px;font-weight:900;color:#0078d4;text-align:center;}
 </style></head><body>
 <div class="title">تقرير إجمالي المخزون - ${shipmentName}</div>
 <table><thead><tr><th style="text-align:right;width:20%">المنتج</th>
@@ -380,7 +380,7 @@ tfoot tr td{background-color:#e2e8f0!important;border:1px solid #0F2444;font-siz
             <td class="name">${p.productName}</td><td class="center">${p.incoming}</td><td class="center">${p.outgoing}</td>
             <td class="center ${p.remaining <= 0 ? 'zero' : p.remaining < 5 ? 'low' : ''}">${p.remaining}</td>
           </tr>`).join('');
-        return `<h3 style="margin:12px 0 4px;font-size:13px;color:#0F2444;font-family:Cairo,Arial,sans-serif;">${loc.name} — المتبقي: ${loc.totalRemaining}</h3>
+        return `<h3 style="margin:12px 0 4px;font-size:13px;color:#0078d4;font-family:Cairo,Arial,sans-serif;">${loc.name} — المتبقي: ${loc.totalRemaining}</h3>
 <table style="margin-bottom:12px;"><thead><tr>
 <th style="text-align:right;width:30%">المنتج</th><th>الكمية المستلمة</th><th>المباع</th><th>المتبقي</th>
 </tr></thead><tbody>${rowsHtml}</tbody></table>`;
@@ -389,9 +389,9 @@ tfoot tr td{background-color:#e2e8f0!important;border:1px solid #0F2444;font-siz
 <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
 @page{size:A4 portrait;margin:10mm;}*{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Cairo',Arial,sans-serif;direction:rtl;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.title{font-size:16px;font-weight:900;color:#0F2444;text-align:center;margin-bottom:8px;}
-table{width:100%;border-collapse:collapse;font-size:11px;}thead tr{background-color:#0F2444!important;color:#fff;}
-th{padding:5px 8px;font-weight:700;text-align:center;border:1px solid #0F2444;color:#fff;background-color:#0F2444!important;}
+.title{font-size:16px;font-weight:900;color:#0078d4;text-align:center;margin-bottom:8px;}
+table{width:100%;border-collapse:collapse;font-size:11px;}thead tr{background-color:#0078d4!important;color:#fff;}
+th{padding:5px 8px;font-weight:700;text-align:center;border:1px solid #0078d4;color:#fff;background-color:#0078d4!important;}
 td{padding:4px 8px;border:1px solid #cbd5e1;background-color:#fff;}tr.alt td{background-color:#f8fafc!important;}
 td.name{text-align:right;font-weight:600;}td.center{text-align:center;}
 td.zero{color:#e11d48!important;font-weight:700;background-color:#fee2e2!important;}
@@ -433,17 +433,17 @@ td.low{color:#d97706!important;font-weight:700;background-color:#fef3c7!importan
 <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
 @page{size:A4 portrait;margin:8mm;}*{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Cairo',Arial,sans-serif;direction:rtl;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.title{font-size:16px;font-weight:900;color:#0F2444;text-align:center;margin-bottom:3px;}
+.title{font-size:16px;font-weight:900;color:#0078d4;text-align:center;margin-bottom:3px;}
 .subtitle{font-size:11px;color:#1e293b;text-align:center;margin-bottom:10px;}
 table{width:100%;border-collapse:collapse;font-size:10px;}
-thead tr{background-color:#0F2444!important;color:#fff;}
-th{padding:5px 6px;font-weight:700;text-align:center;border:1px solid #0F2444;color:#fff;background-color:#0F2444!important;}
+thead tr{background-color:#0078d4!important;color:#fff;}
+th{padding:5px 6px;font-weight:700;text-align:center;border:1px solid #0078d4;color:#fff;background-color:#0078d4!important;}
 td{padding:4px 6px;border:1px solid #cbd5e1;background-color:#fff;}
 tr.alt td{background-color:#f8fafc!important;}
 tr.group-header td{background-color:#e2e8f0!important;font-size:11px;border:1px solid #94a3b8;}
 td.name{text-align:right;font-weight:600;}td.desc{text-align:right;font-size:9px;}
 td.center{text-align:center;}td.num{text-align:center;font-weight:600;}td.sar{color:#059669!important;}
-tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-size:11px;font-weight:900;color:#fff;text-align:center;}
+tfoot tr td{background-color:#0078d4!important;border:1px solid #0078d4;font-size:11px;font-weight:900;color:#fff;text-align:center;}
 </style></head><body>
 <div class="title">التحاويل حسب المستفيد</div>
 <div class="subtitle">الرسالة: ${shipmentName} | الفترة: ${fromStr} — ${toStr}</div>
@@ -487,17 +487,17 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
 <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
 @page{size:A4 portrait;margin:8mm;}*{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Cairo',Arial,sans-serif;direction:rtl;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.title{font-size:16px;font-weight:900;color:#0F2444;text-align:center;margin-bottom:3px;}
+.title{font-size:16px;font-weight:900;color:#0078d4;text-align:center;margin-bottom:3px;}
 .subtitle{font-size:11px;color:#1e293b;text-align:center;margin-bottom:10px;}
 table{width:100%;border-collapse:collapse;font-size:10px;}
-thead tr{background-color:#0F2444!important;color:#fff;}
-th{padding:5px 6px;font-weight:700;text-align:center;border:1px solid #0F2444;color:#fff;background-color:#0F2444!important;}
+thead tr{background-color:#0078d4!important;color:#fff;}
+th{padding:5px 6px;font-weight:700;text-align:center;border:1px solid #0078d4;color:#fff;background-color:#0078d4!important;}
 td{padding:4px 6px;border:1px solid #cbd5e1;background-color:#fff;}
 tr.alt td{background-color:#f8fafc!important;}
 tr.group-header td{background-color:#e2e8f0!important;font-size:11px;border:1px solid #94a3b8;}
 td.name{text-align:right;font-weight:600;}td.desc{text-align:right;font-size:9px;}
 td.center{text-align:center;}td.num{text-align:center;font-weight:600;color:#dc2626!important;}
-tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-size:11px;font-weight:900;color:#fff;text-align:center;}
+tfoot tr td{background-color:#0078d4!important;border:1px solid #0078d4;font-size:11px;font-weight:900;color:#fff;text-align:center;}
 </style></head><body>
 <div class="title">المصروفات حسب الفئة</div>
 <div class="subtitle">الرسالة: ${shipmentName} | الفترة: ${fromStr} — ${toStr}</div>
@@ -540,7 +540,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-teal-600 text-teal-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
@@ -557,19 +557,19 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <select value={debtCityFilter} onChange={e => setDebtCityFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value>{t('allCities')}</option>
                 {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <select value={debtShipmentFilter} onChange={e => setDebtShipmentFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value>{t('allShipments')}</option>
                 {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
               <select value={debtSalespersonFilter} onChange={e => setDebtSalespersonFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value>{t('allSalespeople')}</option>
                 {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -578,7 +578,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                  <thead className="text-xs text-white uppercase bg-[#1E293B]">
+                  <thead className="text-xs text-white uppercase bg-blue-900">
                     <tr>
                       <th className="px-4 py-3">{t('customer')}</th>
                       <th className="px-4 py-3">{t('city')}</th>
@@ -588,7 +588,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {debtData.length > 0 ? debtData.map(row => (
-                      <tr key={row.id} className="hover:bg-teal-50 transition-colors">
+                      <tr key={row.id} className="hover:bg-blue-50 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                         <td className="px-4 py-3">{row.city}</td>
                         <td className="px-4 py-3">{row.salesperson}</td>
@@ -615,7 +615,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">المدينة</label>
                 <select value={dailyDebtCity} onChange={e => setDailyDebtCity(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value>اختر المدينة...</option>
                   {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -624,7 +624,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الرسالة</label>
                 <select value={dailyDebtShipment} onChange={e => setDailyDebtShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -632,11 +632,11 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
                 <input type="date" value={dailyDebtDate} onChange={e => setDailyDebtDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <button onClick={printReport} disabled={!dailyDebtCity}
-                className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
                 طباعة / Print
@@ -644,8 +644,8 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
             </div>
             {dailyDebtCity ? (
               <div className="bg-white p-8 rounded-lg border border-[#e2e8f0] overflow-x-auto" dir="rtl">
-                <div className="flex justify-between items-center border-b-4 border-[#0F2444] pb-6 mb-8">
-                  <h2 className="text-3xl font-bold text-[#0F2444]">تقرير المديونية اليومي</h2>
+                <div className="flex justify-between items-center border-b-4 border-blue-800 pb-6 mb-8">
+                  <h2 className="text-3xl font-bold text-blue-900">تقرير المديونية اليومي</h2>
                   <div className="text-lg text-[#1e293b] font-bold space-x-4 rtl:space-x-reverse">
                     <span>التاريخ: {format(new Date(dailyDebtDate), 'dd/MM/yyyy')}</span>
                     <span className="mx-2">|</span>
@@ -654,13 +654,13 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                     <span>المدينة: {state.cities.find(c => c.id === dailyDebtCity)?.name}</span>
                   </div>
                 </div>
-                <table className="w-full border-collapse border-2 border-[#0F2444]">
+                <table className="w-full border-collapse border-2 border-blue-800">
                   <thead>
-                    <tr className="bg-[#0F2444] text-white">
-                      <th className="w-[40%] px-6 py-4 text-right border-2 border-[#0F2444] text-lg">العميل</th>
-                      <th className="w-[20%] px-6 py-4 text-center border-2 border-[#0F2444] text-lg">إجمالي المبيعات</th>
-                      <th className="w-[20%] px-6 py-4 text-center border-2 border-[#0F2444] text-lg">المبلغ المدفوع</th>
-                      <th className="w-[20%] px-6 py-4 text-left border-2 border-[#0F2444] text-lg">المديونية</th>
+                    <tr className="bg-blue-800 text-white">
+                      <th className="w-[40%] px-6 py-4 text-right border-2 border-blue-800 text-lg">العميل</th>
+                      <th className="w-[20%] px-6 py-4 text-center border-2 border-blue-800 text-lg">إجمالي المبيعات</th>
+                      <th className="w-[20%] px-6 py-4 text-center border-2 border-blue-800 text-lg">المبلغ المدفوع</th>
+                      <th className="w-[20%] px-6 py-4 text-left border-2 border-blue-800 text-lg">المديونية</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -674,11 +674,11 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-[#e2e8f0] font-black text-[#0F2444] text-xl">
-                      <td className="px-6 py-4 border-2 border-[#0F2444] text-right">الإجمالي</td>
-                      <td className="px-6 py-4 border-2 border-[#0F2444] text-center">{new Intl.NumberFormat('en-US').format(dailyDebtData.reduce((s, r) => s + r.totalSales, 0))}</td>
-                      <td className="px-6 py-4 border-2 border-[#0F2444] text-center">{new Intl.NumberFormat('en-US').format(dailyDebtData.reduce((s, r) => s + r.totalPaid, 0))}</td>
-                      <td className="px-6 py-4 border-2 border-[#0F2444] text-left text-[#e11d48]">{new Intl.NumberFormat('en-US').format(dailyDebtData.reduce((s, r) => s + r.debt, 0))}</td>
+                    <tr className="bg-[#e2e8f0] font-black text-blue-900 text-xl">
+                      <td className="px-6 py-4 border-2 border-blue-800 text-right">الإجمالي</td>
+                      <td className="px-6 py-4 border-2 border-blue-800 text-center">{new Intl.NumberFormat('en-US').format(dailyDebtData.reduce((s, r) => s + r.totalSales, 0))}</td>
+                      <td className="px-6 py-4 border-2 border-blue-800 text-center">{new Intl.NumberFormat('en-US').format(dailyDebtData.reduce((s, r) => s + r.totalPaid, 0))}</td>
+                      <td className="px-6 py-4 border-2 border-blue-800 text-left text-[#e11d48]">{new Intl.NumberFormat('en-US').format(dailyDebtData.reduce((s, r) => s + r.debt, 0))}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -698,7 +698,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <h3 className="text-lg font-bold text-slate-800">تصفية الرسالة / Shipment Settlement</h3>
               <button
                 onClick={() => navigate('/capital', { state: { tab: 'settlement' } })}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
                 {t('viewFullSettlement')}
@@ -734,7 +734,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                 <span className="font-medium text-slate-700">{t('totalGeneralTransfers')}</span>
                 <span className="font-bold text-red-600 text-lg">-{formatCurrency(pnlData.totalGeneralTransfers)}</span>
               </div>
-              <div className="flex justify-between items-center p-6 bg-[#0F2444] text-white rounded-xl shadow-md mt-6">
+              <div className="flex justify-between items-center p-6 bg-blue-800 text-white rounded-xl shadow-md mt-6">
                 <span className="font-bold text-xl">المتبقي (بناءً على المُحصَّل)</span>
                 <span className={`font-bold text-2xl ${pnlData.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(pnlData.netProfit)}</span>
               </div>
@@ -742,7 +742,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                 <p className="text-sm text-slate-500 mb-3">للحصول على التصفية الكاملة مع توزيع الأرباح على الشركاء والمساهمين</p>
                 <button
                   onClick={() => navigate('/capital')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
                 >
                   <ExternalLink className="w-4 h-4" />
                   {t('viewFullSettlement')} ← رأس المال
@@ -759,13 +759,13 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <h3 className="text-lg font-bold text-slate-800">{t('salespersonPerformance')}</h3>
               <div className="flex items-center gap-3">
                 <select value={salespersonCityFilter} onChange={e => setSalespersonCityFilter(e.target.value)}
-                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">كل المدن</option>
                   {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <button onClick={printSalespersonReport} disabled={salespersonData.length === 0}
-                  className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors disabled:opacity-50"
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
                 >
                   <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
                 </button>
@@ -786,7 +786,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                       <div key={sp.id} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col gap-3 min-w-[280px]">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-[#0F2444] text-white flex items-center justify-center font-bold text-lg shrink-0">{initials}</div>
+                            <div className="w-12 h-12 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-lg shrink-0">{initials}</div>
                             <div>
                               <p className="text-lg font-bold text-slate-800">{sp.name}</p>
                               <p className="text-xs text-slate-500">{sp.cities.slice(0, 3).join(' · ')}</p>
@@ -796,7 +796,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div><p className="text-xs text-slate-400">إجمالي المبيعات</p><p className="font-bold text-slate-800">{formatCurrency(sp.sales)}</p></div>
-                          <div><p className="text-xs text-slate-400">المتحصلات</p><p className="font-bold text-teal-600">{formatCurrency(sp.collections)}</p></div>
+                          <div><p className="text-xs text-slate-400">المتحصلات</p><p className="font-bold text-blue-600">{formatCurrency(sp.collections)}</p></div>
                           <div><p className="text-xs text-slate-400">المديونية</p><p className="font-bold text-red-600">{formatCurrency(sp.debt)}</p></div>
                           <div><p className="text-xs text-slate-400">عدد الفواتير</p><p className="font-bold text-slate-600">{sp.invoiceCount}</p></div>
                         </div>
@@ -832,7 +832,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                           />
                           <Tooltip formatter={(value: number) => formatCurrency(value)} cursor={{ fill: '#F1F5F9' }} />
                           <Legend />
-                          <Bar dataKey="sales" name="المبيعات" fill="#0F2444" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: (v: number) => v > 0 ? `${Math.round(v / 1000)}k` : '', fontSize: 11, fill: '#64748b' }} />
+                          <Bar dataKey="sales" name="المبيعات" fill="#0078d4" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: (v: number) => v > 0 ? `${Math.round(v / 1000)}k` : '', fontSize: 11, fill: '#64748b' }} />
                           <Bar dataKey="collections" name="المتحصلات" fill="#0D9488" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: (v: number) => v > 0 ? `${Math.round(v / 1000)}k` : '', fontSize: 11, fill: '#64748b' }} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -843,7 +843,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                   <h4 className="text-sm font-semibold text-slate-600 mb-3">جدول تفصيلي</h4>
                   <div className="overflow-x-auto rounded-xl border border-slate-200">
                     <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                      <thead className="text-xs text-white bg-[#0F2444]">
+                      <thead className="text-xs text-white bg-blue-800">
                         <tr>
                           <th className="px-4 py-3">المندوب</th><th className="px-4 py-3">المدن</th>
                           <th className="px-4 py-3 text-center">عدد الفواتير</th>
@@ -862,7 +862,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                               <td className="px-4 py-3 text-slate-500 text-xs">{sp.cities.join('، ')}</td>
                               <td className="px-4 py-3 text-center">{sp.invoiceCount}</td>
                               <td className="px-4 py-3 font-semibold text-right rtl:text-left">{formatCurrency(sp.sales)}</td>
-                              <td className="px-4 py-3 font-semibold text-teal-600 text-right rtl:text-left">{formatCurrency(sp.collections)}</td>
+                              <td className="px-4 py-3 font-semibold text-blue-600 text-right rtl:text-left">{formatCurrency(sp.collections)}</td>
                               <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(sp.debt)}</td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${rateColor}`}>{sp.collectionRate}%</span>
@@ -876,7 +876,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                           <td className="px-4 py-3">الإجمالي</td><td />
                           <td className="px-4 py-3 text-center">{salespersonData.reduce((s, sp) => s + sp.invoiceCount, 0)}</td>
                           <td className="px-4 py-3 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.sales, 0))}</td>
-                          <td className="px-4 py-3 font-bold text-teal-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.collections, 0))}</td>
+                          <td className="px-4 py-3 font-bold text-blue-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.collections, 0))}</td>
                           <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.debt, 0))}</td>
                           <td />
                         </tr>
@@ -897,26 +897,26 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">من تاريخ</label>
                 <input type="date" value={transfersFromDate} onChange={e => setTransfersFromDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">إلى تاريخ</label>
                 <input type="date" value={transfersToDate} onChange={e => setTransfersToDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
                 <select value={transfersShipment} onChange={e => setTransfersShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">الكل</option>
                   {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <button onClick={printTransfersReport}
-                className="flex items-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
               </button>
@@ -956,7 +956,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                     <h4 className="text-sm font-semibold text-slate-600 mb-3">ملخص حسب المستفيد</h4>
                     <div className="overflow-x-auto rounded-xl border border-slate-200">
                       <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                        <thead className="text-xs text-white bg-[#0F2444]">
+                        <thead className="text-xs text-white bg-blue-800">
                           <tr>
                             <th className="px-4 py-3">المستفيد</th>
                             <th className="px-4 py-3 text-center">عدد التحاويل</th>
@@ -1004,7 +1004,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                   <h4 className="text-sm font-semibold text-slate-600 mb-3">تفاصيل التحاويل</h4>
                   <div className="overflow-x-auto rounded-xl border border-slate-200">
                     <table className="w-full text-slate-600" style={{ fontSize: '11px' }}>
-                      <thead className="text-white bg-[#0F2444]">
+                      <thead className="text-white bg-blue-800">
                         <tr>
                           <th className="px-3 py-2 text-center font-semibold">التاريخ</th>
                           <th className="px-3 py-2 text-center font-semibold">رقم التحويل</th>
@@ -1048,7 +1048,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                           </React.Fragment>
                         ))}
                       </tbody>
-                      <tfoot className="bg-[#0F2444] text-white font-bold">
+                      <tfoot className="bg-blue-800 text-white font-bold">
                         <tr>
                           <td colSpan={5} className="px-3 py-2 text-right rtl:text-left">الإجمالي</td>
                           <td className="px-3 py-2 text-right rtl:text-left">{formatCurrency(transfersData.totalSDG)}</td>
@@ -1073,19 +1073,19 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">من تاريخ</label>
                 <input type="date" value={expensesFromDate} onChange={e => setExpensesFromDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">إلى تاريخ</label>
                 <input type="date" value={expensesToDate} onChange={e => setExpensesToDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
                 <select value={expensesShipment} onChange={e => setExpensesShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">الكل</option>
                   {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -1094,14 +1094,14 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">السيارة</label>
                 <select value={expensesCarFilter} onChange={e => setExpensesCarFilter(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">كل السيارات</option>
                   {state.cars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <button onClick={printExpensesReport}
-                className="flex items-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
               </button>
@@ -1135,7 +1135,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                     <h4 className="text-sm font-semibold text-slate-600 mb-3">ملخص حسب الفئة</h4>
                     <div className="overflow-x-auto rounded-xl border border-slate-200">
                       <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                        <thead className="text-xs text-white bg-[#0F2444]">
+                        <thead className="text-xs text-white bg-blue-800">
                           <tr>
                             <th className="px-4 py-3">الفئة</th>
                             <th className="px-4 py-3 text-center">السجلات</th>
@@ -1152,7 +1152,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-slate-100 rounded-full h-2">
-                                    <div className="bg-teal-500 h-2 rounded-full" style={{ width: `${cat.percentage}%` }} />
+                                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${cat.percentage}%` }} />
                                   </div>
                                   <span className="text-xs font-bold text-slate-600 w-9 text-right">{cat.percentage}%</span>
                                 </div>
@@ -1178,7 +1178,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                   <h4 className="text-sm font-semibold text-slate-600 mb-3">تفاصيل المصروفات</h4>
                   <div className="overflow-x-auto rounded-xl border border-slate-200">
                     <table className="w-full text-slate-600" style={{ fontSize: '11px' }}>
-                      <thead className="text-white bg-[#0F2444]">
+                      <thead className="text-white bg-blue-800">
                         <tr>
                           <th className="px-3 py-2 text-center font-semibold">التاريخ</th>
                           <th className="px-3 py-2 text-center font-semibold">رقم المصروف</th>
@@ -1212,7 +1212,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                           </React.Fragment>
                         ))}
                       </tbody>
-                      <tfoot className="bg-[#0F2444] text-white font-bold">
+                      <tfoot className="bg-blue-800 text-white font-bold">
                         <tr>
                           <td colSpan={6} className="px-3 py-2 text-right rtl:text-left">الإجمالي</td>
                           <td className="px-3 py-2 text-right rtl:text-left">{formatCurrency(expensesChartData.total)}</td>
@@ -1232,14 +1232,14 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
             <div className="flex flex-wrap justify-between items-center gap-4">
               <div className="flex gap-2">
                 <button onClick={() => setInventoryView('byCar')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'byCar' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'byCar' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >حسب السيارة</button>
                 <button onClick={() => setInventoryView('total')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'total' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'total' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >إجمالي المتبقي</button>
               </div>
               <button onClick={() => printInventoryReport(inventoryView)}
-                className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
               </button>
@@ -1254,7 +1254,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                 ) : (
                   inventoryData.locationData.map(loc => (
                     <div key={loc.id} className="rounded-xl border border-slate-200 overflow-hidden">
-                      <div className="bg-[#0F2444] text-white px-4 py-2 flex justify-between items-center">
+                      <div className="bg-blue-800 text-white px-4 py-2 flex justify-between items-center">
                         <span className="font-bold text-sm">{loc.name}</span>
                         <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">المتبقي: {loc.totalRemaining}</span>
                       </div>
@@ -1290,7 +1290,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div className="rounded-xl border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-slate-600" style={{ fontSize: '11px' }}>
-                    <thead className="text-white bg-[#0F2444]">
+                    <thead className="text-white bg-blue-800">
                       <tr>
                         <th className="px-3 py-1.5 text-right rtl:text-left font-semibold">المنتج</th>
                         <th className="px-3 py-1.5 text-center font-semibold">إجمالي المستلم</th>

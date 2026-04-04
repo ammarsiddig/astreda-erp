@@ -45,7 +45,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
             onClick={(e) => e.stopPropagation()}
           >
             {/* Dark navy header */}
-            <div className="bg-[#0F2444] text-white px-6 py-4 rounded-t-2xl flex items-center justify-between sticky top-0 z-10">
+            <div className="bg-blue-800 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between sticky top-0 z-10">
               <h2 className="text-lg font-semibold">{title}</h2>
               <button
                 onClick={onClose}

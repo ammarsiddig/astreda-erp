@@ -130,14 +130,14 @@ export default function CarLoading() {
         </div>
         <div className="flex items-center space-x-4 rtl:space-x-reverse">
           <select value={selectedCarId} onChange={(e) => setSelectedCarId(e.target.value)}
-            className="px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none shadow-sm"
+            className="px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
           >
             {state.cars.map(car => (
               <option key={car.id} value={car.id}>{car.name}</option>
             ))}
           </select>
           {hasWriteAccess && <button onClick={() => setShowLoadModal(true)}
-            className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm"
+            className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
             {t('addLoadingEntry')}
@@ -148,7 +148,7 @@ export default function CarLoading() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-blue-900">
               <tr>
                 <th className="px-4 py-4 font-semibold">{t('product')}</th>
                 <th className="px-4 py-4 font-semibold text-center">{t('loadedQty')}</th>
@@ -160,7 +160,7 @@ export default function CarLoading() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {carData.length > 0 ? carData.map((row) => (
-                <tr key={row.product.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={row.product.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{row.product.name}</td>
                   <td className="px-4 py-3 text-center">{new Intl.NumberFormat('en-US').format(row.loaded)}</td>
                   <td className="px-4 py-3 text-center">{new Intl.NumberFormat('en-US').format(row.transferredOut)}</td>
@@ -186,7 +186,7 @@ export default function CarLoading() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left rtl:text-right">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-blue-900">
               <tr>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('product')}</th>
@@ -199,7 +199,7 @@ export default function CarLoading() {
                 .filter(t => t.shipmentId === activeShipmentId && t.type === 'load' && t.toLocation === selectedCarId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} className="hover:bg-teal-50">
+                  <tr key={log.id} className="hover:bg-blue-50">
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
                     <td className="px-4 py-3 text-center font-bold text-slate-700">
@@ -208,7 +208,7 @@ export default function CarLoading() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => setShowViewModal(log)}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
@@ -239,7 +239,7 @@ export default function CarLoading() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
             <input type="date" required value={loadDate} onChange={(e) => setLoadDate(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
           </div>
 
@@ -252,7 +252,7 @@ export default function CarLoading() {
                     newItems[index].productId = e.target.value;
                     setLoadItems(newItems);
                   }}
-                  className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
                   <option value>{t('select')}</option>
                   {state.products.map(p => (
@@ -264,7 +264,7 @@ export default function CarLoading() {
                     newItems[index].qty = parseInt(e.target.value) || 0;
                     setLoadItems(newItems);
                   }}
-                  className="w-24 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="w-24 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder={t('qty')}
                 />
                 {index === loadItems.length - 1 && (
@@ -284,7 +284,7 @@ export default function CarLoading() {
             >
               {t('cancel')}
             </button>
-            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors">
               {t('save')}
             </button>
           </div>
@@ -331,13 +331,13 @@ export default function CarLoading() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input type="date" required value={editDate} onChange={(e) => setEditDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('product')}</label>
               <select required value={editProductId} onChange={(e) => setEditProductId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 {state.products.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -347,7 +347,7 @@ export default function CarLoading() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('qty')}</label>
               <input type="number" required min="1" value={editQty} onChange={(e) => setEditQty(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div className="pt-4 flex justify-end gap-3">
@@ -356,7 +356,7 @@ export default function CarLoading() {
               >
                 {t('cancel')}
               </button>
-              <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">
+              <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors">
                 {t('save')}
               </button>
             </div>

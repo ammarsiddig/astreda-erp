@@ -34,10 +34,10 @@ const navItemClass = 'flex items-center gap-3 px-4 py-2.5 rounded-lg mx-2 text-s
 
 function getRoleBadgeColor(roleName: string): string {
   if (roleName === 'مدير النظام') return 'bg-red-700 text-white';
-  if (roleName === 'مدير') return 'bg-[#0F2444] text-white';
+  if (roleName === 'مدير') return 'bg-blue-800 text-white';
   if (roleName === 'محاسب') return 'bg-blue-700 text-white';
   if (roleName === 'مخزن') return 'bg-green-700 text-white';
-  if (roleName === 'مندوب') return 'bg-teal-600 text-white';
+  if (roleName === 'مندوب') return 'bg-blue-600 text-white';
   return 'bg-slate-600 text-white';
 }
 
@@ -82,10 +82,10 @@ export default function Layout() {
           <img src="/logo-header.png" alt="أستريدا" className="w-9 h-9 object-contain" />
           <div>
             <h1 className="text-xl font-bold tracking-wide text-amber-400 leading-tight">أستريدا</h1>
-            <p className="text-[10px] text-slate-400">نظام التوزيع</p>
+            <p className="text-[10px] text-blue-200">نظام التوزيع</p>
           </div>
         </div>
-        <div className="border-t border-slate-700 mt-4" />
+        <div className="border-t border-blue-900 mt-4" />
       </div>
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2">
@@ -99,8 +99,8 @@ export default function Layout() {
                   cn(
                     navItemClass,
                     isActive
-                      ? 'bg-teal-600 text-white font-medium'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                      ? 'bg-blue-600 text-white font-medium'
+                      : 'text-blue-100 hover:text-white hover:bg-blue-900/50'
                   )
                 }
               >
@@ -115,10 +115,10 @@ export default function Layout() {
   );
 
   return (
-    <div className="flex h-screen bg-[#EEF2F7] font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-screen bg-gray-50 font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* Sidebar — Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#0F2444] text-white shadow-xl z-20 flex-shrink-0">
+      <aside className="hidden md:flex flex-col w-64 bg-blue-800 text-white shadow-xl z-20 flex-shrink-0">
         <SidebarContent />
       </aside>
 
@@ -137,7 +137,7 @@ export default function Layout() {
               exit={{ x: lang === 'ar' ? '100%' : '-100%' }}
               transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
               className={cn(
-                'fixed top-0 bottom-0 w-64 bg-[#0F2444] text-white shadow-2xl z-40 flex flex-col',
+                'fixed top-0 bottom-0 w-64 bg-blue-800 text-white shadow-2xl z-40 flex flex-col',
                 lang === 'ar' ? 'right-0' : 'left-0'
               )}
             >
@@ -146,14 +146,14 @@ export default function Layout() {
                   <img src="/logo-header.png" alt="أستريدا" className="w-8 h-8 object-contain" />
                   <div>
                     <h1 className="text-lg font-bold tracking-wide text-amber-400 leading-tight">أستريدا</h1>
-                    <p className="text-[10px] text-slate-400">نظام التوزيع</p>
+                    <p className="text-[10px] text-blue-200">نظام التوزيع</p>
                   </div>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-300 hover:text-white">
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-blue-100 hover:text-white">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="border-t border-slate-700 mx-4 mb-2" />
+              <div className="border-t border-blue-900 mx-4 mb-2" />
               <nav className="flex-1 overflow-y-auto py-2">
                 <ul className="space-y-0.5">
                   {visibleNavItems.map((item) => (
@@ -165,8 +165,8 @@ export default function Layout() {
                           cn(
                             navItemClass,
                             isActive
-                              ? 'bg-teal-600 text-white font-medium'
-                              : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                              ? 'bg-blue-600 text-white font-medium'
+                              : 'text-blue-100 hover:text-white hover:bg-blue-900/50'
                           )
                         }
                       >
@@ -217,7 +217,7 @@ export default function Layout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center bg-teal-50 text-teal-700 border border-teal-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-teal-100 transition-colors"
+              className="flex items-center bg-blue-50 text-blue-700 border border-blue-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-100 transition-colors"
             >
               <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 rtl:ml-1 rtl:mr-0" />
               <span>{lang === 'ar' ? 'EN' : 'AR'}</span>
@@ -249,7 +249,7 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-[#EEF2F7]">
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-4 sm:p-6">
             <Outlet />
           </div>

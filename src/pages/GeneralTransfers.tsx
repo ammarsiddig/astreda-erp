@@ -204,7 +204,7 @@ export default function GeneralTransfers() {
           {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">&#x1F441; وضع القراءة فقط</span>}
         </div>
         {hasWriteAccess && <button onClick={() => setShowAddModal(true)}
-          className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm"
+          className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
           {t('recordTransfer')}
@@ -216,13 +216,13 @@ export default function GeneralTransfers() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('partner')}</label>
           <select value={filterPartner} onChange={(e) => setFilterPartner(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value="">{t('all')}</option>
             {state.partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -231,7 +231,7 @@ export default function GeneralTransfers() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('capitalType')}</label>
           <select value={filterType} onChange={(e) => setFilterType(e.target.value as any)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value="">{t('all')}</option>
             <option value="capital_return">إرجاع رأس مال وأرباح</option>
@@ -244,7 +244,7 @@ export default function GeneralTransfers() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-blue-900">
               <tr>
                 <th className="px-4 py-3">{t('receiptNumber')}</th>
                 <th className="px-4 py-3">{t('date')}</th>
@@ -262,7 +262,7 @@ export default function GeneralTransfers() {
                   ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
                   : state.partners.find(p => p.id === transfer.partnerId)?.name;
                 return (
-                  <tr key={transfer.id} className="hover:bg-teal-50 transition-colors">
+                  <tr key={transfer.id} className="hover:bg-blue-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
                     <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3">{getTypeBadge(transfer.transferType)}</td>
@@ -277,7 +277,7 @@ export default function GeneralTransfers() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => setShowViewModal(transfer)}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
@@ -319,9 +319,9 @@ export default function GeneralTransfers() {
       >
         <form onSubmit={handleSaveTransfer} className="space-y-4">
           {/* Auto-calculated total */}
-          <div className="p-4 bg-teal-50 rounded-xl border border-teal-200 flex justify-between items-center">
-            <span className="text-sm font-medium text-teal-700">إجمالي المبلغ (SDG)</span>
-            <span className="font-bold text-teal-600 text-3xl">{formatCurrency(totalSplitsAmount)}</span>
+          <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 flex justify-between items-center">
+            <span className="text-sm font-medium text-blue-700">إجمالي المبلغ (SDG)</span>
+            <span className="font-bold text-blue-600 text-3xl">{formatCurrency(totalSplitsAmount)}</span>
           </div>
 
           {/* Transfer Type */}
@@ -359,7 +359,7 @@ export default function GeneralTransfers() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الشريك</label>
                 <select required value={partnerId} onChange={(e) => setPartnerId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
                   <option value="">{t('select')}</option>
                   {operatingPartners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -369,7 +369,7 @@ export default function GeneralTransfers() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('beneficiary')}</label>
                 <select required value={beneficiaryPartnerId} onChange={(e) => setBeneficiaryPartnerId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
                   <option value="">{t('select')}</option>
                   {state.partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -379,7 +379,7 @@ export default function GeneralTransfers() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
           </div>
@@ -391,7 +391,7 @@ export default function GeneralTransfers() {
               <button
                 type="button"
                 onClick={handleAddSplit}
-                className="text-sm text-teal-600 hover:underline flex items-center"
+                className="text-sm text-blue-600 hover:underline flex items-center"
               >
                 <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0" />
                 إضافة حساب
@@ -405,7 +405,7 @@ export default function GeneralTransfers() {
                     required
                     value={split.bankAccountId}
                     onChange={(e) => handleSplitChange(index, 'bankAccountId', e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   >
                     <option value="">{t('bankAccount')}</option>
                     {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -419,7 +419,7 @@ export default function GeneralTransfers() {
                     step="0.01"
                     value={split.amount || ''}
                     onChange={(e) => handleSplitChange(index, 'amount', parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                     placeholder={t('amount')}
                   />
                 </div>
@@ -446,7 +446,7 @@ export default function GeneralTransfers() {
                 value={exchangeRate}
                 onChange={(e) => setExchangeRate(Number(e.target.value))}
                 placeholder="أدخل سعر الصرف"
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
@@ -463,7 +463,7 @@ export default function GeneralTransfers() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('description')}</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none h-20"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none h-20"
             />
           </div>
 
@@ -477,7 +477,7 @@ export default function GeneralTransfers() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>
