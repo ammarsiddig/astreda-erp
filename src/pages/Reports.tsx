@@ -246,13 +246,13 @@ export default function Reports() {
   tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #134e4a; font-size: 12px; font-weight: 900; color: #134e4a; text-align: center; }
   tfoot td.name { text-align: right; } tfoot td.debt { color: #e11d48 !important; }
 </style></head><body>
-  <div class="title">تقرير أداء المناديب</div>
+  <div class="title">تقرير أداء مناديب المبيعات</div>
   <div class="subtitle">الرسالة: ${shipmentName}</div>
   <table>
     <thead><tr>
       <th style="text-align:right;width:16%">المندوب</th><th style="width:18%">المدن</th>
       <th style="width:8%">الفواتير</th><th style="width:16%">إجمالي المبيعات</th>
-      <th style="width:16%">المتحصلات</th><th style="width:16%">المديونية</th><th style="width:10%">نسبة التحصيل</th>
+      <th style="width:16%">التحصيلات</th><th style="width:16%">المديونية</th><th style="width:10%">نسبة التحصيل</th>
     </tr></thead>
     <tbody>${rowsHtml}</tbody>
     <tfoot><tr>
@@ -642,7 +642,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
-                طباعة / Print
+                طباعة
               </button>
             </div>
             {dailyDebtCity ? (
@@ -738,7 +738,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div><p className="text-xs text-slate-400">إجمالي المبيعات</p><p className="font-bold text-slate-800">{formatCurrency(sp.sales)}</p></div>
-                          <div><p className="text-xs text-slate-400">المتحصلات</p><p className="font-bold text-[#134e4a]">{formatCurrency(sp.collections)}</p></div>
+                          <div><p className="text-xs text-slate-400">التحصيلات</p><p className="font-bold text-[#134e4a]">{formatCurrency(sp.collections)}</p></div>
                           <div><p className="text-xs text-slate-400">المديونية</p><p className="font-bold text-red-600">{formatCurrency(sp.debt)}</p></div>
                           <div><p className="text-xs text-slate-400">عدد الفواتير</p><p className="font-bold text-slate-600">{sp.invoiceCount}</p></div>
                         </div>
@@ -750,7 +750,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                   })}
                 </div>
                 <div className="bg-white rounded-xl border border-slate-100 p-4">
-                  <h4 className="text-sm font-semibold text-slate-600 mb-3">مقارنة المبيعات والمتحصلات</h4>
+                  <h4 className="text-sm font-semibold text-slate-600 mb-3">مقارنة المبيعات والتحصيلات</h4>
                   <div style={{ overflowX: 'auto' }}>
                     <div style={{ minWidth: 500, height: 280 }}>
                       <ResponsiveContainer width="100%" height="100%">
@@ -775,7 +775,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                           <Tooltip formatter={(value: number) => formatCurrency(value)} cursor={{ fill: '#F1F5F9' }} />
                           <Legend />
                           <Bar dataKey="sales" name="المبيعات" fill="#134e4a" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: (v: number) => v > 0 ? `${Math.round(v / 1000)}k` : '', fontSize: 11, fill: '#64748b' }} />
-                          <Bar dataKey="collections" name="المتحصلات" fill="#0D9488" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: (v: number) => v > 0 ? `${Math.round(v / 1000)}k` : '', fontSize: 11, fill: '#64748b' }} />
+                          <Bar dataKey="collections" name="التحصيلات" fill="#0D9488" barSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: (v: number) => v > 0 ? `${Math.round(v / 1000)}k` : '', fontSize: 11, fill: '#64748b' }} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -823,7 +823,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                             <th className="px-4 py-3">المندوب</th><th className="px-4 py-3">المدن</th>
                             <th className="px-4 py-3 text-center">عدد الفواتير</th>
                             <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
-                            <th className="px-4 py-3 text-right rtl:text-left">المتحصلات</th>
+                            <th className="px-4 py-3 text-right rtl:text-left">التحصيلات</th>
                             <th className="px-4 py-3 text-right rtl:text-left">المديونية</th>
                             <th className="px-4 py-3 text-center">نسبة التحصيل</th>
                           </tr>
