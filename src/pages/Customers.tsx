@@ -191,7 +191,7 @@ export default function Customers() {
                 <th className="px-4 py-3">{t('phone')}</th>
                 <th className="px-4 py-3">{t('city')}</th>
                 <th className="px-4 py-3">{t('salesperson')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
+                <th className="px-4 py-3 text-right rtl:text-left">{t('totalSales')}</th>
                 <th className="px-4 py-3 text-right rtl:text-left">{t('totalPayments')}</th>
                 <th className="px-4 py-3 text-right rtl:text-left">{t('debt')}</th>
                 <th className="px-4 py-3 text-center">{t('action')}</th>
