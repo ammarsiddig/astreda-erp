@@ -148,7 +148,7 @@ export default function Settings() {
                 required
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
@@ -160,7 +160,7 @@ export default function Settings() {
                 step="0.01"
                 value={formData.transferFee || 0}
                 onChange={(e) => setFormData({ ...formData, transferFee: Number(e.target.value) })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
           </>
@@ -175,7 +175,7 @@ export default function Settings() {
                 required
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div className="flex items-center mt-4">
@@ -184,7 +184,7 @@ export default function Settings() {
                 id="isActive"
                 checked={formData.isActive || false}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
               />
               <label htmlFor="isActive" className="ml-2 rtl:mr-2 text-sm font-medium text-slate-700">
                 {t('active')}
@@ -202,7 +202,7 @@ export default function Settings() {
                 required
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div className="flex items-center mt-4">
@@ -211,7 +211,7 @@ export default function Settings() {
                 id="isOperatingPartner"
                 checked={formData.isOperatingPartner || false}
                 onChange={(e) => setFormData({ ...formData, isOperatingPartner: e.target.checked })}
-                className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
               />
               <label htmlFor="isOperatingPartner" className="ml-2 rtl:mr-2 rtl:ml-0 text-sm font-medium text-slate-700">
                 {t('isOperatingPartner')}
@@ -228,7 +228,7 @@ export default function Settings() {
               required
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
           </div>
         );
@@ -379,7 +379,7 @@ export default function Settings() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-4 py-3 text-left rtl:text-right text-sm font-medium transition-colors border-l-4 rtl:border-r-4 rtl:border-l-0 ${
                   activeTab === tab.id
-                    ? 'border-teal-600 bg-blue-50 text-teal-600'
+                    ? 'border-blue-600 bg-blue-50 text-blue-600'
                     : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
@@ -406,7 +406,7 @@ export default function Settings() {
                   <select
                     value={profitShipmentId}
                     onChange={e => setProfitShipmentId(e.target.value)}
-                    className="w-full sm:w-64 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                    className="w-full sm:w-64 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
                     {state.shipments.map(s => (
                       <option key={s.id} value={s.id}>
@@ -446,7 +446,7 @@ export default function Settings() {
                             step="1"
                             value={shareholdersPercent}
                             onChange={e => updateShipmentSettings({ shareholdersPercent: Number(e.target.value) })}
-                            className="w-full px-3 py-2.5 pr-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                            className="w-full px-3 py-2.5 pr-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           />
                           <span className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
                         </div>
@@ -479,7 +479,7 @@ export default function Settings() {
                             step="1"
                             value={mgmtFeePercent}
                             onChange={e => updateShipmentSettings({ managementFeePercent: Number(e.target.value) })}
-                            className="w-full px-3 py-2.5 pr-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                            className="w-full px-3 py-2.5 pr-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           />
                           <span className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
                         </div>
@@ -492,7 +492,7 @@ export default function Settings() {
                         <select
                           value={mgmtFeeRecipientId}
                           onChange={e => updateShipmentSettings({ managementFeeRecipientId: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                          className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                           <option value="">{t('select')}</option>
                           {operatingPartners.map(p => (
@@ -522,9 +522,9 @@ export default function Settings() {
                           <p className="text-xs text-blue-600 mb-1">حصة المساهمين</p>
                           <p className="text-xl font-bold text-blue-700">{sp}%</p>
                         </div>
-                        <div className="flex-1 min-w-[120px] p-3 bg-teal-50 rounded-lg border border-teal-200 text-center">
-                          <p className="text-xs text-teal-600 mb-1">حصة الشركاء</p>
-                          <p className="text-xl font-bold text-teal-700">{pp}%</p>
+                        <div className="flex-1 min-w-[120px] p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
+                          <p className="text-xs text-blue-600 mb-1">حصة الشركاء</p>
+                          <p className="text-xl font-bold text-blue-700">{pp}%</p>
                         </div>
                         {mf > 0 && (
                           <div className="flex-1 min-w-[120px] p-3 bg-amber-50 rounded-lg border border-amber-200 text-center">
@@ -552,7 +552,7 @@ export default function Settings() {
                   <h2 className="text-lg font-bold text-slate-800">قائمة الشركاء</h2>
                   {hasSettingsWrite && <button
                     onClick={() => { setActiveTab('partners'); openModal(); }}
-                    className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                    className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                   >
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0" />
                     {t('add')}
@@ -569,11 +569,11 @@ export default function Settings() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {state.partners.map((partner) => (
-                        <tr key={partner.id} className="hover:bg-teal-50 transition-colors">
+                        <tr key={partner.id} className="hover:bg-blue-50 transition-colors">
                           <td className="px-4 py-3 font-medium text-slate-900">{partner.name}</td>
                           <td className="px-4 py-3 text-center">
                             {partner.isOperatingPartner ? (
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">شريك مشغِّل</span>
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">شريك مشغِّل</span>
                             ) : (
                               <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
                             )}
@@ -610,8 +610,8 @@ export default function Settings() {
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Users className="w-5 h-5 text-teal-600"/>إدارة المستخدمين</h2>
-                  {hasSettingsWrite && <button onClick={() => openUserModal()} className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">
+                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Users className="w-5 h-5 text-blue-600"/>إدارة المستخدمين</h2>
+                  {hasSettingsWrite && <button onClick={() => openUserModal()} className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
                   </button>}
                 </div>
@@ -632,7 +632,7 @@ export default function Settings() {
                         const role = state.roles.find(r => r.id === user.roleId);
                         const sp = user.salespersonId ? state.salespeople.find(s => s.id === user.salespersonId) : null;
                         return (
-                          <tr key={user.id} className="hover:bg-teal-50 transition-colors">
+                          <tr key={user.id} className="hover:bg-blue-50 transition-colors">
                             <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
                             <td className="px-4 py-3 font-mono text-xs text-slate-500">{user.username}</td>
                             <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{role?.name || '-'}</span></td>
@@ -663,8 +663,8 @@ export default function Settings() {
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Shield className="w-5 h-5 text-teal-600"/>إدارة الأدوار</h2>
-                  {hasSettingsWrite && <button onClick={() => openRoleModal()} className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm">
+                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Shield className="w-5 h-5 text-blue-600"/>إدارة الأدوار</h2>
+                  {hasSettingsWrite && <button onClick={() => openRoleModal()} className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
                   </button>}
                 </div>
@@ -683,11 +683,11 @@ export default function Settings() {
                       {state.roles.map(role => {
                         const userCount = state.users.filter(u => u.roleId === role.id).length;
                         return (
-                          <tr key={role.id} className="hover:bg-teal-50 transition-colors">
+                          <tr key={role.id} className="hover:bg-blue-50 transition-colors">
                             <td className="px-4 py-3 font-medium text-slate-900">{role.name}</td>
                             <td className="px-4 py-3 text-slate-500">{role.nameEn}</td>
                             <td className="px-4 py-3 text-center">
-                              {role.isSalesperson ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">نعم</span> : <span className="text-slate-400">-</span>}
+                              {role.isSalesperson ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">نعم</span> : <span className="text-slate-400">-</span>}
                             </td>
                             <td className="px-4 py-3 text-center font-medium">{userCount}</td>
                             <td className="px-4 py-3 text-center">
@@ -713,7 +713,7 @@ export default function Settings() {
                 </h2>
                 {hasSettingsWrite && <button
                   onClick={() => openModal()}
-                  className="flex items-center px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                  className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0" />
                   {t('add')}
@@ -733,7 +733,7 @@ export default function Settings() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {list.length > 0 ? list.map((item) => (
-                      <tr key={item.id} className="hover:bg-teal-50 transition-colors">
+                      <tr key={item.id} className="hover:bg-blue-50 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900">{item.name}</td>
                         {activeTab === 'bankAccounts' && <td className="px-4 py-3">{item.transferFee}</td>}
                         {activeTab === 'shipments' && (
@@ -746,7 +746,7 @@ export default function Settings() {
                         {activeTab === 'partners' && (
                           <td className="px-4 py-3 text-center">
                             {item.isOperatingPartner ? (
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">شريك مشغِّل</span>
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">شريك مشغِّل</span>
                             ) : (
                               <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
                             )}
@@ -809,7 +809,7 @@ export default function Settings() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>
@@ -824,18 +824,18 @@ export default function Settings() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">الاسم الكامل</label>
               <input type="text" required value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"/>
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"/>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">اسم المستخدم</label>
               <input type="text" required value={userForm.username} onChange={e => setUserForm({ ...userForm, username: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none font-mono" dir="ltr"/>
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono" dir="ltr"/>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">كلمة المرور</label>
               <div className="relative">
                 <input type={showUserPassword ? 'text' : 'password'} required value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })}
-                  className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none font-mono" dir="ltr"/>
+                  className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono" dir="ltr"/>
                 <button type="button" onClick={() => setShowUserPassword(!showUserPassword)} className="absolute left-2 rtl:right-2 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                   {showUserPassword ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                 </button>
@@ -844,7 +844,7 @@ export default function Settings() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">الدور</label>
               <select required value={userForm.roleId} onChange={e => setUserForm({ ...userForm, roleId: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                 <option value="">{t('select')}</option>
                 {state.roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
@@ -853,7 +853,7 @@ export default function Settings() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">المندوب المرتبط</label>
                 <select value={userForm.salespersonId} onChange={e => setUserForm({ ...userForm, salespersonId: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                   <option value="">{t('select')}</option>
                   {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -861,13 +861,13 @@ export default function Settings() {
             )}
             <div className="flex items-center pt-6">
               <input type="checkbox" id="userActive" checked={userForm.isActive} onChange={e => setUserForm({ ...userForm, isActive: e.target.checked })}
-                className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"/>
               <label htmlFor="userActive" className="mr-2 rtl:ml-2 text-sm font-medium text-slate-700">حساب نشط</label>
             </div>
           </div>
           <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
             <button type="button" onClick={() => setShowUserModal(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('cancel')}</button>
-            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
           </div>
         </form>
       </Modal>
@@ -879,17 +879,17 @@ export default function Settings() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">اسم الدور (عربي)</label>
               <input type="text" required value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"/>
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"/>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">اسم الدور (English)</label>
               <input type="text" required value={roleForm.nameEn} onChange={e => setRoleForm({ ...roleForm, nameEn: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" dir="ltr"/>
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" dir="ltr"/>
             </div>
           </div>
           <div className="flex items-center">
             <input type="checkbox" id="roleSp" checked={roleForm.isSalesperson} onChange={e => setRoleForm({ ...roleForm, isSalesperson: e.target.checked })}
-              className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"/>
             <label htmlFor="roleSp" className="mr-2 rtl:ml-2 text-sm font-medium text-slate-700">دور مندوب (يُفلتر البيانات حسب المندوب المرتبط)</label>
           </div>
 
@@ -910,11 +910,11 @@ export default function Settings() {
                       <td className="px-4 py-2 text-slate-700">{PAGE_LABELS[perm.pageKey]}</td>
                       <td className="px-4 py-2 text-center">
                         <input type="checkbox" checked={perm.canView} onChange={() => toggleRolePerm(perm.pageKey, 'canView')}
-                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"/>
                       </td>
                       <td className="px-4 py-2 text-center">
                         <input type="checkbox" checked={perm.canWrite} onChange={() => toggleRolePerm(perm.pageKey, 'canWrite')}
-                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"/>
+                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"/>
                       </td>
                     </tr>
                   ))}
@@ -925,7 +925,7 @@ export default function Settings() {
 
           <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
             <button type="button" onClick={() => setShowRoleModal(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('cancel')}</button>
-            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
           </div>
         </form>
       </Modal>

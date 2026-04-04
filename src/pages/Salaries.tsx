@@ -326,7 +326,7 @@ export default function Salaries() {
         {hasWriteAccess && (activeTab === 'salaries' ? (
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+            className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
           >
             <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />
             {t('recordSalary')}
@@ -348,7 +348,7 @@ export default function Salaries() {
           onClick={() => setActiveTab('salaries')}
           className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
             activeTab === 'salaries'
-              ? 'border-teal-600 text-teal-600'
+              ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -381,7 +381,7 @@ export default function Salaries() {
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               />
             </div>
             <div>
@@ -389,7 +389,7 @@ export default function Salaries() {
               <select
                 value={filterEmployee}
                 onChange={(e) => setFilterEmployee(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               >
                 <option value="">{t('all')}</option>
                 {state.employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
@@ -400,7 +400,7 @@ export default function Salaries() {
           {/* Salaries Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+              <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[600px]">
                 <thead className="text-xs text-white uppercase bg-[#1E293B]">
                   <tr>
                     <th className="px-4 py-3">{t('receiptNumber')}</th>
@@ -416,7 +416,7 @@ export default function Salaries() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                    <tr key={salary.id} className="hover:bg-teal-50 transition-colors">
+                    <tr key={salary.id} className="hover:bg-blue-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
                       <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>
@@ -431,7 +431,7 @@ export default function Salaries() {
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => setShowViewModal(salary)}
-                            className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                             title={t('view')}
                           >
                             <Eye className="w-4 h-4" />
@@ -476,7 +476,7 @@ export default function Salaries() {
                     <span className="text-sm font-bold text-red-600">{formatCurrency(total)}</span>
                     <button
                       onClick={() => setShowSettleAllConfirm(empName)}
-                      className="text-xs px-2 py-0.5 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors font-medium"
+                      className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium"
                     >
                       تسوية الكل
                     </button>
@@ -527,7 +527,7 @@ export default function Salaries() {
           {/* Advances Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+              <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[600px]">
                 <thead className="text-xs text-white uppercase bg-[#1E293B]">
                   <tr>
                     <th className="px-4 py-3">التاريخ</th>
@@ -566,7 +566,7 @@ export default function Salaries() {
                         {!adv.settled && (
                           <button
                             onClick={() => setShowSettleConfirm(adv.id)}
-                            className="px-3 py-1 bg-teal-600 text-white text-xs rounded-lg hover:bg-teal-700 transition-colors font-semibold"
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                           >
                             تسوية
                           </button>
@@ -603,7 +603,7 @@ export default function Salaries() {
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
@@ -612,7 +612,7 @@ export default function Salaries() {
                 required
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="">{t('select')}</option>
                 {state.employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
@@ -642,7 +642,7 @@ export default function Salaries() {
                 required
                 value={type}
                 onChange={(e) => setType(e.target.value as 'salary' | 'allowance')}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="salary">{t('salary')}</option>
                 <option value="allowance">{t('allowance')}</option>
@@ -655,7 +655,7 @@ export default function Salaries() {
                 required
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             <div>
@@ -667,7 +667,7 @@ export default function Salaries() {
                 step="0.01"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
               {employeeId && totalOpenAdvances > 0 && netSalary !== null && (
                 <p className="mt-1 text-xs font-semibold text-green-700">
@@ -681,7 +681,7 @@ export default function Salaries() {
                 required
                 value={bankAccountId}
                 onChange={(e) => setBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="">{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -692,7 +692,7 @@ export default function Salaries() {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none h-20"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none h-20"
               />
             </div>
             {employeeId && openAdvancesForEmployee.length > 0 && (
@@ -702,7 +702,7 @@ export default function Salaries() {
                     type="checkbox"
                     checked={autoSettle}
                     onChange={(e) => setAutoSettle(e.target.checked)}
-                    className="w-4 h-4 accent-teal-600"
+                    className="w-4 h-4 accent-blue-600"
                   />
                   <span className="text-sm text-slate-700">تسوية السلفيات تلقائياً عند الحفظ</span>
                 </label>
@@ -720,7 +720,7 @@ export default function Salaries() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
             >
               {t('save')}
             </button>
@@ -812,7 +812,7 @@ export default function Salaries() {
             </button>
             <button
               onClick={handleSettleAdvance}
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
             >
               تسوية
             </button>
@@ -835,7 +835,7 @@ export default function Salaries() {
             </button>
             <button
               onClick={handleSettleAll}
-              className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
             >
               تسوية الكل
             </button>

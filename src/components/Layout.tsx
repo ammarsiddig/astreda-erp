@@ -37,7 +37,7 @@ function getRoleBadgeColor(roleName: string): string {
   if (roleName === 'مدير') return 'bg-[#0F2444] text-white';
   if (roleName === 'محاسب') return 'bg-blue-700 text-white';
   if (roleName === 'مخزن') return 'bg-green-700 text-white';
-  if (roleName === 'مندوب') return 'bg-teal-600 text-white';
+  if (roleName === 'مندوب') return 'bg-blue-600 text-white';
   return 'bg-slate-600 text-white';
 }
 
@@ -99,7 +99,7 @@ export default function Layout() {
                   cn(
                     navItemClass,
                     isActive
-                      ? 'bg-teal-600 text-white font-medium'
+                      ? 'bg-blue-600 text-white font-medium'
                       : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                   )
                 }
@@ -115,7 +115,7 @@ export default function Layout() {
   );
 
   return (
-    <div className="flex h-screen bg-[#EEF2F7] font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-screen bg-gray-50 font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* Sidebar — Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-[#0F2444] text-white shadow-xl z-20 flex-shrink-0">
@@ -149,7 +149,7 @@ export default function Layout() {
                     <p className="text-[10px] text-slate-400">نظام التوزيع</p>
                   </div>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-300 hover:text-white">
+                <button onClick={() => setIsMobileMenuOpen(false)} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-300 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -165,7 +165,7 @@ export default function Layout() {
                           cn(
                             navItemClass,
                             isActive
-                              ? 'bg-teal-600 text-white font-medium'
+                              ? 'bg-blue-600 text-white font-medium'
                               : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                           )
                         }
@@ -190,7 +190,8 @@ export default function Layout() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 -ml-1 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+              className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+              aria-label="فتح القائمة"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -217,7 +218,7 @@ export default function Layout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center bg-teal-50 text-teal-700 border border-teal-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-teal-100 transition-colors"
+              className="flex items-center bg-blue-50 text-blue-700 border border-blue-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-100 transition-colors"
             >
               <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 rtl:ml-1 rtl:mr-0" />
               <span>{lang === 'ar' ? 'EN' : 'AR'}</span>
@@ -249,7 +250,7 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-[#EEF2F7]">
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-4 sm:p-6">
             <Outlet />
           </div>

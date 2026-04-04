@@ -339,7 +339,7 @@ export default function Ledger() {
             onClick={() => setShowAllShipments(v => !v)}
             className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
               showAllShipments
-                ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700'
+                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
                 : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
             }`}
           >
@@ -356,7 +356,7 @@ export default function Ledger() {
             type="date"
             value={filterStartDate}
             onChange={(e) => setFilterStartDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
@@ -365,7 +365,7 @@ export default function Ledger() {
             type="date"
             value={filterEndDate}
             onChange={(e) => setFilterEndDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
@@ -373,7 +373,7 @@ export default function Ledger() {
           <select
             value={filterAccount}
             onChange={(e) => setFilterAccount(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -384,7 +384,7 @@ export default function Ledger() {
           <select
             value={filterModule}
             onChange={(e) => setFilterModule(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             <option value="sale_cash">{t('sales')}</option>
@@ -400,7 +400,7 @@ export default function Ledger() {
       {/* Ledger Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+          <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[600px]">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
                 <th className="px-4 py-3">{t('date')}</th>
@@ -413,7 +413,7 @@ export default function Ledger() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {ledgerData.length > 0 ? ledgerData.map((entry) => (
-                <tr key={entry.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={entry.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3 text-slate-900 font-medium">{entry.description}</td>
                   <td className="px-4 py-3">
@@ -473,7 +473,7 @@ export default function Ledger() {
                     type="date"
                     value={stmtFromDate}
                     onChange={(e) => setStmtFromDate(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -482,7 +482,7 @@ export default function Ledger() {
                     type="date"
                     value={stmtToDate}
                     onChange={(e) => setStmtToDate(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function Ledger() {
                 <select
                   value={stmtAccount}
                   onChange={(e) => setStmtAccount(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                 >
                   <option value="">جميع الحسابات</option>
                   {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}

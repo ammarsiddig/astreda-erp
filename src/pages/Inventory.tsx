@@ -300,7 +300,7 @@ export default function Inventory() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {inventoryData.map((row) => (
-                <tr key={row.product.id} className={`hover:bg-teal-50 transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+                <tr key={row.product.id} className={`hover:bg-blue-50 transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-slate-900 flex items-center">
                     {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 mr-2 rtl:ml-2 rtl:mr-0"/>}
                     {row.product.name}
@@ -351,7 +351,7 @@ export default function Inventory() {
                 .filter(t => t.shipmentId === activeShipmentId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} className="hover:bg-teal-50">
+                  <tr key={log.id} className="hover:bg-blue-50">
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium text-slate-500">{log.referenceId || '-'}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
@@ -367,7 +367,7 @@ export default function Inventory() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => setShowViewModal(log)}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>

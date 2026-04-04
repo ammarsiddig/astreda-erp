@@ -238,7 +238,7 @@ export default function Reports() {
         <td class="center">${sp.cities.join('، ')}</td>
         <td class="center">${sp.invoiceCount}</td>
         <td class="num">${fmt(sp.sales)}</td>
-        <td class="num teal">${fmt(sp.collections)}</td>
+        <td class="num blue">${fmt(sp.collections)}</td>
         <td class="num debt">${fmt(sp.debt)}</td>
         <td class="center">${sp.collectionRate}%</td>
       </tr>`).join('');
@@ -258,7 +258,7 @@ export default function Reports() {
   td.name { text-align: right; font-weight: 600; }
   td.center { text-align: center; }
   td.num { text-align: center; font-weight: 600; }
-  td.teal { color: #0d9488 !important; }
+  td.blue { color: #0078d4 !important; }
   td.debt { color: #e11d48 !important; font-weight: 700; }
   tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #0F2444; font-size: 12px; font-weight: 900; color: #0F2444; text-align: center; }
   tfoot td.name { text-align: right; } tfoot td.debt { color: #e11d48 !important; }
@@ -274,7 +274,7 @@ export default function Reports() {
     <tbody>${rowsHtml}</tbody>
     <tfoot><tr>
       <td class="name">الإجمالي</td><td></td><td>${totals.invoiceCount}</td>
-      <td>${fmt(totals.sales)}</td><td class="teal">${fmt(totals.collections)}</td>
+      <td>${fmt(totals.sales)}</td><td class="blue">${fmt(totals.collections)}</td>
       <td class="debt">${fmt(totals.debt)}</td><td></td>
     </tr></tfoot>
   </table>
@@ -540,7 +540,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-teal-600 text-teal-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
@@ -557,19 +557,19 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <select value={debtCityFilter} onChange={e => setDebtCityFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value>{t('allCities')}</option>
                 {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <select value={debtShipmentFilter} onChange={e => setDebtShipmentFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value>{t('allShipments')}</option>
                 {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
               <select value={debtSalespersonFilter} onChange={e => setDebtSalespersonFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value>{t('allSalespeople')}</option>
                 {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -588,7 +588,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {debtData.length > 0 ? debtData.map(row => (
-                      <tr key={row.id} className="hover:bg-teal-50 transition-colors">
+                      <tr key={row.id} className="hover:bg-blue-50 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                         <td className="px-4 py-3">{row.city}</td>
                         <td className="px-4 py-3">{row.salesperson}</td>
@@ -615,7 +615,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">المدينة</label>
                 <select value={dailyDebtCity} onChange={e => setDailyDebtCity(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value>اختر المدينة...</option>
                   {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -624,7 +624,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الرسالة</label>
                 <select value={dailyDebtShipment} onChange={e => setDailyDebtShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -632,11 +632,11 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
                 <input type="date" value={dailyDebtDate} onChange={e => setDailyDebtDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <button onClick={printReport} disabled={!dailyDebtCity}
-                className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
                 طباعة / Print
@@ -698,7 +698,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <h3 className="text-lg font-bold text-slate-800">تصفية الرسالة / Shipment Settlement</h3>
               <button
                 onClick={() => navigate('/capital', { state: { tab: 'settlement' } })}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
                 {t('viewFullSettlement')}
@@ -742,7 +742,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                 <p className="text-sm text-slate-500 mb-3">للحصول على التصفية الكاملة مع توزيع الأرباح على الشركاء والمساهمين</p>
                 <button
                   onClick={() => navigate('/capital')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
                 >
                   <ExternalLink className="w-4 h-4" />
                   {t('viewFullSettlement')} ← رأس المال
@@ -759,13 +759,13 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <h3 className="text-lg font-bold text-slate-800">{t('salespersonPerformance')}</h3>
               <div className="flex items-center gap-3">
                 <select value={salespersonCityFilter} onChange={e => setSalespersonCityFilter(e.target.value)}
-                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">كل المدن</option>
                   {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <button onClick={printSalespersonReport} disabled={salespersonData.length === 0}
-                  className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors disabled:opacity-50"
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors disabled:opacity-50"
                 >
                   <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
                 </button>
@@ -796,7 +796,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div><p className="text-xs text-slate-400">إجمالي المبيعات</p><p className="font-bold text-slate-800">{formatCurrency(sp.sales)}</p></div>
-                          <div><p className="text-xs text-slate-400">المتحصلات</p><p className="font-bold text-teal-600">{formatCurrency(sp.collections)}</p></div>
+                          <div><p className="text-xs text-slate-400">المتحصلات</p><p className="font-bold text-blue-600">{formatCurrency(sp.collections)}</p></div>
                           <div><p className="text-xs text-slate-400">المديونية</p><p className="font-bold text-red-600">{formatCurrency(sp.debt)}</p></div>
                           <div><p className="text-xs text-slate-400">عدد الفواتير</p><p className="font-bold text-slate-600">{sp.invoiceCount}</p></div>
                         </div>
@@ -862,7 +862,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                               <td className="px-4 py-3 text-slate-500 text-xs">{sp.cities.join('، ')}</td>
                               <td className="px-4 py-3 text-center">{sp.invoiceCount}</td>
                               <td className="px-4 py-3 font-semibold text-right rtl:text-left">{formatCurrency(sp.sales)}</td>
-                              <td className="px-4 py-3 font-semibold text-teal-600 text-right rtl:text-left">{formatCurrency(sp.collections)}</td>
+                              <td className="px-4 py-3 font-semibold text-blue-600 text-right rtl:text-left">{formatCurrency(sp.collections)}</td>
                               <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(sp.debt)}</td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${rateColor}`}>{sp.collectionRate}%</span>
@@ -876,7 +876,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                           <td className="px-4 py-3">الإجمالي</td><td />
                           <td className="px-4 py-3 text-center">{salespersonData.reduce((s, sp) => s + sp.invoiceCount, 0)}</td>
                           <td className="px-4 py-3 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.sales, 0))}</td>
-                          <td className="px-4 py-3 font-bold text-teal-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.collections, 0))}</td>
+                          <td className="px-4 py-3 font-bold text-blue-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.collections, 0))}</td>
                           <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.debt, 0))}</td>
                           <td />
                         </tr>
@@ -897,26 +897,26 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">من تاريخ</label>
                 <input type="date" value={transfersFromDate} onChange={e => setTransfersFromDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">إلى تاريخ</label>
                 <input type="date" value={transfersToDate} onChange={e => setTransfersToDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
                 <select value={transfersShipment} onChange={e => setTransfersShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">الكل</option>
                   {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <button onClick={printTransfersReport}
-                className="flex items-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
               </button>
@@ -1073,19 +1073,19 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">من تاريخ</label>
                 <input type="date" value={expensesFromDate} onChange={e => setExpensesFromDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">إلى تاريخ</label>
                 <input type="date" value={expensesToDate} onChange={e => setExpensesToDate(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
                 <select value={expensesShipment} onChange={e => setExpensesShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">الكل</option>
                   {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -1094,14 +1094,14 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">السيارة</label>
                 <select value={expensesCarFilter} onChange={e => setExpensesCarFilter(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="">كل السيارات</option>
                   {state.cars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <button onClick={printExpensesReport}
-                className="flex items-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
               </button>
@@ -1152,7 +1152,7 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-slate-100 rounded-full h-2">
-                                    <div className="bg-teal-500 h-2 rounded-full" style={{ width: `${cat.percentage}%` }} />
+                                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${cat.percentage}%` }} />
                                   </div>
                                   <span className="text-xs font-bold text-slate-600 w-9 text-right">{cat.percentage}%</span>
                                 </div>
@@ -1232,14 +1232,14 @@ tfoot tr td{background-color:#0F2444!important;border:1px solid #0F2444;font-siz
             <div className="flex flex-wrap justify-between items-center gap-4">
               <div className="flex gap-2">
                 <button onClick={() => setInventoryView('byCar')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'byCar' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'byCar' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >حسب السيارة</button>
                 <button onClick={() => setInventoryView('total')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'total' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${inventoryView === 'total' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >إجمالي المتبقي</button>
               </div>
               <button onClick={() => printInventoryReport(inventoryView)}
-                className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm transition-colors"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />طباعة
               </button>

@@ -410,7 +410,7 @@ export default function Capital() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-teal-100 rounded-xl"><Wallet className="w-6 h-6 text-teal-600" /></div>
+          <div className="p-2 bg-blue-100 rounded-xl"><Wallet className="w-6 h-6 text-blue-600" /></div>
           <div>
             <h1 className="text-2xl font-bold text-slate-800">رأس المال والتصفية</h1>
             <p className="text-sm text-slate-500">{activeShipment?.name || 'لا توجد رسالة نشطة'}</p>
@@ -424,7 +424,7 @@ export default function Capital() {
         {tabs.map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === tab.key ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              activeTab === tab.key ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}>{tab.icon}{tab.label}</button>
         ))}
       </div>
@@ -435,9 +435,9 @@ export default function Capital() {
           {/* View toggle + action */}
           <div className="flex flex-wrap justify-between items-center gap-3">
             <div className="flex gap-2">
-              <button onClick={() => setCapitalView('cards')} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${capitalView === 'cards' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+              <button onClick={() => setCapitalView('cards')} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${capitalView === 'cards' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                 <LayoutGrid className="w-4 h-4" />بطاقات</button>
-              <button onClick={() => setCapitalView('table')} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${capitalView === 'table' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+              <button onClick={() => setCapitalView('table')} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${capitalView === 'table' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                 <Table2 className="w-4 h-4" />جدول</button>
             </div>
             <div className="flex gap-2">
@@ -446,7 +446,7 @@ export default function Capital() {
                   <Printer className="w-4 h-4" />طباعة</button>
               )}
               {hasWriteAccess && <button onClick={() => { resetContribForm(); setShowContribModal(true); }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-semibold shadow-sm">
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold shadow-sm">
                 <Plus className="w-4 h-4" />تسجيل مساهمة</button>
               }
             </div>
@@ -557,7 +557,7 @@ export default function Capital() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {investorData.map(d => (
-                      <tr key={d.partner.id} className="hover:bg-teal-50 transition-colors">
+                      <tr key={d.partner.id} className="hover:bg-blue-50 transition-colors">
                         <td className="px-4 py-3 font-semibold text-slate-900">{d.partner.name}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.capital)}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.returned)}</td>
@@ -600,7 +600,7 @@ export default function Capital() {
               <input type="number" min="0" step="0.01"
                 value={settlementExRateOverride !== '' ? settlementExRateOverride : (autoExchangeRate ?? '')}
                 onChange={e => setSettlementExRateOverride(e.target.value ? Number(e.target.value) : '')}
-                className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+                className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
               <span className="text-xs text-slate-400">جنيه/ريال</span>
               {autoExchangeRate && <span className="text-xs text-slate-400">(مأخوذ تلقائياً من آخر تحويل عام)</span>}
             </div>
@@ -614,7 +614,7 @@ export default function Capital() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-[#0F2444] flex items-center gap-2"><CreditCard className="w-4 h-4" />منصرفات الشركاء</h3>
               {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-xs font-semibold shadow-sm">
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-semibold shadow-sm">
                 <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
               }
             </div>
@@ -641,7 +641,7 @@ export default function Capital() {
                         <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
                         <td className="px-3 py-2 text-center">
                           <div className="flex justify-center gap-1">
-                            {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-teal-600 rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
+                            {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
                             {hasWriteAccess && <button onClick={() => handleDeleteDrawing(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
                           </div>
                         </td>
@@ -670,7 +670,7 @@ export default function Capital() {
               <div className="flex justify-between py-1"><span className="text-slate-600">الكاش المتوفر (بنوك + خزينة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.cashBalanceSDG)}</span></div>
               <div className="flex justify-between py-1"><span className="text-slate-600">+ منصرفات الشركاء (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.drawingsSDG)}</span></div>
               <div className="border-t-2 border-[#0F2444] pt-2 flex justify-between font-bold"><span>= الربح الخام (SDG)</span><span>{fmtSDG(settlementCalc.grossProfitSDG)}</span></div>
-              <div className="flex justify-between font-bold text-teal-700"><span>= الربح الخام (SAR) = SDG ÷ سعر الصرف</span><span>{fmtSAR(settlementCalc.grossProfitSAR)}</span></div>
+              <div className="flex justify-between font-bold text-blue-700"><span>= الربح الخام (SAR) = SDG ÷ سعر الصرف</span><span>{fmtSAR(settlementCalc.grossProfitSAR)}</span></div>
             </div>
           </div>
 
@@ -683,7 +683,7 @@ export default function Capital() {
                 <input type="number" min="0" max="100" step="1"
                   value={investorsPctOverride !== '' ? investorsPctOverride : (activeShipment?.shareholdersPercent ?? 40)}
                   onChange={e => setInvestorsPctOverride(e.target.value ? Number(e.target.value) : '')}
-                  className="w-20 px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+                  className="w-20 px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                 <span className="text-sm text-slate-500">%</span>
               </div>
               <span className="text-sm text-slate-500">حصة المساهمين بعد التقريب = {fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</span>
@@ -700,7 +700,7 @@ export default function Capital() {
                       <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
                       <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
                       <td className="px-3 py-2 text-left font-mono">{fmtPct(r.pct)}</td>
-                      <td className="px-3 py-2 text-left font-mono font-bold text-teal-700">{fmtSAR(r.profit)}</td>
+                      <td className="px-3 py-2 text-left font-mono font-bold text-blue-700">{fmtSAR(r.profit)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -724,7 +724,7 @@ export default function Capital() {
                   <input type="number" min="0" max="100" step="1"
                     value={mgmtFeePctOverride !== '' ? mgmtFeePctOverride : (activeShipment?.managementFeePercent ?? 20)}
                     onChange={e => setMgmtFeePctOverride(e.target.value ? Number(e.target.value) : '')}
-                    className="w-20 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-teal-500 outline-none" />
+                    className="w-20 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                   <span className="text-slate-500">%</span>
                 </div>
                 <span className="text-slate-400">= {fmtSAR(settlementCalc.managementFeeSAR)}</span>
@@ -767,7 +767,7 @@ export default function Capital() {
                       <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
                         <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
                         <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
-                        <td className="px-3 py-2 text-left font-mono text-teal-700">{fmtSAR(r.profit)}</td>
+                        <td className="px-3 py-2 text-left font-mono text-blue-700">{fmtSAR(r.profit)}</td>
                         <td className="px-3 py-2 text-left font-mono font-bold">{fmtSAR(r.capital + r.profit)}</td>
                       </tr>
                     ))}
@@ -789,7 +789,7 @@ export default function Capital() {
           <div className="flex flex-wrap gap-3 justify-end">
             <button onClick={printSettlement} className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-semibold text-sm">
               <Printer className="w-4 h-4" />طباعة التصفية</button>
-            {hasWriteAccess && <button onClick={handleSaveSettlement} className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm shadow-sm">
+            {hasWriteAccess && <button onClick={handleSaveSettlement} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm">
               <Save className="w-4 h-4" />حفظ التصفية ✓</button>
             }
           </div>
@@ -799,7 +799,7 @@ export default function Capital() {
                 <CheckCircle className="w-5 h-5" />
                 <span className="text-sm font-semibold">تم حفظ التصفية بتاريخ {format(new Date(savedSettlement.savedAt), 'dd/MM/yyyy HH:mm')}</span>
               </div>
-              {hasWriteAccess && <button onClick={handleSaveSettlement} className="text-sm text-teal-600 hover:text-teal-800 font-semibold">إعادة الحساب</button>}
+              {hasWriteAccess && <button onClick={handleSaveSettlement} className="text-sm text-blue-600 hover:text-blue-800 font-semibold">إعادة الحساب</button>}
             </div>
           )}
         </div>
@@ -847,7 +847,7 @@ export default function Capital() {
               { icon: <CreditCard className="w-5 h-5 text-red-600" />, label: 'إجمالي المصروفات', value: fmtSDG(verification.totalExpensesSDG), sub: 'من المصروفات', color: 'bg-red-50 border-red-200' },
               { icon: <Users className="w-5 h-5 text-amber-600" />, label: 'إجمالي الرواتب', value: fmtSDG(verification.totalSalariesSDG), sub: 'من الرواتب', color: 'bg-amber-50 border-amber-200' },
               { icon: <TrendingUp className="w-5 h-5 text-blue-600" />, label: 'إجمالي التحاويل العامة (الكل)', value: fmtSDG(verification.totalTransfersSDG), sub: 'الكل يخصم من البنوك', color: 'bg-blue-50 border-blue-200' },
-              { icon: <Building2 className="w-5 h-5 text-teal-600" />, label: 'الكاش في الحسابات', value: fmtSDG(verification.cashBalanceSDG), sub: 'أرصدة البنوك (رسالة نشطة)', color: 'bg-teal-50 border-teal-200' },
+              { icon: <Building2 className="w-5 h-5 text-blue-600" />, label: 'الكاش في الحسابات', value: fmtSDG(verification.cashBalanceSDG), sub: 'أرصدة البنوك (رسالة نشطة)', color: 'bg-blue-50 border-blue-200' },
               { icon: <AlertTriangle className="w-5 h-5 text-orange-600" />, label: 'المديونية غير المحصلة', value: fmtSDG(verification.uncollectedDebtSDG), sub: 'فواتير آجلة − مدفوعات', color: 'bg-orange-50 border-orange-200' },
             ].map((card, i) => (
               <div key={i} className={`p-4 rounded-xl border ${card.color}`}>
@@ -872,7 +872,7 @@ export default function Capital() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">المساهم</label>
             <select value={contribPartnerId} onChange={e => setContribPartnerId(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="">اختر المساهم...</option>
               {state.partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -880,22 +880,22 @@ export default function Capital() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ (SAR)</label>
             <input type="number" min="0" step="0.01" value={contribAmountSAR} onChange={e => setContribAmountSAR(e.target.value ? Number(e.target.value) : '')} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="0.00" />
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
             <input type="date" value={contribDate} onChange={e => setContribDate(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">ملاحظات</label>
             <input type="text" value={contribNotes} onChange={e => setContribNotes(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="اختياري" />
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="اختياري" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => { setShowContribModal(false); resetContribForm(); }}
               className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold">إلغاء</button>
-            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm">حفظ المساهمة</button>
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm">حفظ المساهمة</button>
           </div>
         </form>
       </Modal>
@@ -906,7 +906,7 @@ export default function Capital() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">الشريك</label>
             <select value={drawPartnerId} onChange={e => setDrawPartnerId(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="">اختر الشريك...</option>
               {operatingPartners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -914,24 +914,24 @@ export default function Capital() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
             <input type="date" value={drawDate} onChange={e => setDrawDate(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">سعر الصرف (جنيه/ريال)</label>
             <input type="number" min="0" step="0.01" value={drawExchangeRate} onChange={e => setDrawExchangeRate(e.target.value ? Number(e.target.value) : '')} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="مثال: 940" />
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="مثال: 940" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">الحسابات والمبالغ (SDG)</label>
             {drawSplits.map((split, idx) => (
               <div key={idx} className="flex gap-2 mb-2">
                 <select value={split.bankAccountId} onChange={e => { const ns = [...drawSplits]; ns[idx] = { ...ns[idx], bankAccountId: e.target.value }; setDrawSplits(ns); }} required
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                   <option value="">الحساب...</option>
                   {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
                 <input type="number" min="0" step="1" value={split.amount || ''} onChange={e => { const ns = [...drawSplits]; ns[idx] = { ...ns[idx], amount: Number(e.target.value) || 0 }; setDrawSplits(ns); }} required
-                  className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none" placeholder="المبلغ" />
+                  className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="المبلغ" />
                 {drawSplits.length > 1 && (
                   <button type="button" onClick={() => setDrawSplits(drawSplits.filter((_, i) => i !== idx))}
                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
@@ -939,12 +939,12 @@ export default function Capital() {
               </div>
             ))}
             <button type="button" onClick={() => setDrawSplits([...drawSplits, { bankAccountId: '', amount: 0 }])}
-              className="text-xs text-teal-600 hover:underline flex items-center gap-1 mt-1"><Plus className="w-3 h-3" />إضافة حساب</button>
+              className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"><Plus className="w-3 h-3" />إضافة حساب</button>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">الوصف</label>
             <input type="text" value={drawDescription} onChange={e => setDrawDescription(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="اختياري" />
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="اختياري" />
           </div>
           {drawSplits.some(s => s.amount > 0) && (
             <div className="bg-slate-50 p-3 rounded-lg text-sm space-y-1">
@@ -955,7 +955,7 @@ export default function Capital() {
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => { setShowDrawModal(false); resetDrawForm(); }}
               className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold">إلغاء</button>
-            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm">{editingDrawId ? 'تحديث' : 'حفظ'}</button>
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm">{editingDrawId ? 'تحديث' : 'حفظ'}</button>
           </div>
         </form>
       </Modal>

@@ -96,7 +96,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {debtors.length > 0 ? debtors.map((debtor) => (
-                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-teal-50 transition-colors">
+                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{debtor.name}</td>
                   <td className="px-4 py-3">{state.cities.find(c => c.id === debtor.cityId)?.name}</td>
                   <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">

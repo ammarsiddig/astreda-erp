@@ -187,12 +187,12 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
             <input type="date" required value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('customer')}</label>
-            <select required value={customerId} onChange={handleCustomerChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+            <select required value={customerId} onChange={handleCustomerChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
               <option value>{t('select')}</option>
               {availableCustomers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -212,7 +212,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('paymentType')}</label>
             <select required value={paymentType} onChange={(e) => setPaymentType(e.target.value as any)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="cash">{t('cash')}</option>
               <option value="credit">{t('credit')}</option>
@@ -222,7 +222,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
               <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value>{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -234,7 +234,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <label className="block text-sm font-medium text-slate-700">{t('products')}</label>
-            <button type="button" onClick={handleAddLine} className="text-sm text-teal-600 hover:underline flex items-center">
+            <button type="button" onClick={handleAddLine} className="text-sm text-blue-600 hover:underline flex items-center">
               <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>
               {t('add')}
             </button>
@@ -244,7 +244,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
             <div key={index} className="flex gap-2 items-start">
               <div className="flex-1">
                 <select required value={line.productId} onChange={(e) => handleLineChange(index, 'productId', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                 >
                   <option value>{t('product')}</option>
                   {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -252,13 +252,13 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
               </div>
               <div className="w-20">
                 <input type="number" required min="1" value={line.qty || ''} onChange={(e) => handleLineChange(index, 'qty', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   placeholder={t('qty')}
                 />
               </div>
               <div className="w-28">
                 <input type="number" required min="0" step="0.01" value={line.unitPrice || ''} onChange={(e) => handleLineChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                   placeholder={t('unitPrice')}
                 />
               </div>
@@ -282,7 +282,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
             <button type="button" onClick={onClose} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">
               {t('cancel')}
             </button>
-            <button type="submit" className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors">
+            <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors">
               {t('save')}
             </button>
           </div>

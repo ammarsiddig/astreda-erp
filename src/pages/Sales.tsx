@@ -165,7 +165,7 @@ export default function Sales() {
             <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">👁 وضع القراءة فقط</span>
           )}
         </div>
-        {hasWriteAccess && <button onClick={handleOpenNewInvoice} className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors shadow-sm">
+        {hasWriteAccess && <button onClick={handleOpenNewInvoice} className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors shadow-sm">
           <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
           {t('newInvoice')}
         </button>}
@@ -176,13 +176,13 @@ export default function Sales() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('city')}</label>
           <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -191,7 +191,7 @@ export default function Sales() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('salesperson')}</label>
           <select value={filterSalesperson} onChange={(e) => setFilterSalesperson(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -200,7 +200,7 @@ export default function Sales() {
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('paymentType')}</label>
           <select value={filterPaymentType} onChange={(e) => setFilterPaymentType(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
           >
             <option value>{t('all')}</option>
             <option value="cash">{t('cash')}</option>
@@ -212,7 +212,7 @@ export default function Sales() {
       {/* Invoices Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+          <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[600px]">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
                 <th className="px-4 py-3">{t('invoiceNumber')}</th>
@@ -226,7 +226,7 @@ export default function Sales() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-teal-50 transition-colors">
+                <tr key={invoice.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.customers.find(c => c.id === invoice.customerId)?.name}</td>
@@ -241,13 +241,13 @@ export default function Sales() {
                   </td>
                   <td className="px-4 py-3 text-center flex justify-center gap-2">
                     {hasWriteAccess && <button onClick={() => handleOpenEditInvoice(invoice)}
-                      className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                       title={t('edit')}
                     >
                       <Edit className="w-4 h-4"/>
                     </button>}
                     <button onClick={() => setShowViewModal(invoice.id)}
-                      className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
                       title={t('print')}
                     >
                       <Printer className="w-4 h-4"/>
@@ -341,7 +341,7 @@ export default function Sales() {
                 {t('close')}
               </button>
               <button onClick={() => handlePrintInvoice(viewInvoice)}
-                className="flex items-center px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold shadow-sm transition-colors"
+                className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm transition-colors"
               >
                 <Printer className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
                 {t('print')}
