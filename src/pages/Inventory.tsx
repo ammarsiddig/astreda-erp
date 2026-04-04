@@ -276,7 +276,47 @@ export default function Inventory() {
 
       {/* Main Inventory Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {inventoryData.map((row) => (
+            <div key={row.product.id} className={`p-4 space-y-3 ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+              <div className="flex items-center gap-2">
+                {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0"/>}
+                <span className="font-semibold text-slate-900 text-sm">{row.product.name}</span>
+              </div>
+              <div className="flex items-center justify-between bg-slate-100/50 rounded-lg px-3 py-2">
+                <span className="text-xs text-slate-500">{t('warehouse')}</span>
+                <span className={`font-bold text-sm ${row.warehouseRemaining < 0 ? 'text-red-600' : 'text-slate-700'}`}>
+                  {new Intl.NumberFormat('en-US').format(row.warehouseRemaining)}
+                </span>
+              </div>
+              {row.cars.filter(c => visibleCars.some(vc => vc.id === c.carId)).map(car => {
+                const carName = visibleCars.find(vc => vc.id === car.carId)?.name;
+                return (
+                  <div key={car.carId} className="border border-slate-100 rounded-lg overflow-hidden">
+                    <div className="bg-[#1E293B] text-white text-xs font-semibold px-3 py-1.5">{carName}</div>
+                    <div className="grid grid-cols-3 divide-x rtl:divide-x-reverse divide-slate-100">
+                      <div className="px-2 py-2 text-center">
+                        <p className="text-xs text-slate-400 mb-0.5">{t('loadedQty')}</p>
+                        <p className="text-sm font-medium text-slate-700">{new Intl.NumberFormat('en-US').format(car.loaded)}</p>
+                      </div>
+                      <div className="px-2 py-2 text-center">
+                        <p className="text-xs text-slate-400 mb-0.5">{t('soldQty')}</p>
+                        <p className="text-sm font-medium text-emerald-600">{new Intl.NumberFormat('en-US').format(car.sold)}</p>
+                      </div>
+                      <div className="px-2 py-2 text-center">
+                        <p className="text-xs text-slate-400 mb-0.5">{t('remainingStock')}</p>
+                        <p className={`text-sm font-bold ${car.remaining < 0 ? 'text-red-600' : 'text-slate-700'}`}>{new Intl.NumberFormat('en-US').format(car.remaining)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
@@ -333,7 +373,56 @@ export default function Inventory() {
         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
           <h2 className="text-lg font-semibold text-slate-800">سجل التحويلات / Transfer Log</h2>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {state.inventoryTransactions
+            .filter(t => t.shipmentId === activeShipmentId)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map(log => (
+              <div key={log.id} className="p-4 space-y-2">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
+                    <p className="text-xs text-slate-500">{log.referenceId || '-'}</p>
+                    <p className="text-xs text-slate-400">{format(new Date(log.date), 'dd/MM/yyyy')}</p>
+                  </div>
+                  <span className="font-bold text-slate-900 text-sm flex-shrink-0">
+                    {new Intl.NumberFormat('en-US').format(log.qty)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <span className="px-2 py-0.5 bg-slate-100 rounded">{log.fromLocation === 'warehouse' ? t('warehouse') : state.cars.find(c => c.id === log.fromLocation)?.name}</span>
+                  <span>→</span>
+                  <span className="px-2 py-0.5 bg-slate-100 rounded">{log.toLocation === 'warehouse' ? t('warehouse') : state.cars.find(c => c.id === log.toLocation)?.name}</span>
+                </div>
+                <div className="flex justify-end gap-1 pt-1">
+                  <button onClick={() => setShowViewModal(log)}
+                    className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                    title={t('view')}
+                  >
+                    <Eye className="w-4 h-4"/>
+                  </button>
+                  <button onClick={() => openEditModal(log)}
+                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                    title={t('edit')}
+                  >
+                    <Edit2 className="w-4 h-4"/>
+                  </button>
+                  <button onClick={() => setShowDeleteConfirm(log)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title={t('delete')}
+                  >
+                    <Trash2 className="w-4 h-4"/>
+                  </button>
+                </div>
+              </div>
+            ))}
+          {state.inventoryTransactions.filter(t => t.shipmentId === activeShipmentId).length === 0 && (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
