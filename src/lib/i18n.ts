@@ -613,7 +613,7 @@ export const translations = {
     salesByCity: 'المبيعات حسب المدينة',
     customerDebt: 'مديونية العملاء',
     totalRevenue: 'إجمالي الإيرادات',
-    salespersonPerformance: 'أداء المندوبين',
+    salespersonPerformance: 'أداء مناديب المبيعات',
     collections: 'التحصيلات',
     recordSalary: 'تسجيل راتب',
     active: 'نشط',
