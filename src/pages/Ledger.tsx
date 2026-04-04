@@ -399,7 +399,38 @@ export default function Ledger() {
 
       {/* Ledger Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {ledgerData.length > 0 ? ledgerData.map((entry) => (
+            <div key={entry.id} className="p-4 space-y-1">
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-slate-900 leading-snug line-clamp-2">{entry.description}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{format(new Date(entry.date), 'dd/MM/yyyy')}</p>
+                </div>
+                <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md flex-shrink-0">
+                  {t(entry.sourceModule === 'sale_cash' ? 'sales' :
+                     entry.sourceModule === 'payment' ? 'payments' :
+                     entry.sourceModule === 'expense' ? 'expenses' :
+                     entry.sourceModule === 'salary' ? 'salaries' :
+                     entry.sourceModule === 'general_transfer' ? 'generalTransfers' :
+                     'accountTransfers')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-1">
+                <div className="flex gap-3 text-xs">
+                  {entry.amountIn > 0 && <span className="text-emerald-600 font-bold">+{formatCurrency(entry.amountIn)}</span>}
+                  {entry.amountOut > 0 && <span className="text-red-600 font-bold">-{formatCurrency(entry.amountOut)}</span>}
+                </div>
+                {filterAccount && <span className="text-xs font-bold text-slate-700">{formatCurrency(entry.balance)}</span>}
+              </div>
+            </div>
+          )) : (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>

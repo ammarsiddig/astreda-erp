@@ -138,7 +138,51 @@ export default function Customers() {
 
       {/* Customers Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredCustomers.length > 0 ? filteredCustomers.map((customer) => {
+            const debt = getCustomerDebt(customer.id);
+            const totalSales = getCustomerTotalSales(customer.id);
+            return (
+              <div key={customer.id} className="p-4 space-y-2">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
+                    <p className="text-xs text-slate-500" dir="ltr">{customer.phone}</p>
+                    <p className="text-xs text-slate-400">{state.cities.find(c => c.id === customer.cityId)?.name}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`text-sm font-bold ${debt > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                      {formatCurrency(debt)}
+                    </span>
+                    <span className="text-xs text-slate-500">{t('debt')}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center pt-1">
+                  <div className="flex gap-3 text-xs text-slate-600">
+                    <span className="font-medium">{t('totalPayments')}: <span className="text-emerald-600 font-bold">{formatCurrency(state.payments.filter(p => p.customerId === customer.id && p.shipmentId === activeShipmentId).reduce((sum, p) => sum + p.amount, 0))}</span></span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => navigate(`/customers/${customer.id}`)}
+                      className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      <Eye className="w-4 h-4"/>
+                    </button>
+                    {hasWriteAccess && <button onClick={() => openEditModal(customer)}
+                      className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4"/>
+                    </button>}
+                  </div>
+                </div>
+              </div>
+            );
+          }) : (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>

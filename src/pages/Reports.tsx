@@ -576,7 +576,28 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
               </select>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="overflow-x-auto">
+              {/* Mobile card list */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {debtData.length > 0 ? debtData.map(row => (
+                  <div key={row.id} className="p-4 space-y-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 text-sm">{row.name}</p>
+                        <p className="text-xs text-slate-500">{row.city} · {row.salesperson}</p>
+                      </div>
+                      <span className="font-bold text-red-600 text-sm flex-shrink-0">{formatCurrency(row.debt)}</span>
+                    </div>
+                  </div>
+                )) : <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>}
+                {debtData.length > 0 && (
+                  <div className="px-4 py-3 bg-slate-50 flex justify-between items-center font-bold text-slate-900 text-sm">
+                    <span>{t('totalDebt')}</span>
+                    <span className="text-red-600">{formatCurrency(debtData.reduce((sum, row) => sum + row.debt, 0))}</span>
+                  </div>
+                )}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                   <thead className="text-xs text-white uppercase bg-[#1E293B]">
                     <tr>
@@ -841,47 +862,81 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-slate-600 mb-3">جدول تفصيلي</h4>
-                  <div className="overflow-x-auto rounded-xl border border-slate-200">
-                    <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                      <thead className="text-xs text-white bg-[#134e4a]">
-                        <tr>
-                          <th className="px-4 py-3">المندوب</th><th className="px-4 py-3">المدن</th>
-                          <th className="px-4 py-3 text-center">عدد الفواتير</th>
-                          <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
-                          <th className="px-4 py-3 text-right rtl:text-left">المتحصلات</th>
-                          <th className="px-4 py-3 text-right rtl:text-left">المديونية</th>
-                          <th className="px-4 py-3 text-center">نسبة التحصيل</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {salespersonData.map(sp => {
-                          const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
-                          return (
-                            <tr key={sp.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{sp.name}</td>
-                              <td className="px-4 py-3 text-slate-500 text-xs">{sp.cities.join('، ')}</td>
-                              <td className="px-4 py-3 text-center">{sp.invoiceCount}</td>
-                              <td className="px-4 py-3 font-semibold text-right rtl:text-left">{formatCurrency(sp.sales)}</td>
-                              <td className="px-4 py-3 font-semibold text-[#134e4a] text-right rtl:text-left">{formatCurrency(sp.collections)}</td>
-                              <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(sp.debt)}</td>
-                              <td className="px-4 py-3 text-center">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${rateColor}`}>{sp.collectionRate}%</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                      <tfoot className="bg-slate-100 border-t-2 border-slate-300 font-bold text-slate-900">
-                        <tr>
-                          <td className="px-4 py-3">الإجمالي</td><td />
-                          <td className="px-4 py-3 text-center">{salespersonData.reduce((s, sp) => s + sp.invoiceCount, 0)}</td>
-                          <td className="px-4 py-3 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.sales, 0))}</td>
-                          <td className="px-4 py-3 font-bold text-[#134e4a] text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.collections, 0))}</td>
-                          <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.debt, 0))}</td>
-                          <td />
-                        </tr>
-                      </tfoot>
-                    </table>
+                  <div className="rounded-xl border border-slate-200 overflow-hidden">
+                    {/* Mobile card list */}
+                    <div className="md:hidden divide-y divide-slate-100">
+                      {salespersonData.map(sp => {
+                        const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+                        return (
+                          <div key={sp.id} className="p-4 space-y-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm">{sp.name}</p>
+                                <p className="text-xs text-slate-500">{sp.cities.join('، ')}</p>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${rateColor}`}>{sp.collectionRate}%</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div>
+                                <p className="text-slate-500">مبيعات</p>
+                                <p className="font-semibold text-slate-800">{formatCurrency(sp.sales)}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">تحصيل</p>
+                                <p className="font-semibold text-[#134e4a]">{formatCurrency(sp.collections)}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">مديونية</p>
+                                <p className="font-bold text-red-600">{formatCurrency(sp.debt)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Desktop table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                        <thead className="text-xs text-white bg-[#134e4a]">
+                          <tr>
+                            <th className="px-4 py-3">المندوب</th><th className="px-4 py-3">المدن</th>
+                            <th className="px-4 py-3 text-center">عدد الفواتير</th>
+                            <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
+                            <th className="px-4 py-3 text-right rtl:text-left">المتحصلات</th>
+                            <th className="px-4 py-3 text-right rtl:text-left">المديونية</th>
+                            <th className="px-4 py-3 text-center">نسبة التحصيل</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {salespersonData.map(sp => {
+                            const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+                            return (
+                              <tr key={sp.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-4 py-3 font-semibold text-slate-900">{sp.name}</td>
+                                <td className="px-4 py-3 text-slate-500 text-xs">{sp.cities.join('، ')}</td>
+                                <td className="px-4 py-3 text-center">{sp.invoiceCount}</td>
+                                <td className="px-4 py-3 font-semibold text-right rtl:text-left">{formatCurrency(sp.sales)}</td>
+                                <td className="px-4 py-3 font-semibold text-[#134e4a] text-right rtl:text-left">{formatCurrency(sp.collections)}</td>
+                                <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(sp.debt)}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${rateColor}`}>{sp.collectionRate}%</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                        <tfoot className="bg-slate-100 border-t-2 border-slate-300 font-bold text-slate-900">
+                          <tr>
+                            <td className="px-4 py-3">الإجمالي</td><td />
+                            <td className="px-4 py-3 text-center">{salespersonData.reduce((s, sp) => s + sp.invoiceCount, 0)}</td>
+                            <td className="px-4 py-3 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.sales, 0))}</td>
+                            <td className="px-4 py-3 font-bold text-[#134e4a] text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.collections, 0))}</td>
+                            <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(salespersonData.reduce((s, sp) => s + sp.debt, 0))}</td>
+                            <td />
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </>

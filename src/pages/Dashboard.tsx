@@ -85,8 +85,23 @@ export default function Dashboard() {
           <div className="px-5 py-3.5 border-b border-slate-100">
             <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{t('topDebtors')}</h2>
           </div>
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left rtl:text-right text-slate-500 min-w-[400px]">
+          {/* Mobile card view */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {debtors.length > 0 ? debtors.map((debtor) => (
+              <div key={debtor.id} className="px-4 py-3 flex justify-between items-center gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 text-sm truncate">{debtor.name}</p>
+                  <p className="text-xs text-slate-500">{state.cities.find(c => c.id === debtor.cityId)?.name}</p>
+                </div>
+                <span className="font-bold text-red-600 text-sm flex-shrink-0">{formatCurrency(debtor.debt)}</span>
+              </div>
+            )) : (
+              <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+            )}
+          </div>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm text-left rtl:text-right text-slate-500">
             <thead>
               <tr className="bg-[#1E293B] text-white text-xs uppercase">
                 <th className="px-4 py-3">{t('customer')}</th>
