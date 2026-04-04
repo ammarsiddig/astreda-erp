@@ -19,7 +19,7 @@ export default function Reports() {
   const isSpRole = isSalesperson(currentUser, state.roles);
   const isWhRole = isWarehouse(currentUser, state.roles);
   const defaultTab = isSpRole ? 'debt' : isWhRole ? 'inventory' : 'salesperson';
-  const [activeTab, setActiveTab] = useState<'debt' | 'pnl' | 'salesperson' | 'dailyDebt' | 'inventory' | 'transfers' | 'expenses'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'debt' | 'salesperson' | 'dailyDebt' | 'inventory' | 'transfers' | 'expenses'>(defaultTab);
 
   // Debt Report Filters
   const [debtCityFilter, setDebtCityFilter] = useState('');
@@ -77,23 +77,6 @@ export default function Reports() {
   }, [state.customers, state.invoices, state.payments, state.cities, state.salespeople, debtCityFilter, debtShipmentFilter, debtSalespersonFilter]);
 
   // 2. P&L Data
-  const pnlData = useMemo(() => {
-    const invoices = state.invoices.filter(i => i.shipmentId === activeShipmentId);
-    const payments = state.payments.filter(p => p.shipmentId === activeShipmentId);
-    const expenses = state.expenses.filter(e => e.shipmentId === activeShipmentId);
-    const salaries = state.salaries.filter(s => s.shipmentId === activeShipmentId);
-    const generalTransfers = state.generalTransfers.filter(t => t.shipmentId === activeShipmentId);
-
-    const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0);
-    const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0);
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const totalSalaries = salaries.reduce((sum, sal) => sum + sal.amount, 0);
-    const totalGeneralTransfers = generalTransfers.reduce((sum, t) => sum + t.amountSDG, 0);
-    const netProfit = totalCollected - totalExpenses - totalSalaries - totalGeneralTransfers;
-
-    return { totalCollected, totalInvoiced, totalExpenses, totalSalaries, totalGeneralTransfers, netProfit };
-  }, [state.invoices, state.payments, state.expenses, state.salaries, state.generalTransfers, activeShipmentId]);
-
   // 3. Salesperson Performance Data
   const salespersonData = useMemo(() => {
     return state.salespeople.map(sp => {
@@ -528,7 +511,6 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
           { id: 'inventory', label: 'تقرير المخزون' },
         ] : [
           { id: 'salesperson', label: t('salespersonReport') },
-          { id: 'pnl',         label: 'تصفية الرسالة' },
           { id: 'dailyDebt',   label: 'تقرير المديونية اليومي' },
           { id: 'debt',        label: t('debtReport') },
           { id: 'transfers',   label: 'التحاويل حسب المستفيد' },
@@ -709,67 +691,6 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 <p>يرجى اختيار المدينة لعرض تقرير المديونية</p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* P&L Tab */}
-        {activeTab === 'pnl' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-800">تصفية الرسالة / Shipment Settlement</h3>
-              <button
-                onClick={() => navigate('/capital', { state: { tab: 'settlement' } })}
-                className="flex items-center gap-2 px-4 py-2 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                {t('viewFullSettlement')}
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="flex flex-col p-4 bg-emerald-50 rounded-lg border border-emerald-200 gap-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-emerald-700">إجمالي الإيرادات (المُحصَّل فعلياً)</span>
-                  <span className="font-bold text-emerald-600 text-lg">{formatCurrency(pnlData.totalCollected)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-400">إجمالي المبيعات (الفواتير)</span>
-                  <span className="text-sm text-slate-400">{formatCurrency(pnlData.totalInvoiced)}</span>
-                </div>
-              </div>
-              <div className="flex flex-col p-4 bg-amber-50 rounded-lg border border-amber-200 gap-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-amber-700">إجمالي المديونية (غير محصل)</span>
-                  <span className="font-bold text-lg" style={{ color: '#F59E0B' }}>{formatCurrency(pnlData.totalInvoiced - pnlData.totalCollected)}</span>
-                </div>
-                <p className="text-xs text-amber-500">هذا المبلغ لم يُحصَّل بعد ولا يؤثر على المتبقي</p>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <span className="font-medium text-slate-700">{t('totalExpenses')}</span>
-                <span className="font-bold text-red-600 text-lg">-{formatCurrency(pnlData.totalExpenses)}</span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <span className="font-medium text-slate-700">{t('totalSalaries')}</span>
-                <span className="font-bold text-red-600 text-lg">-{formatCurrency(pnlData.totalSalaries)}</span>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <span className="font-medium text-slate-700">{t('totalGeneralTransfers')}</span>
-                <span className="font-bold text-red-600 text-lg">-{formatCurrency(pnlData.totalGeneralTransfers)}</span>
-              </div>
-              <div className="flex justify-between items-center p-6 bg-[#134e4a] text-white rounded-xl shadow-md mt-6">
-                <span className="font-bold text-xl">المتبقي (بناءً على المُحصَّل)</span>
-                <span className={`font-bold text-2xl ${pnlData.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(pnlData.netProfit)}</span>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                <p className="text-sm text-slate-500 mb-3">للحصول على التصفية الكاملة مع توزيع الأرباح على الشركاء والمساهمين</p>
-                <button
-                  onClick={() => navigate('/capital')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  {t('viewFullSettlement')} ← رأس المال
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
