@@ -7,6 +7,7 @@ import { Users, Plus, Edit2, Eye, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
 import { Customer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
@@ -15,6 +16,7 @@ export default function Customers() {
   const { t, lang } = useTranslation();
   const navigate = useNavigate();
   const { state, updateState, activeShipmentId } = useAppStore();
+  const { showToast } = useToast();
   const currentUser = state.currentUser;
   const isSpRole = isSalesperson(currentUser, state.roles);
   const hasWriteAccess = canWrite(currentUser, state.roles, 'customers');
@@ -50,6 +52,7 @@ export default function Customers() {
         c.id === showEditModal.id ? { ...c, name, phone, cityId, salespersonId, carId, notes } : c
       );
       updateState({ customers: updatedCustomers });
+      showToast(t('updatedSuccessfully'));
       setShowEditModal(null);
     } else {
       const newCustomer: Customer = {
@@ -62,6 +65,7 @@ export default function Customers() {
         notes,
       };
       updateState({ customers: [...state.customers, newCustomer] });
+      showToast(t('addedSuccessfully'));
       setShowAddModal(false);
     }
 

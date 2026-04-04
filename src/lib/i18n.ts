@@ -330,6 +330,11 @@ export const translations = {
     investorShare: 'Investor Share',
     totalEntitlements: 'Total Entitlements',
     viewFullSettlement: 'View Full Settlement',
+    savedSuccessfully: 'Saved successfully',
+    deletedSuccessfully: 'Deleted successfully',
+    addedSuccessfully: 'Added successfully',
+    updatedSuccessfully: 'Updated successfully',
+    errorOccurred: 'An error occurred. Please try again.',
   },
   ar: {
     dashboard: 'لوحة التحكم',
@@ -662,6 +667,11 @@ export const translations = {
     investorShare: 'نصيب المساهم',
     totalEntitlements: 'إجمالي المستحقات',
     viewFullSettlement: 'عرض التصفية الكاملة',
+    savedSuccessfully: 'تم الحفظ بنجاح',
+    deletedSuccessfully: 'تم الحذف بنجاح',
+    addedSuccessfully: 'تمت الإضافة بنجاح',
+    updatedSuccessfully: 'تم التحديث بنجاح',
+    errorOccurred: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
   }
 };
 
