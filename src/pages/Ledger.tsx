@@ -584,13 +584,17 @@ export default function Ledger() {
               <button
                 onClick={() => setShowStatementModal(false)}
                 className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold text-sm transition-colors"
-              >{t('close')}</button>
+              >
+                {t('close')}
+              </button>
               <button
                 onClick={printAccountStatement}
                 disabled={!stmtFromDate || !stmtToDate}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
               >
-                <Printer className="w-4 h-4" />{t('print')}</button>
+                <Printer className="w-4 h-4" />
+                {t('print')}
+              </button>
             </div>
           </div>
         </div>

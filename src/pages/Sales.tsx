@@ -162,7 +162,7 @@ export default function Sales() {
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('sales')}</h1>
           {!hasWriteAccess && (
-            <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">👁 {t('readOnlyMode')}</span>
+            <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>
           )}
         </div>
         {hasWriteAccess && <button onClick={handleOpenNewInvoice} className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm">
