@@ -419,7 +419,7 @@ export default function GeneralTransfers() {
           {/* Bank accounts section */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-slate-700">دفع من حسابات / Pay from accounts</label>
+              <label className="block text-sm font-medium text-slate-700">دفع من الحسابات</label>
               <button
                 type="button"
                 onClick={handleAddSplit}
@@ -561,7 +561,7 @@ export default function GeneralTransfers() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-slate-500">تفاصيل الحسابات / Account Details</label>
+              <label className="block text-xs font-medium text-slate-500">تفاصيل الحسابات</label>
               <div className="bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-200">
                 {showViewModal.splits.map((split, idx) => (
                   <div key={idx} className="p-2 flex justify-between text-sm">

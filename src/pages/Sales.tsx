@@ -145,7 +145,7 @@ export default function Sales() {
     <span class="total-label">الإجمالي</span>
     <span class="total-value">${new Intl.NumberFormat('en-US').format(invoice.total)} SDG</span>
   </div>
-  <div class="footer">شكراً لتعاملكم معنا — Thank you for your business</div>
+  <div class="footer">شكراً لتعاملكم معنا</div>
 </body></html>`;
 
     const w = window.open('', '', 'width=850,height=1000,scrollbars=1');

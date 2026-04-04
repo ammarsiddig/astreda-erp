@@ -20,8 +20,8 @@ const PAGE_LABELS: Record<PageKey, string> = {
   payments: 'المدفوعات',
   expenses: 'المصروفات',
   salaries: 'الرواتب',
-  generalTransfers: 'التحويلات',
-  accountTransfers: 'تحويل بين الحسابات',
+  generalTransfers: 'التحاويل العامة',
+  accountTransfers: 'المقاصة',
   ledger: 'الدفتر',
   reports: 'التقارير',
   capital: 'رأس المال',
@@ -470,7 +470,7 @@ export default function Settings() {
 
                       {/* نسبة الإدارة */}
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">نسبة إدارة عصام</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('managementFeePercent')}</label>
                         <div className="relative">
                           <input
                             type="number"

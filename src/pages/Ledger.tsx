@@ -485,7 +485,7 @@ export default function Ledger() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#134e4a]" />
-                <h2 className="text-base font-bold text-slate-800">كشف حساب / Account Statement</h2>
+                <h2 className="text-base font-bold text-slate-800">كشف حساب</h2>
               </div>
               <button
                 onClick={() => setShowStatementModal(false)}
