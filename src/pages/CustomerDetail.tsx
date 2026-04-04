@@ -228,6 +228,7 @@ export default function CustomerDetail() {
         <div>
           <h1 className="text-xl font-bold text-slate-800">{customer.name}</h1>
           <p className="text-sm text-slate-500">{customer.phone} - {state.cities.find(c => c.id === customer.cityId)?.name}</p>
+          <p className="text-sm text-slate-500">{t('salesperson')}: <span className="font-medium text-slate-700">{state.salespeople.find(s => s.id === customer.salespersonId)?.name || '-'}</span></p>
         </div>
       </div>
 
@@ -287,6 +288,7 @@ export default function CustomerDetail() {
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
                       <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
+                      <p className="text-xs text-slate-500">{t('salesperson')}: {state.salespeople.find(s => s.id === invoice.salespersonId)?.name || '-'}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       <span className="font-bold text-slate-900 text-sm">{formatCurrency(invoice.total)}</span>
@@ -312,6 +314,7 @@ export default function CustomerDetail() {
                   <tr>
                     <th className="px-4 py-3">{t('invoiceNumber')}</th>
                     <th className="px-4 py-3">{t('date')}</th>
+                    <th className="px-4 py-3">{t('salesperson')}</th>
                     <th className="px-4 py-3">{t('paymentType')}</th>
                     <th className="px-4 py-3 text-right rtl:text-left">{t('total')}</th>
                     <th className="px-4 py-3 text-center">{t('action')}</th>
@@ -322,6 +325,7 @@ export default function CustomerDetail() {
                     <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors">
                       <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                       <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3 text-slate-600">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${ invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }`}>
                           {t(invoice.paymentType)}
@@ -353,7 +357,7 @@ export default function CustomerDetail() {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                      <td colSpan={6} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                     </tr>
                   )}
                 </tbody>
