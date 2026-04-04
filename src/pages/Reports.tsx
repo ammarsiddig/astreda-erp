@@ -1152,7 +1152,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-slate-100 rounded-full h-2">
-                                    <div className="bg-[#f0fdfa]0 h-2 rounded-full" style={{ width: `${cat.percentage}%` }} />
+                                    <div className="bg-[#14b8a6] h-2 rounded-full" style={{ width: `${cat.percentage}%` }} />
                                   </div>
                                   <span className="text-xs font-bold text-slate-600 w-9 text-right">{cat.percentage}%</span>
                                 </div>

@@ -59,7 +59,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <KPICard title={t('totalCash')} value={totalCash} icon={Wallet} color="bg-emerald-500" border="border-t-emerald-500" />
         <KPICard title={t('totalDebt')} value={totalDebt} icon={Users} color="bg-red-500" border="border-t-red-500" />
-        <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-[#f0fdfa]0" border="border-t-blue-500" />
+        <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-[#14b8a6]" border="border-t-[#14b8a6]" />
         <KPICard title={t('totalExpenses')} value={activeShipmentExpenses} icon={Receipt} color="bg-amber-500" border="border-t-amber-500" />
       </div>
 
