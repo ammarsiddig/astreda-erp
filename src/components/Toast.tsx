@@ -32,8 +32,6 @@ const STYLES: Record<ToastType, { bg: string; icon: string; border: string }> = 
 
 const AUTO_DISMISS_MS = 3500;
 
-let idCounter = 0;
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -53,7 +51,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
-    const id = `toast-${++idCounter}`;
+    const id = crypto.randomUUID();
     setToasts(prev => [...prev, { id, message, type }]);
     const timer = setTimeout(() => {
       timersRef.current.delete(id);
