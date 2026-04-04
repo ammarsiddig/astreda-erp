@@ -75,6 +75,17 @@ export default function Capital() {
     [state.generalTransfers, activeShipmentId]);
   const savedSettlement = activeShipmentId ? (state.settlementResults || {})[activeShipmentId] : undefined;
 
+  const receivablesSDG = useMemo(() => {
+    if (!activeShipmentId) return 0;
+    const totalCreditInvoices = state.invoices
+      .filter(i => i.shipmentId === activeShipmentId && i.paymentType === 'credit')
+      .reduce((s, i) => s + i.total, 0);
+    const totalPaymentsCollected = state.payments
+      .filter(p => p.shipmentId === activeShipmentId)
+      .reduce((s, p) => s + p.amount, 0);
+    return Math.max(0, totalCreditInvoices - totalPaymentsCollected);
+  }, [activeShipmentId, state.invoices, state.payments]);
+
   // === TAB 1: Investor data per partner (live profit calculation) ===
   const liveExchangeRate = autoExchangeRate ?? 0;
   const liveProfitCalc = useMemo(() => {
@@ -82,13 +93,13 @@ export default function Capital() {
     const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
     const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
     const drawingsSDG = drawingTransfers.reduce((s, t) => s + t.amountSDG, 0);
-    const grossProfitSDG = cashBalanceSDG + drawingsSDG;
+    const grossProfitSDG = cashBalanceSDG + drawingsSDG + receivablesSDG;
     const grossProfitSAR = grossProfitSDG / liveExchangeRate;
     const investorsPct = activeShipment?.shareholdersPercent ?? 40;
     const investorShareSAR = grossProfitSAR * investorsPct / 100;
     const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
     return { investorShareSAR, totalCapitalSAR };
-  }, [activeShipmentId, liveExchangeRate, state.ledger, state.bankAccounts, drawingTransfers, contributions, activeShipment]);
+  }, [activeShipmentId, liveExchangeRate, state.ledger, state.bankAccounts, receivablesSDG, drawingTransfers, contributions, activeShipment]);
 
   const investorData = useMemo(() => {
     if (!activeShipmentId) return [];
@@ -132,7 +143,7 @@ export default function Capital() {
     const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
     const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
     const drawingsSDG = drawingTransfers.reduce((s, t) => s + t.amountSDG, 0);
-    const grossProfitSDG = cashBalanceSDG + drawingsSDG;
+    const grossProfitSDG = cashBalanceSDG + drawingsSDG + receivablesSDG;
     const grossProfitSAR = exchangeRate > 0 ? grossProfitSDG / exchangeRate : 0;
     const investorsShareSAR = grossProfitSAR * investorsPct / 100;
     const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
@@ -161,12 +172,12 @@ export default function Capital() {
     const regularInvestors = investorShares.filter(r => !r.partner.isOperatingPartner);
     return {
       exchangeRate, noExRate, investorsPct, partnersPct, mgmtFeePct, mgmtFeeRecipientId,
-      cashBalanceSDG, drawingsSDG, grossProfitSDG, grossProfitSAR,
+      cashBalanceSDG, drawingsSDG, receivablesSDG, grossProfitSDG, grossProfitSAR,
       investorsShareSAR, totalRoundedInvestorProfits, investorRoundingRemainder, totalCapitalSAR, investorShares,
       partnersShareSAR, managementFeeSAR, remainingForPartners, perPartnerSAR,
       partnerSummaries, regularInvestors,
     };
-  }, [activeShipmentId, state, contributions, drawingTransfers, operatingPartners,
+  }, [activeShipmentId, state, receivablesSDG, contributions, drawingTransfers, operatingPartners,
       settlementExRateOverride, autoExchangeRate, investorsPctOverride, mgmtFeePctOverride, activeShipment]);
 
   // === TAB 3: Verification ===
@@ -367,8 +378,9 @@ export default function Capital() {
       .totals{background:#e2e8f0;font-weight:bold}</style></head>
       <body><h1>أستريدا للتوزيع — تصفية الرسالة</h1>
       <div class="sub">${shipmentName} | سعر الصرف: ${sc.exchangeRate} | ${format(new Date(),'dd/MM/yyyy')}</div>
-      <h2>أ — الربح الخام</h2>
+      <h2>أ — الربح الخام (شامل المديونية)</h2>
       <div class="summary-box"><div class="line"><span>الكاش المتوفر (SDG)</span><span>${fmtSDG(sc.cashBalanceSDG)}</span></div>
+      <div class="line"><span>+ المديونية (مبالغ غير محصلة) (SDG)</span><span>${fmtSDG(sc.receivablesSDG)}</span></div>
       <div class="line"><span>+ منصرفات الشركاء (SDG)</span><span>${fmtSDG(sc.drawingsSDG)}</span></div>
       <div class="total-line"><span>= الربح الخام (SDG)</span><span>${fmtSDG(sc.grossProfitSDG)}</span></div>
       <div class="total-line"><span>= الربح الخام (SAR)</span><span>${fmtSAR(sc.grossProfitSAR)}</span></div></div>
@@ -665,9 +677,10 @@ export default function Capital() {
 
           {/* Section أ — Gross Profit */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4" />أ — الربح الخام</h3>
+            <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4" />أ — الربح الخام (شامل المديونية)</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-1"><span className="text-slate-600">الكاش المتوفر (بنوك + خزينة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.cashBalanceSDG)}</span></div>
+              <div className="flex justify-between py-1"><span className="text-slate-600">+ المديونية (مبالغ غير محصلة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.receivablesSDG)}</span></div>
               <div className="flex justify-between py-1"><span className="text-slate-600">+ منصرفات الشركاء (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.drawingsSDG)}</span></div>
               <div className="border-t-2 border-[#134e4a] pt-2 flex justify-between font-bold"><span>= الربح الخام (SDG)</span><span>{fmtSDG(settlementCalc.grossProfitSDG)}</span></div>
               <div className="flex justify-between font-bold text-[#134e4a]"><span>= الربح الخام (SAR) = SDG ÷ سعر الصرف</span><span>{fmtSAR(settlementCalc.grossProfitSAR)}</span></div>
