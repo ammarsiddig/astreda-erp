@@ -211,7 +211,45 @@ export default function Sales() {
 
       {/* Invoices Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
+            <div key={invoice.id} className="p-4 space-y-2">
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
+                  <p className="text-xs text-slate-500">{state.customers.find(c => c.id === invoice.customerId)?.name}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="font-bold text-slate-900 text-sm">{formatCurrency(invoice.total)}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {t(invoice.paymentType)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-xs text-slate-500">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name}</span>
+                <div className="flex gap-1">
+                  {hasWriteAccess && <button onClick={() => handleOpenEditInvoice(invoice)}
+                    className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-4 h-4"/>
+                  </button>}
+                  <button onClick={() => setShowViewModal(invoice.id)}
+                    className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <Printer className="w-4 h-4"/>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
@@ -306,7 +344,7 @@ export default function Sales() {
               </div>
               {/* Lines table */}
               <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[400px]">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[#134e4a] text-white text-xs uppercase">
                     <th className="px-4 py-2.5 text-right">المنتج</th>

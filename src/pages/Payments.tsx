@@ -174,7 +174,46 @@ export default function Payments() {
 
       {/* Payments Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredPayments.length > 0 ? filteredPayments.map((payment) => (
+            <div key={payment.id} className="p-4 space-y-2">
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm">{payment.id}</p>
+                  <p className="text-xs text-slate-700">{state.customers.find(c => c.id === payment.customerId)?.name}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(payment.date), 'dd/MM/yyyy')}</p>
+                </div>
+                <span className="font-bold text-emerald-600 text-sm flex-shrink-0">{formatCurrency(payment.amount)}</span>
+              </div>
+              {payment.notes && <p className="text-xs text-slate-500 truncate">{payment.notes}</p>}
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</span>
+                <div className="flex gap-1">
+                  <button onClick={() => setShowViewModal(payment)}
+                    className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <Eye className="w-4 h-4"/>
+                  </button>
+                  {hasWriteAccess && <button onClick={() => openEditModal(payment)}
+                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4"/>
+                  </button>}
+                  {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(payment)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4"/>
+                  </button>}
+                </div>
+              </div>
+            </div>
+          )) : (
+            <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>

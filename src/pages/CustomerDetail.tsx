@@ -278,59 +278,88 @@ export default function CustomerDetail() {
       {/* Tab Content */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {activeTab === 'invoices' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-              <thead className="text-xs text-white uppercase bg-[#1E293B]">
-                <tr>
-                  <th className="px-4 py-3">{t('invoiceNumber')}</th>
-                  <th className="px-4 py-3">{t('date')}</th>
-                  <th className="px-4 py-3">{t('paymentType')}</th>
-                  <th className="px-4 py-3 text-right rtl:text-left">{t('total')}</th>
-                  <th className="px-4 py-3 text-center">{t('action')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {invoices.length > 0 ? invoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors">
-                    <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
-                    <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${ invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }`}>
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {invoices.length > 0 ? invoices.map((invoice) => (
+                <div key={invoice.id} className="p-4 space-y-2">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
+                      <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="font-bold text-slate-900 text-sm">{formatCurrency(invoice.total)}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                         {t(invoice.paymentType)}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 font-bold text-slate-900 text-right rtl:text-left">
-                      {formatCurrency(invoice.total)}
-                    </td>
-                    <td className="px-4 py-3 text-center flex justify-center gap-2">
-                      <button onClick={() => handleOpenEditInvoice(invoice)}
-                        className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
-                        title={t('edit')}
-                      >
-                        <Edit className="w-4 h-4"/>
-                      </button>
-                      <button onClick={() => setShowPrintModal(invoice.id)}
-                        className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
-                        title={t('print')}
-                      >
-                        <Printer className="w-4 h-4"/>
-                      </button>
-                      <button onClick={() => handleDeleteInvoice(invoice.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title={t('delete')}
-                      >
-                        <Trash2 className="w-4 h-4"/>
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-1">
+                    <button onClick={() => handleOpenEditInvoice(invoice)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+                    <button onClick={() => setShowPrintModal(invoice.id)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Printer className="w-4 h-4"/></button>
+                    <button onClick={() => handleDeleteInvoice(invoice.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                  </div>
+                </div>
+              )) : (
+                <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+              )}
+            </div>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                <thead className="text-xs text-white uppercase bg-[#1E293B]">
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                    <th className="px-4 py-3">{t('invoiceNumber')}</th>
+                    <th className="px-4 py-3">{t('date')}</th>
+                    <th className="px-4 py-3">{t('paymentType')}</th>
+                    <th className="px-4 py-3 text-right rtl:text-left">{t('total')}</th>
+                    <th className="px-4 py-3 text-center">{t('action')}</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {invoices.length > 0 ? invoices.map((invoice) => (
+                    <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors">
+                      <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
+                      <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${ invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }`}>
+                          {t(invoice.paymentType)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-bold text-slate-900 text-right rtl:text-left">
+                        {formatCurrency(invoice.total)}
+                      </td>
+                      <td className="px-4 py-3 text-center flex justify-center gap-2">
+                        <button onClick={() => handleOpenEditInvoice(invoice)}
+                          className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                          title={t('edit')}
+                        >
+                          <Edit className="w-4 h-4"/>
+                        </button>
+                        <button onClick={() => setShowPrintModal(invoice.id)}
+                          className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                          title={t('print')}
+                        >
+                          <Printer className="w-4 h-4"/>
+                        </button>
+                        <button onClick={() => handleDeleteInvoice(invoice.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title={t('delete')}
+                        >
+                          <Trash2 className="w-4 h-4"/>
+                        </button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {activeTab === 'payments' && (
@@ -343,7 +372,32 @@ export default function CustomerDetail() {
                 {t('addPayment')}
               </button>
             </div>
-            <div className="overflow-x-auto">
+            {/* Mobile card list */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {paymentsWithBalance.length > 0 ? paymentsWithBalance.map((payment) => (
+                <div key={payment.id} className="p-4 space-y-2">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-500">{format(new Date(payment.date), 'dd/MM/yyyy')}</p>
+                      <p className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</p>
+                      {payment.notes && <p className="text-xs text-slate-500 truncate">{payment.notes}</p>}
+                    </div>
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      <span className="font-bold text-emerald-600 text-sm">{formatCurrency(payment.amount)}</span>
+                      <span className="text-xs text-slate-500">{t('balance')}: {formatCurrency(payment.balanceAfter)}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-1">
+                    <button onClick={() => openEditPayment(payment)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>
+                    <button onClick={() => setShowDeletePaymentConfirm(payment)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                  </div>
+                </div>
+              )) : (
+                <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+              )}
+            </div>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B]">
                   <tr>

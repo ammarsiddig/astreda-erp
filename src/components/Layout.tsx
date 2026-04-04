@@ -249,8 +249,8 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-[#f0fdfa]">
-          <div className="p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#f0fdfa]">
+          <div className="p-4 sm:p-6 max-w-full">
             <Outlet />
           </div>
         </main>
