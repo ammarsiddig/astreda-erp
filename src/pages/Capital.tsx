@@ -82,13 +82,16 @@ export default function Capital() {
     const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
     const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
     const drawingsSDG = drawingTransfers.reduce((s, t) => s + t.amountSDG, 0);
-    const grossProfitSDG = cashBalanceSDG + drawingsSDG;
+    const totalCreditInvoices = state.invoices.filter(i => i.shipmentId === activeShipmentId && i.paymentType === 'credit').reduce((s, i) => s + i.total, 0);
+    const totalPaymentsCollected = state.payments.filter(p => p.shipmentId === activeShipmentId).reduce((s, p) => s + p.amount, 0);
+    const receivablesSDG = Math.max(0, totalCreditInvoices - totalPaymentsCollected);
+    const grossProfitSDG = cashBalanceSDG + drawingsSDG + receivablesSDG;
     const grossProfitSAR = grossProfitSDG / liveExchangeRate;
     const investorsPct = activeShipment?.shareholdersPercent ?? 40;
     const investorShareSAR = grossProfitSAR * investorsPct / 100;
     const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
     return { investorShareSAR, totalCapitalSAR };
-  }, [activeShipmentId, liveExchangeRate, state.ledger, state.bankAccounts, drawingTransfers, contributions, activeShipment]);
+  }, [activeShipmentId, liveExchangeRate, state.ledger, state.bankAccounts, state.invoices, state.payments, drawingTransfers, contributions, activeShipment]);
 
   const investorData = useMemo(() => {
     if (!activeShipmentId) return [];
@@ -132,7 +135,10 @@ export default function Capital() {
     const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
     const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
     const drawingsSDG = drawingTransfers.reduce((s, t) => s + t.amountSDG, 0);
-    const grossProfitSDG = cashBalanceSDG + drawingsSDG;
+    const totalCreditInvoices = state.invoices.filter(i => i.shipmentId === activeShipmentId && i.paymentType === 'credit').reduce((s, i) => s + i.total, 0);
+    const totalPaymentsCollected = state.payments.filter(p => p.shipmentId === activeShipmentId).reduce((s, p) => s + p.amount, 0);
+    const receivablesSDG = Math.max(0, totalCreditInvoices - totalPaymentsCollected);
+    const grossProfitSDG = cashBalanceSDG + drawingsSDG + receivablesSDG;
     const grossProfitSAR = exchangeRate > 0 ? grossProfitSDG / exchangeRate : 0;
     const investorsShareSAR = grossProfitSAR * investorsPct / 100;
     const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
@@ -161,7 +167,7 @@ export default function Capital() {
     const regularInvestors = investorShares.filter(r => !r.partner.isOperatingPartner);
     return {
       exchangeRate, noExRate, investorsPct, partnersPct, mgmtFeePct, mgmtFeeRecipientId,
-      cashBalanceSDG, drawingsSDG, grossProfitSDG, grossProfitSAR,
+      cashBalanceSDG, drawingsSDG, receivablesSDG, grossProfitSDG, grossProfitSAR,
       investorsShareSAR, totalRoundedInvestorProfits, investorRoundingRemainder, totalCapitalSAR, investorShares,
       partnersShareSAR, managementFeeSAR, remainingForPartners, perPartnerSAR,
       partnerSummaries, regularInvestors,
@@ -370,6 +376,7 @@ export default function Capital() {
       <h2>أ — الربح الخام</h2>
       <div class="summary-box"><div class="line"><span>الكاش المتوفر (SDG)</span><span>${fmtSDG(sc.cashBalanceSDG)}</span></div>
       <div class="line"><span>+ منصرفات الشركاء (SDG)</span><span>${fmtSDG(sc.drawingsSDG)}</span></div>
+      <div class="line"><span>+ المديونية (أموال غير محصلة) (SDG)</span><span>${fmtSDG(sc.receivablesSDG)}</span></div>
       <div class="total-line"><span>= الربح الخام (SDG)</span><span>${fmtSDG(sc.grossProfitSDG)}</span></div>
       <div class="total-line"><span>= الربح الخام (SAR)</span><span>${fmtSAR(sc.grossProfitSAR)}</span></div></div>
       <h2>ب — توزيع أرباح المساهمين (${fmtPct(sc.investorsPct)})</h2>
@@ -544,7 +551,31 @@ export default function Capital() {
           ) : (
             /* ── Table View ── */
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="overflow-x-auto">
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {investorData.length > 0 ? investorData.map(d => (
+                  <div key={d.partner.id} className="p-4 space-y-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{d.partner.name}</p>
+                        <p className="text-xs text-slate-500">رأس المال: <span className="font-mono">{fmtSAR(d.capital)}</span></p>
+                      </div>
+                      {statusBadge(d.status)}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                      <span className="text-slate-500">المُرجَع</span><span className="font-mono text-right">{fmtSAR(d.returned)}</span>
+                      <span className="text-slate-500">متبقي رأس مال</span><span className={`font-mono font-bold text-right ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{fmtSAR(d.remainingCapital)}</span>
+                      <span className="text-slate-500">أرباح مستحقة</span><span className="font-mono text-right">{liveProfitCalc ? fmtSAR(d.profitEntitled) : <span className="text-amber-500">⚠️</span>}</span>
+                      <span className="text-slate-500">أرباح مدفوعة</span><span className="font-mono text-right">{fmtSAR(d.profitPaid)}</span>
+                      <span className="text-slate-500">الإجمالي المستحق</span><span className="font-mono font-bold text-right">{fmtSAR(d.totalDue)}</span>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="px-4 py-8 text-center text-slate-400 text-sm">لا توجد بيانات</p>
+                )}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-right text-slate-600">
                   <thead className="text-xs text-white bg-[#134e4a]">
                     <tr>
@@ -619,44 +650,71 @@ export default function Capital() {
               }
             </div>
             {drawingTransfers.length > 0 ? (
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-white bg-[#134e4a]">
-                    <tr>
-                      <th className="px-3 py-2 text-right">التاريخ</th>
-                      <th className="px-3 py-2 text-right">الشريك</th>
-                      <th className="px-3 py-2 text-left">المبلغ (SDG)</th>
-                      <th className="px-3 py-2 text-left">المبلغ (SAR)</th>
-                      <th className="px-3 py-2 text-right">الوصف</th>
-                      <th className="px-3 py-2 text-center">إجراء</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {drawingTransfers.map((dt, i) => (
-                      <tr key={dt.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
-                        <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy')}</td>
-                        <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>
-                        <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
-                        <td className="px-3 py-2 text-center">
-                          <div className="flex justify-center gap-1">
-                            {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
-                            {hasWriteAccess && <button onClick={() => handleDeleteDrawing(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
-                          </div>
-                        </td>
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                {/* Mobile cards */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {drawingTransfers.map(dt => (
+                    <div key={dt.id} className="p-3 space-y-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
+                          <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy')}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-mono text-sm font-bold">{fmtSDG(dt.amountSDG)}</p>
+                          <p className="font-mono text-xs text-[#134e4a]">{fmtSAR(dt.amountSAR)}</p>
+                        </div>
+                      </div>
+                      {dt.description && <p className="text-xs text-slate-500">{dt.description}</p>}
+                      {hasWriteAccess && (
+                        <div className="flex gap-1 pt-1">
+                          <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleDeleteDrawing(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-white bg-[#134e4a]">
+                      <tr>
+                        <th className="px-3 py-2 text-right">التاريخ</th>
+                        <th className="px-3 py-2 text-right">الشريك</th>
+                        <th className="px-3 py-2 text-left">المبلغ (SDG)</th>
+                        <th className="px-3 py-2 text-left">المبلغ (SAR)</th>
+                        <th className="px-3 py-2 text-right">الوصف</th>
+                        <th className="px-3 py-2 text-center">إجراء</th>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <tr>
-                      <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
-                      <td colSpan={2}></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {drawingTransfers.map((dt, i) => (
+                        <tr key={dt.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
+                          <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy')}</td>
+                          <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>
+                          <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex justify-center gap-1">
+                              {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
+                              {hasWriteAccess && <button onClick={() => handleDeleteDrawing(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                      <tr>
+                        <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
+                        <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
+                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-slate-400 text-center py-4">لا توجد منصرفات مسجلة</p>
@@ -669,6 +727,7 @@ export default function Capital() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-1"><span className="text-slate-600">الكاش المتوفر (بنوك + خزينة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.cashBalanceSDG)}</span></div>
               <div className="flex justify-between py-1"><span className="text-slate-600">+ منصرفات الشركاء (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.drawingsSDG)}</span></div>
+              <div className="flex justify-between py-1"><span className="text-slate-600">+ المديونية (أموال غير محصلة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.receivablesSDG)}</span></div>
               <div className="border-t-2 border-[#134e4a] pt-2 flex justify-between font-bold"><span>= الربح الخام (SDG)</span><span>{fmtSDG(settlementCalc.grossProfitSDG)}</span></div>
               <div className="flex justify-between font-bold text-[#134e4a]"><span>= الربح الخام (SAR) = SDG ÷ سعر الصرف</span><span>{fmtSAR(settlementCalc.grossProfitSAR)}</span></div>
             </div>
@@ -689,25 +748,40 @@ export default function Capital() {
               <span className="text-sm text-slate-500">حصة المساهمين بعد التقريب = {fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</span>
             </div>
             <p className="text-sm text-slate-500 mb-2">إجمالي رأس المال الكلي: <span className="font-bold text-slate-800">{fmtSAR(settlementCalc.totalCapitalSAR)}</span></p>
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-white bg-[#134e4a]">
-                  <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال</th><th className="px-3 py-2 text-left">النسبة%</th><th className="px-3 py-2 text-left">الربح (SAR)</th></tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {settlementCalc.investorShares.map((r, i) => (
-                    <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
-                      <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtPct(r.pct)}</td>
-                      <td className="px-3 py-2 text-left font-mono font-bold text-[#134e4a]">{fmtSAR(r.profit)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                  <tr><td className="px-3 py-2">الإجمالي</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalCapitalSAR)}</td><td className="px-3 py-2 text-left">100%</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</td></tr>
-                </tfoot>
-              </table>
+            <div className="rounded-lg border border-slate-200 overflow-hidden">
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {settlementCalc.investorShares.map(r => (
+                  <div key={r.partner.id} className="p-3 flex justify-between items-center text-sm">
+                    <span className="font-semibold text-slate-900">{r.partner.name}</span>
+                    <div className="text-right">
+                      <p className="font-mono text-xs text-slate-500">{fmtSAR(r.capital)} — {fmtPct(r.pct)}</p>
+                      <p className="font-mono font-bold text-[#134e4a]">{fmtSAR(r.profit)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-xs text-white bg-[#134e4a]">
+                    <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال</th><th className="px-3 py-2 text-left">النسبة%</th><th className="px-3 py-2 text-left">الربح (SAR)</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {settlementCalc.investorShares.map((r, i) => (
+                      <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
+                        <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
+                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
+                        <td className="px-3 py-2 text-left font-mono">{fmtPct(r.pct)}</td>
+                        <td className="px-3 py-2 text-left font-mono font-bold text-[#134e4a]">{fmtSAR(r.profit)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                    <tr><td className="px-3 py-2">الإجمالي</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalCapitalSAR)}</td><td className="px-3 py-2 text-left">100%</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</td></tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
             <p className="mt-2 text-xs text-amber-700">* الأرباح مقربة لأقرب 10 ريال — الفرق ({fmtSAR(settlementCalc.investorRoundingRemainder)}) أضيف لحصة الشركاء</p>
           </div>
@@ -757,23 +831,38 @@ export default function Capital() {
           {settlementCalc.regularInvestors.length > 0 && (
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
               <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><Building2 className="w-4 h-4" />د — ملخص المساهمين العاديين</h3>
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-white bg-[#134e4a]">
-                    <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال (SAR)</th><th className="px-3 py-2 text-left">الأرباح (SAR)</th><th className="px-3 py-2 text-left">الإجمالي المستحق (SAR)</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {settlementCalc.regularInvestors.map((r, i) => (
-                      <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
-                        <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
-                        <td className="px-3 py-2 text-left font-mono text-[#134e4a]">{fmtSAR(r.profit)}</td>
-                        <td className="px-3 py-2 text-left font-mono font-bold">{fmtSAR(r.capital + r.profit)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <tr>
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                {/* Mobile cards */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {settlementCalc.regularInvestors.map(r => (
+                    <div key={r.partner.id} className="p-3 flex justify-between items-center text-sm">
+                      <span className="font-semibold text-slate-900">{r.partner.name}</span>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-500">رأس مال: <span className="font-mono">{fmtSAR(r.capital)}</span></p>
+                        <p className="text-xs text-slate-500">أرباح: <span className="font-mono text-[#134e4a]">{fmtSAR(r.profit)}</span></p>
+                        <p className="font-mono font-bold">{fmtSAR(r.capital + r.profit)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-white bg-[#134e4a]">
+                      <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال (SAR)</th><th className="px-3 py-2 text-left">الأرباح (SAR)</th><th className="px-3 py-2 text-left">الإجمالي المستحق (SAR)</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {settlementCalc.regularInvestors.map((r, i) => (
+                        <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
+                          <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
+                          <td className="px-3 py-2 text-left font-mono text-[#134e4a]">{fmtSAR(r.profit)}</td>
+                          <td className="px-3 py-2 text-left font-mono font-bold">{fmtSAR(r.capital + r.profit)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                      <tr>
                       <td className="px-3 py-2">الإجمالي</td>
                       <td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.regularInvestors.reduce((s,r)=>s+r.capital,0))}</td>
                       <td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.regularInvestors.reduce((s,r)=>s+r.profit,0))}</td>
@@ -781,6 +870,7 @@ export default function Capital() {
                     </tr>
                   </tfoot>
                 </table>
+              </div>
               </div>
             </div>
           )}

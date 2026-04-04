@@ -558,50 +558,72 @@ export default function Settings() {
                     {t('add')}
                   </button>}
                 </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[500px]">
-                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3">{t('name')}</th>
-                        <th className="px-4 py-3 text-center">{t('isOperatingPartner')}</th>
-                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {state.partners.map((partner) => (
-                        <tr key={partner.id} className="hover:bg-[#f0fdfa] transition-colors">
-                          <td className="px-4 py-3 font-medium text-slate-900">{partner.name}</td>
-                          <td className="px-4 py-3 text-center">
-                            {partner.isOperatingPartner ? (
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">شريك مشغِّل</span>
-                            ) : (
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex justify-center gap-2">
-                              {hasSettingsWrite && <button
-                                onClick={() => { setActiveTab('partners'); openModal(partner); }}
-                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>}
-                              {hasSettingsWrite && <button
-                                onClick={() => {
-                                  if (window.confirm('هل أنت متأكد؟')) {
-                                    updateState({ partners: state.partners.filter(p => p.id !== partner.id) });
-                                  }
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>}
-                            </div>
-                          </td>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  {/* Mobile cards */}
+                  <div className="md:hidden divide-y divide-slate-100">
+                    {state.partners.map((partner) => (
+                      <div key={partner.id} className="p-4 flex justify-between items-center gap-2">
+                        <div>
+                          <p className="font-medium text-slate-900 text-sm">{partner.name}</p>
+                          {partner.isOperatingPartner ? (
+                            <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">شريك مشغِّل</span>
+                          ) : (
+                            <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          {hasSettingsWrite && <button onClick={() => { setActiveTab('partners'); openModal(partner); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>}
+                          {hasSettingsWrite && <button onClick={() => { if (window.confirm('هل أنت متأكد؟')) { updateState({ partners: state.partners.filter(p => p.id !== partner.id) }); } }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                      <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3">{t('name')}</th>
+                          <th className="px-4 py-3 text-center">{t('isOperatingPartner')}</th>
+                          <th className="px-4 py-3 text-center w-24">{t('action')}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {state.partners.map((partner) => (
+                          <tr key={partner.id} className="hover:bg-[#f0fdfa] transition-colors">
+                            <td className="px-4 py-3 font-medium text-slate-900">{partner.name}</td>
+                            <td className="px-4 py-3 text-center">
+                              {partner.isOperatingPartner ? (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">شريك مشغِّل</span>
+                              ) : (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                {hasSettingsWrite && <button
+                                  onClick={() => { setActiveTab('partners'); openModal(partner); }}
+                                  className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>}
+                                {hasSettingsWrite && <button
+                                  onClick={() => {
+                                    if (window.confirm('هل أنت متأكد؟')) {
+                                      updateState({ partners: state.partners.filter(p => p.id !== partner.id) });
+                                    }
+                                  }}
+                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -615,46 +637,73 @@ export default function Settings() {
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
                   </button>}
                 </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[500px]">
-                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3">الاسم</th>
-                        <th className="px-4 py-3">اسم المستخدم</th>
-                        <th className="px-4 py-3">الدور</th>
-                        <th className="px-4 py-3">المندوب</th>
-                        <th className="px-4 py-3 text-center">الحالة</th>
-                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {state.users.map(user => {
-                        const role = state.roles.find(r => r.id === user.roleId);
-                        const sp = user.salespersonId ? state.salespeople.find(s => s.id === user.salespersonId) : null;
-                        return (
-                          <tr key={user.id} className="hover:bg-[#f0fdfa] transition-colors">
-                            <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
-                            <td className="px-4 py-3 font-mono text-xs text-slate-500">{user.username}</td>
-                            <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">{role?.name || '-'}</span></td>
-                            <td className="px-4 py-3 text-slate-500">{sp?.name || '-'}</td>
-                            <td className="px-4 py-3 text-center">
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                {user.isActive ? 'نشط' : 'معطل'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <div className="flex justify-center gap-2">
-                                {hasSettingsWrite && (user.id !== 'user-sysadmin' || state.currentUser?.id === 'user-sysadmin') && <button onClick={() => openUserModal(user)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
-                                {hasSettingsWrite && state.currentUser?.id !== user.id && user.id !== 'user-sysadmin' && (
-                                  <button onClick={() => handleDeleteUser(user.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  {/* Mobile cards */}
+                  <div className="md:hidden divide-y divide-slate-100">
+                    {state.users.map(user => {
+                      const role = state.roles.find(r => r.id === user.roleId);
+                      const sp = user.salespersonId ? state.salespeople.find(s => s.id === user.salespersonId) : null;
+                      return (
+                        <div key={user.id} className="p-4 flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 text-sm">{user.name}</p>
+                            <p className="font-mono text-xs text-slate-400">{user.username}</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">{role?.name || '-'}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{user.isActive ? 'نشط' : 'معطل'}</span>
+                            </div>
+                            {sp && <p className="text-xs text-slate-400 mt-0.5">{sp.name}</p>}
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {hasSettingsWrite && (user.id !== 'user-sysadmin' || state.currentUser?.id === 'user-sysadmin') && <button onClick={() => openUserModal(user)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                            {hasSettingsWrite && state.currentUser?.id !== user.id && user.id !== 'user-sysadmin' && <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                      <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3">الاسم</th>
+                          <th className="px-4 py-3">اسم المستخدم</th>
+                          <th className="px-4 py-3">الدور</th>
+                          <th className="px-4 py-3">المندوب</th>
+                          <th className="px-4 py-3 text-center">الحالة</th>
+                          <th className="px-4 py-3 text-center w-24">{t('action')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {state.users.map(user => {
+                          const role = state.roles.find(r => r.id === user.roleId);
+                          const sp = user.salespersonId ? state.salespeople.find(s => s.id === user.salespersonId) : null;
+                          return (
+                            <tr key={user.id} className="hover:bg-[#f0fdfa] transition-colors">
+                              <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
+                              <td className="px-4 py-3 font-mono text-xs text-slate-500">{user.username}</td>
+                              <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">{role?.name || '-'}</span></td>
+                              <td className="px-4 py-3 text-slate-500">{sp?.name || '-'}</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                  {user.isActive ? 'نشط' : 'معطل'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex justify-center gap-2">
+                                  {hasSettingsWrite && (user.id !== 'user-sysadmin' || state.currentUser?.id === 'user-sysadmin') && <button onClick={() => openUserModal(user)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                                  {hasSettingsWrite && state.currentUser?.id !== user.id && user.id !== 'user-sysadmin' && (
+                                    <button onClick={() => handleDeleteUser(user.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -668,39 +717,64 @@ export default function Settings() {
                     <Plus className="w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0"/>{t('add')}
                   </button>}
                 </div>
-                <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[500px]">
-                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3">الاسم</th>
-                        <th className="px-4 py-3">الاسم (EN)</th>
-                        <th className="px-4 py-3 text-center">دور مندوب</th>
-                        <th className="px-4 py-3 text-center">المستخدمون</th>
-                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {state.roles.map(role => {
-                        const userCount = state.users.filter(u => u.roleId === role.id).length;
-                        return (
-                          <tr key={role.id} className="hover:bg-[#f0fdfa] transition-colors">
-                            <td className="px-4 py-3 font-medium text-slate-900">{role.name}</td>
-                            <td className="px-4 py-3 text-slate-500">{role.nameEn}</td>
-                            <td className="px-4 py-3 text-center">
-                              {role.isSalesperson ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">نعم</span> : <span className="text-slate-400">-</span>}
-                            </td>
-                            <td className="px-4 py-3 text-center font-medium">{userCount}</td>
-                            <td className="px-4 py-3 text-center">
-                              <div className="flex justify-center gap-2">
-                                {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => openRoleModal(role)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
-                                {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => handleDeleteRole(role.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  {/* Mobile cards */}
+                  <div className="md:hidden divide-y divide-slate-100">
+                    {state.roles.map(role => {
+                      const userCount = state.users.filter(u => u.roleId === role.id).length;
+                      return (
+                        <div key={role.id} className="p-4 flex justify-between items-start gap-2">
+                          <div>
+                            <p className="font-medium text-slate-900 text-sm">{role.name}</p>
+                            <p className="text-xs text-slate-400">{role.nameEn}</p>
+                            <div className="flex gap-1 mt-1">
+                              {role.isSalesperson && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">مندوب</span>}
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">{userCount} مستخدم</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => openRoleModal(role)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                            {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => handleDeleteRole(role.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                      <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3">الاسم</th>
+                          <th className="px-4 py-3">الاسم (EN)</th>
+                          <th className="px-4 py-3 text-center">دور مندوب</th>
+                          <th className="px-4 py-3 text-center">المستخدمون</th>
+                          <th className="px-4 py-3 text-center w-24">{t('action')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {state.roles.map(role => {
+                          const userCount = state.users.filter(u => u.roleId === role.id).length;
+                          return (
+                            <tr key={role.id} className="hover:bg-[#f0fdfa] transition-colors">
+                              <td className="px-4 py-3 font-medium text-slate-900">{role.name}</td>
+                              <td className="px-4 py-3 text-slate-500">{role.nameEn}</td>
+                              <td className="px-4 py-3 text-center">
+                                {role.isSalesperson ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">نعم</span> : <span className="text-slate-400">-</span>}
+                              </td>
+                              <td className="px-4 py-3 text-center font-medium">{userCount}</td>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex justify-center gap-2">
+                                  {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => openRoleModal(role)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                                  {hasSettingsWrite && role.id !== 'role-sysadmin' && <button onClick={() => handleDeleteRole(role.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -720,62 +794,92 @@ export default function Settings() {
                 </button>}
               </div>
 
-              <div className="border border-slate-200 rounded-lg overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm text-left rtl:text-right text-slate-600 min-w-[400px]">
-                  <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3">{t('name')}</th>
-                      {activeTab === 'bankAccounts' && <th className="px-4 py-3">{t('transferFee')}</th>}
-                      {activeTab === 'shipments' && <th className="px-4 py-3">{t('status')}</th>}
-                      {activeTab === 'partners' && <th className="px-4 py-3 text-center">{t('isOperatingPartner')}</th>}
-                      <th className="px-4 py-3 text-center w-24">{t('action')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {list.length > 0 ? list.map((item) => (
-                      <tr key={item.id} className="hover:bg-[#f0fdfa] transition-colors">
-                        <td className="px-4 py-3 font-medium text-slate-900">{item.name}</td>
-                        {activeTab === 'bankAccounts' && <td className="px-4 py-3">{item.transferFee}</td>}
+              <div className="border border-slate-200 rounded-lg overflow-hidden">
+                {/* Mobile cards */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {list.length > 0 ? list.map((item) => (
+                    <div key={item.id} className="p-4 flex justify-between items-center gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900 text-sm">{item.name}</p>
+                        {activeTab === 'bankAccounts' && item.transferFee && <p className="text-xs text-slate-400">{t('transferFee')}: {item.transferFee}</p>}
                         {activeTab === 'shipments' && (
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                              {item.isActive ? t('active') : t('inactive')}
-                            </span>
-                          </td>
+                          <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                            {item.isActive ? t('active') : t('inactive')}
+                          </span>
                         )}
                         {activeTab === 'partners' && (
-                          <td className="px-4 py-3 text-center">
-                            {item.isOperatingPartner ? (
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">شريك مشغِّل</span>
-                            ) : (
-                              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
-                            )}
-                          </td>
+                          <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${item.isOperatingPartner ? 'bg-[#ccfbf1] text-[#134e4a]' : 'bg-slate-100 text-slate-500'}`}>
+                            {item.isOperatingPartner ? 'شريك مشغِّل' : 'مساهم'}
+                          </span>
                         )}
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex justify-center gap-2">
-                            {hasSettingsWrite && <button
-                              onClick={() => openModal(item)}
-                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>}
-                            {hasSettingsWrite && <button
-                              onClick={() => handleDelete(item.id)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>}
-                          </div>
-                        </td>
-                      </tr>
-                    )) : (
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        {hasSettingsWrite && <button onClick={() => openModal(item)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>}
+                        {hasSettingsWrite && <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+                  )}
+                </div>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                    <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                        <th className="px-4 py-3">{t('name')}</th>
+                        {activeTab === 'bankAccounts' && <th className="px-4 py-3">{t('transferFee')}</th>}
+                        {activeTab === 'shipments' && <th className="px-4 py-3">{t('status')}</th>}
+                        {activeTab === 'partners' && <th className="px-4 py-3 text-center">{t('isOperatingPartner')}</th>}
+                        <th className="px-4 py-3 text-center w-24">{t('action')}</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {list.length > 0 ? list.map((item) => (
+                        <tr key={item.id} className="hover:bg-[#f0fdfa] transition-colors">
+                          <td className="px-4 py-3 font-medium text-slate-900">{item.name}</td>
+                          {activeTab === 'bankAccounts' && <td className="px-4 py-3">{item.transferFee}</td>}
+                          {activeTab === 'shipments' && (
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                                {item.isActive ? t('active') : t('inactive')}
+                              </span>
+                            </td>
+                          )}
+                          {activeTab === 'partners' && (
+                            <td className="px-4 py-3 text-center">
+                              {item.isOperatingPartner ? (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-[#ccfbf1] text-[#134e4a]">شريك مشغِّل</span>
+                              ) : (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">مساهم</span>
+                              )}
+                            </td>
+                          )}
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex justify-center gap-2">
+                              {hasSettingsWrite && <button
+                                onClick={() => openModal(item)}
+                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>}
+                              {hasSettingsWrite && <button
+                                onClick={() => handleDelete(item.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>}
+                            </div>
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
