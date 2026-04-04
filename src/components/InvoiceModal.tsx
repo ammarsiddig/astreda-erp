@@ -193,7 +193,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('customer')}</label>
             <select required value={customerId} onChange={handleCustomerChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none">
-              <option value>{t('select')}</option>
+              <option value="">{t('select')}</option>
               {availableCustomers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
@@ -224,7 +224,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
               <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
@@ -246,7 +246,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
                 <select required value={line.productId} onChange={(e) => handleLineChange(index, 'productId', e.target.value)}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
                 >
-                  <option value>{t('product')}</option>
+                  <option value="">{t('product')}</option>
                   {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>

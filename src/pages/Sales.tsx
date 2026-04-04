@@ -184,7 +184,7 @@ export default function Sales() {
           <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
@@ -193,7 +193,7 @@ export default function Sales() {
           <select value={filterSalesperson} onChange={(e) => setFilterSalesperson(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
@@ -202,7 +202,7 @@ export default function Sales() {
           <select value={filterPaymentType} onChange={(e) => setFilterPaymentType(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             <option value="cash">{t('cash')}</option>
             <option value="credit">{t('credit')}</option>
           </select>

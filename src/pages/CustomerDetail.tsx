@@ -92,27 +92,11 @@ export default function CustomerDetail() {
         e => e.linkedId !== invoice.id && e.referenceId !== invoice.id && e.invoiceId !== invoice.id
       );
 
-      let updatedBankAccounts = state.bankAccounts;
-      if (invoice.paymentType === 'cash' && invoice.bankAccountId) {
-        const reversalAmount = invoiceLedgerEntries
-          .filter(e => e.sourceModule === 'sale_cash' && e.toAccount === invoice.bankAccountId)
-          .reduce((sum, e) => sum + e.amountIn - e.amountOut, 0);
-
-        if (reversalAmount !== 0) {
-          updatedBankAccounts = state.bankAccounts.map(b =>
-            b.id === invoice.bankAccountId && typeof b.balance === 'number'
-              ? { ...b, balance: b.balance - reversalAmount }
-              : b
-          );
-        }
-      }
-
       updateState({
         invoices: updatedInvoices,
         inventoryTransactions: updatedInventoryTransactions,
         customers: updatedCustomers,
         ledger: updatedLedger,
-        bankAccounts: updatedBankAccounts,
       });
     }
   };
@@ -152,23 +136,15 @@ export default function CustomerDetail() {
       salespersonId: customer.salespersonId
     };
 
-    let newBankAccounts = [...state.bankAccounts];
     let newLedger = [...state.ledger];
 
     if (isEditing) {
       // Reverse old effects (same pattern as Payments.tsx)
       const oldPayment = editingPayment!;
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === oldPayment.bankAccountId ? { ...b, balance: b.balance - oldPayment.amount } : b
-      );
       newLedger = newLedger.filter(l => l.linkedId !== oldPayment.id);
     }
 
     // Apply new effects
-    newBankAccounts = newBankAccounts.map(b =>
-      b.id === bankAccountId ? { ...b, balance: b.balance + paymentAmount } : b
-    );
-
     const newLedgerEntry = {
       id: uuidv4(),
       date: paymentDate,
@@ -186,7 +162,6 @@ export default function CustomerDetail() {
         ? state.payments.map(p => p.id === paymentId ? newPayment : p)
         : [...state.payments, newPayment],
       ledger: [...newLedger, newLedgerEntry],
-      bankAccounts: newBankAccounts,
     });
 
     setShowPaymentModal(false);
@@ -197,14 +172,9 @@ export default function CustomerDetail() {
     if (!showDeletePaymentConfirm) return;
     const payment = showDeletePaymentConfirm;
 
-    const newBankAccounts = state.bankAccounts.map(b =>
-      b.id === payment.bankAccountId ? { ...b, balance: b.balance - payment.amount } : b
-    );
-
     updateState({
       payments: state.payments.filter(p => p.id !== payment.id),
       ledger: state.ledger.filter(l => l.linkedId !== payment.id),
-      bankAccounts: newBankAccounts,
     });
 
     setShowDeletePaymentConfirm(null);
@@ -524,7 +494,7 @@ export default function CustomerDetail() {
             <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             >
-              <option value>{t('select')}</option>
+              <option value="">{t('select')}</option>
               {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>

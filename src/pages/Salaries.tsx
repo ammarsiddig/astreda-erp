@@ -143,20 +143,12 @@ export default function Salaries() {
       notes: finalNotes,
     };
 
-    let newBankAccounts = [...state.bankAccounts];
     let newLedger = [...state.ledger];
 
     if (isEditing) {
       const oldSalary = showEditModal!;
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === oldSalary.bankAccountId ? { ...b, balance: b.balance + oldSalary.amount } : b
-      );
       newLedger = newLedger.filter(l => l.linkedId !== oldSalary.id);
     }
-
-    newBankAccounts = newBankAccounts.map(b =>
-      b.id === bankAccountId ? { ...b, balance: b.balance - salaryAmount } : b
-    );
 
     const newLedgerEntry = {
       id: uuidv4(),
@@ -184,7 +176,6 @@ export default function Salaries() {
         ? state.salaries.map(s => s.id === salaryId ? newSalary : s)
         : [...state.salaries, newSalary],
       ledger: [...newLedger, newLedgerEntry],
-      bankAccounts: newBankAccounts,
       expenses: newExpenses,
     });
 
@@ -218,13 +209,9 @@ export default function Salaries() {
   const handleDeleteSalary = () => {
     if (!showDeleteConfirm) return;
     const salary = showDeleteConfirm;
-    const newBankAccounts = state.bankAccounts.map(b =>
-      b.id === salary.bankAccountId ? { ...b, balance: b.balance + salary.amount } : b
-    );
     updateState({
       salaries: state.salaries.filter(s => s.id !== salary.id),
       ledger: state.ledger.filter(l => l.linkedId !== salary.id),
-      bankAccounts: newBankAccounts,
     });
     setShowDeleteConfirm(null);
   };
@@ -289,10 +276,6 @@ export default function Salaries() {
       settled: false,
     };
 
-    const newBankAccounts = state.bankAccounts.map(b =>
-      b.id === advBankAccountId ? { ...b, balance: b.balance - advAmountNum } : b
-    );
-
     const newLedgerEntry = {
       id: uuidv4(),
       date: advDate,
@@ -307,7 +290,6 @@ export default function Salaries() {
 
     updateState({
       expenses: [...state.expenses, newExpense],
-      bankAccounts: newBankAccounts,
       ledger: [...state.ledger, newLedgerEntry],
     });
 

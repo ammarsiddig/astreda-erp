@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
+import { hashPassword, isPasswordHashed } from '../lib/utils';
 import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
@@ -75,12 +76,13 @@ const DEFAULT_ROLES: Role[] = [
 ];
 
 const DEFAULT_USERS: User[] = [
-  { id: 'user-sysadmin', name: 'مدير النظام', username: 'sysadmin', password: 'admin@2025', roleId: 'role-sysadmin', isActive: true },
-  { id: 'user-admin', name: 'المدير', username: 'admin', password: '1234', roleId: 'role-manager', isActive: true },
-  { id: 'user-accountant', name: 'المحاسب', username: 'accountant', password: '1234', roleId: 'role-accountant', isActive: true },
-  { id: 'user-warehouse', name: 'المخزن', username: 'warehouse', password: '1234', roleId: 'role-warehouse', isActive: true },
-  { id: 'user-ahmed', name: 'أحمد ماهر', username: 'ahmed', password: '1234', roleId: 'role-salesperson', salespersonId: '1', isActive: true },
-  { id: 'user-hassan', name: 'حسن', username: 'hassan', password: '1234', roleId: 'role-salesperson', salespersonId: '2', isActive: true },
+  // Passwords are SHA-256 hashes. Originals: sysadmin='admin@2025', others='1234'
+  { id: 'user-sysadmin',   name: 'مدير النظام', username: 'sysadmin',   password: 'e7ec9cbf3dc1a42562a5e500d5768001933624ea8d8f3ea0602092c42d4bc857', roleId: 'role-sysadmin',   isActive: true },
+  { id: 'user-admin',      name: 'المدير',       username: 'admin',      password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-manager',    isActive: true },
+  { id: 'user-accountant', name: 'المحاسب',      username: 'accountant', password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-accountant', isActive: true },
+  { id: 'user-warehouse',  name: 'المخزن',       username: 'warehouse',  password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-warehouse',  isActive: true },
+  { id: 'user-ahmed',      name: 'أحمد ماهر',    username: 'ahmed',      password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-salesperson', salespersonId: '1', isActive: true },
+  { id: 'user-hassan',     name: 'حسن',          username: 'hassan',     password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-salesperson', salespersonId: '2', isActive: true },
 ];
 
 const initialState: AppState = {
@@ -424,10 +426,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Fallback to local users if Supabase is unreachable
     }
 
-    const user = users.find(u => u.username === username && u.password === password);
+    const hashedInput = await hashPassword(password);
+
+    // Find user: compare against hashed password first, then fall back to
+    // plaintext for legacy accounts that haven't been migrated yet.
+    let user = users.find(u => u.username === username && u.password === hashedInput);
+    if (!user) {
+      const legacyUser = users.find(
+        u => u.username === username && !isPasswordHashed(u.password) && u.password === password
+      );
+      if (legacyUser) {
+        // Upgrade the stored password to its hashed form transparently
+        const upgradedUsers = users.map(u =>
+          u.id === legacyUser.id ? { ...u, password: hashedInput } : u
+        );
+        setState(prev => ({ ...prev, users: upgradedUsers }));
+        user = { ...legacyUser, password: hashedInput };
+      }
+    }
+
     if (!user) return { success: false, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     if (!user.isActive) return { success: false, error: 'هذا الحساب غير نشط — تواصل مع المدير' };
-    setState(prev => ({ ...prev, currentUser: user }));
+    setState(prev => ({ ...prev, currentUser: user! }));
     localStorage.setItem('astreda_current_user', JSON.stringify(user));
     return { success: true };
   };

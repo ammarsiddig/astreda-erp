@@ -10,6 +10,10 @@ import { canWrite } from '../lib/permissions';
 import { ALL_PAGE_KEYS } from '../lib/permissions';
 import type { User, Role, PagePermission, PageKey } from '../types';
 import { upsertRecord, deleteRecord } from '../lib/syncEngine';
+import { hashPassword } from '../lib/utils';
+
+// Generic entity shape used by the settings CRUD handlers
+type SettingsRecord = { id: string; [key: string]: unknown };
 
 const PAGE_LABELS: Record<PageKey, string> = {
   dashboard: 'لوحة التحكم',
@@ -40,8 +44,8 @@ export default function Settings() {
   );
 
   const [showModal, setShowModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [editingItem, setEditingItem] = useState<SettingsRecord | null>(null);
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
 
   // ─── User Management State ─────────────────────────────────────
   const [showUserModal, setShowUserModal] = useState(false);
@@ -79,22 +83,22 @@ export default function Settings() {
     e.preventDefault();
     if (!hasSettingsWrite) return;
     if (activeTab === 'partnerSettings') return;
-    const list = state[activeTab as keyof typeof state] as any[];
+    const list = (state[activeTab as keyof typeof state] as unknown) as SettingsRecord[];
 
     if (editingItem) {
       let updatedList = list.map(item => item.id === editingItem.id ? { ...item, ...formData } : item);
       if (activeTab === 'shipments' && formData.isActive) {
-        updatedList = updatedList.map((item: any) => ({
+        updatedList = updatedList.map((item) => ({
           ...item,
           isActive: item.id === editingItem.id ? true : false,
         }));
       }
       updateState({ [activeTab]: updatedList });
     } else {
-      const newItem = { id: uuidv4(), ...formData };
+      const newItem: SettingsRecord = { id: uuidv4(), ...formData };
       let newList = [...list, newItem];
       if (activeTab === 'shipments' && formData.isActive) {
-        newList = newList.map((item: any) => ({
+        newList = newList.map((item) => ({
           ...item,
           isActive: item.id === newItem.id ? true : false,
         }));
@@ -110,16 +114,16 @@ export default function Settings() {
   const handleDelete = (id: string) => {
     if (!hasSettingsWrite) return;
     if (window.confirm('Are you sure you want to delete this item?')) {
-      const list = state[activeTab as keyof typeof state] as any[];
+      const list = (state[activeTab as keyof typeof state] as unknown) as SettingsRecord[];
       updateState({ [activeTab]: list.filter(item => item.id !== id) });
     }
   };
 
-  const openModal = (item?: any) => {
+  const openModal = (item?: object) => {
     if (!hasSettingsWrite) return;
     if (item) {
-      setEditingItem(item);
-      setFormData(item);
+      setEditingItem(item as SettingsRecord);
+      setFormData(item as Record<string, unknown>);
     } else {
       setEditingItem(null);
       setFormData({});
@@ -137,6 +141,11 @@ export default function Settings() {
   };
 
   const renderFormFields = () => {
+    // Type-safe accessors for the Record<string, unknown> formData
+    const fStr = (key: string) => (formData[key] as string | undefined) ?? '';
+    const fNum = (key: string) => Number(formData[key]) || 0;
+    const fBool = (key: string) => Boolean(formData[key]);
+
     switch (activeTab) {
       case 'bankAccounts':
         return (
@@ -146,7 +155,7 @@ export default function Settings() {
               <input
                 type="text"
                 required
-                value={formData.name || ''}
+                value={fStr('name')}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
@@ -158,7 +167,7 @@ export default function Settings() {
                 required
                 min="0"
                 step="0.01"
-                value={formData.transferFee || 0}
+                value={fNum('transferFee')}
                 onChange={(e) => setFormData({ ...formData, transferFee: Number(e.target.value) })}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
@@ -173,7 +182,7 @@ export default function Settings() {
               <input
                 type="text"
                 required
-                value={formData.name || ''}
+                value={fStr('name')}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
@@ -182,7 +191,7 @@ export default function Settings() {
               <input
                 type="checkbox"
                 id="isActive"
-                checked={formData.isActive || false}
+                checked={fBool('isActive')}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 className="w-4 h-4 text-[#134e4a] border-slate-300 rounded focus:ring-[#14b8a6]"
               />
@@ -200,7 +209,7 @@ export default function Settings() {
               <input
                 type="text"
                 required
-                value={formData.name || ''}
+                value={fStr('name')}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
@@ -209,7 +218,7 @@ export default function Settings() {
               <input
                 type="checkbox"
                 id="isOperatingPartner"
-                checked={formData.isOperatingPartner || false}
+                checked={fBool('isOperatingPartner')}
                 onChange={(e) => setFormData({ ...formData, isOperatingPartner: e.target.checked })}
                 className="w-4 h-4 text-[#134e4a] border-slate-300 rounded focus:ring-[#14b8a6]"
               />
@@ -226,7 +235,7 @@ export default function Settings() {
             <input
               type="text"
               required
-              value={formData.name || ''}
+              value={fStr('name')}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
             />
@@ -249,16 +258,24 @@ export default function Settings() {
     setShowUserModal(true);
   };
 
-  const handleSaveUser = (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasSettingsWrite) return;
     if (!userForm.name || !userForm.username || !userForm.password || !userForm.roleId) return;
     const selectedRole = state.roles.find(r => r.id === userForm.roleId);
+
+    // Always store a hashed password. If the admin entered a new plaintext password,
+    // hash it. If they left it unchanged while editing (already hashed), keep it.
+    const { isPasswordHashed: checkHashed } = await import('../lib/utils');
+    const storedPassword = checkHashed(userForm.password)
+      ? userForm.password
+      : await hashPassword(userForm.password);
+
     const newUser: User = {
       id: editingUser ? editingUser.id : uuidv4(),
       name: userForm.name,
       username: userForm.username,
-      password: userForm.password,
+      password: storedPassword,
       roleId: userForm.roleId,
       salespersonId: selectedRole?.isSalesperson ? userForm.salespersonId || undefined : undefined,
       isActive: userForm.isActive,

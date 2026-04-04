@@ -306,7 +306,7 @@ export default function CarLoading() {
                   }}
                   className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
                 >
-                  <option value>{t('select')}</option>
+                  <option value="">{t('select')}</option>
                   {state.products.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}

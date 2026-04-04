@@ -45,6 +45,27 @@ export function generateId(prefix: string, currentCount: number) {
  * Rule: when fromAccount is set, amountOut belongs to fromAccount.
  *       when fromAccount is not set, amountOut belongs to toAccount.
  */
+/**
+ * Hashes a plaintext password using SHA-256 via the Web Crypto API.
+ * Returns a lowercase hex string (64 characters).
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Returns true when a stored password string looks like a SHA-256 hex digest
+ * (exactly 64 lowercase hex characters). Used to detect already-hashed passwords
+ * and support the gradual migration from plaintext to hashed storage.
+ */
+export function isPasswordHashed(password: string): boolean {
+  return /^[0-9a-f]{64}$/.test(password);
+}
+
 export function computeBankBalance(accountId: string, ledger: LedgerEntry[]): number {
   return ledger.reduce((bal, entry) => {
     if (entry.toAccount === accountId) {

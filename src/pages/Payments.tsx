@@ -59,23 +59,15 @@ export default function Payments() {
       notes,
     };
 
-    let newBankAccounts = [...state.bankAccounts];
     let newLedger = [...state.ledger];
 
     if (isEditing) {
       // Reverse old effects
       const oldPayment = showEditModal!;
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === oldPayment.bankAccountId ? { ...b, balance: b.balance - oldPayment.amount } : b
-      );
       newLedger = newLedger.filter(l => l.linkedId !== oldPayment.id);
     }
 
     // Apply new effects
-    newBankAccounts = newBankAccounts.map(b =>
-      b.id === bankAccountId ? { ...b, balance: b.balance + paymentAmount } : b
-    );
-
     const newLedgerEntry = {
       id: uuidv4(),
       date,
@@ -93,7 +85,6 @@ export default function Payments() {
         ? state.payments.map(p => p.id === paymentId ? newPayment : p)
         : [...state.payments, newPayment],
       ledger: [...newLedger, newLedgerEntry],
-      bankAccounts: newBankAccounts,
     });
 
     showToast(isEditing ? t('updatedSuccessfully') : t('addedSuccessfully'));
@@ -124,14 +115,9 @@ export default function Payments() {
     if (!showDeleteConfirm) return;
     const payment = showDeleteConfirm;
 
-    const newBankAccounts = state.bankAccounts.map(b =>
-      b.id === payment.bankAccountId ? { ...b, balance: b.balance - payment.amount } : b
-    );
-
     updateState({
       payments: state.payments.filter(p => p.id !== payment.id),
       ledger: state.ledger.filter(l => l.linkedId !== payment.id),
-      bankAccounts: newBankAccounts,
     });
 
     showToast(t('deletedSuccessfully'));
@@ -166,7 +152,7 @@ export default function Payments() {
           <select value={filterCustomer} onChange={(e) => setFilterCustomer(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
-            <option value>{t('all')}</option>
+            <option value="">{t('all')}</option>
             {state.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
@@ -292,7 +278,7 @@ export default function Payments() {
               <select required value={customerId} onChange={(e) => setCustomerId(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
@@ -307,7 +293,7 @@ export default function Payments() {
               <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
-                <option value>{t('select')}</option>
+                <option value="">{t('select')}</option>
                 {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
