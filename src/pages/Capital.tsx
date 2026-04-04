@@ -299,7 +299,7 @@ export default function Capital() {
 
   const handleDeleteDrawing = (drawId: string) => {
     if (!hasWriteAccess) return;
-    if (!window.confirm('هل تريد حذف هذا المنصرف؟')) return;
+    if (!window.confirm(t('deleteConfirmMessage'))) return;
     const transfer = state.generalTransfers.find(t => t.id === drawId);
     if (!transfer) return;
     let newBankAccounts = [...state.bankAccounts];
@@ -335,7 +335,7 @@ export default function Capital() {
       th,td{border:1px solid #ccc;padding:4px 6px;text-align:right}th{background:#134e4a;color:#fff;font-size:9px}
       .alt{background:#f8f9fa}.num{text-align:left;font-family:monospace}.bold{font-weight:bold}
       .red{color:#dc2626}.green{color:#16a34a}.totals{background:#e2e8f0;font-weight:bold}</style></head>
-      <body><h1>أستريدا — متابعة رأس المال</h1><div class="sub">${shipmentName} | ${format(new Date(),'dd/MM/yyyy')}</div>
+      <body><h1>أستريدا للتوزيع — متابعة رأس المال</h1><div class="sub">${shipmentName} | ${format(new Date(),'dd/MM/yyyy')}</div>
       <table><thead><tr><th>المساهم</th><th>رأس المال (SAR)</th><th>المُرجَع (SAR)</th><th>متبقي رأس مال</th>
       <th>أرباح مستحقة</th><th>أرباح مدفوعة</th><th>أرباح متبقية</th><th>الإجمالي المستحق</th><th>الحالة</th></tr></thead>
       <tbody>${rows}${totals}</tbody></table></body></html>`;
@@ -402,7 +402,7 @@ export default function Capital() {
   // === RENDER ===
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'investors', label: 'المساهمون', icon: <Users className="w-4 h-4" /> },
-    { key: 'settlement', label: 'تصفية الشركاء', icon: <TrendingUp className="w-4 h-4" /> },
+    { key: 'settlement', label: 'تصفية الرسالة', icon: <TrendingUp className="w-4 h-4" /> },
     { key: 'verification', label: 'التحقق من الرسالة', icon: <CheckCircle className="w-4 h-4" /> },
   ];
 

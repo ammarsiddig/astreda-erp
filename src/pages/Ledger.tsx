@@ -485,7 +485,7 @@ export default function Ledger() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#134e4a]" />
-                <h2 className="text-base font-bold text-slate-800">كشف حساب / Account Statement</h2>
+                <h2 className="text-base font-bold text-slate-800">كشف حساب</h2>
               </div>
               <button
                 onClick={() => setShowStatementModal(false)}
@@ -535,8 +535,8 @@ export default function Ledger() {
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { value: 'all', label: 'كل المعاملات' },
-                    { value: 'in',  label: 'مدخلات فقط' },
-                    { value: 'out', label: 'مخرجات فقط' },
+                    { value: 'in',  label: 'وارد فقط' },
+                    { value: 'out', label: 'منصرف فقط' },
                   ].map(opt => (
                     <button
                       key={opt.value}
@@ -593,7 +593,7 @@ export default function Ledger() {
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
               >
                 <Printer className="w-4 h-4" />
-                طباعة / Print
+                طباعة
               </button>
             </div>
           </div>

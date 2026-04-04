@@ -80,7 +80,7 @@ export default function Payments() {
       id: uuidv4(),
       date,
       toAccount: bankAccountId,
-      description: `سداد دفعة من عميل / Customer Payment - ${state.customers.find(c => c.id === customerId)?.name} ${notes ? `(${notes})` : ''}`,
+      description: `سداد دفعة من عميل - ${state.customers.find(c => c.id === customerId)?.name} ${notes ? `(${notes})` : ''}`,
       amountIn: paymentAmount,
       amountOut: 0,
       sourceModule: 'payment' as const,

@@ -642,7 +642,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Printer className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
-                طباعة / Print
+                طباعة
               </button>
             </div>
             {dailyDebtCity ? (
