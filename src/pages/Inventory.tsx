@@ -341,8 +341,14 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {inventoryData.map((row) => (
-                <tr key={row.product.id} onClick={() => setSelectedStockRowId(row.product.id)} className={`transition-colors cursor-pointer ${selectedStockRowId === row.product.id ? 'bg-teal-50' : `hover:bg-[#f0fdfa] ${row.hasNegative ? 'bg-red-50/50' : ''}`}`}>
+              {inventoryData.map((row) => {
+                const stockRowClass = selectedStockRowId === row.product.id
+                  ? 'bg-teal-50'
+                  : row.hasNegative
+                    ? 'hover:bg-[#f0fdfa] bg-red-50/50'
+                    : 'hover:bg-[#f0fdfa]';
+                return (
+                <tr key={row.product.id} onClick={() => setSelectedStockRowId(row.product.id)} className={`transition-colors cursor-pointer ${stockRowClass}`}>
                   <td className="px-4 py-3 font-medium text-slate-900 flex items-center">
                     {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 mr-2 rtl:ml-2 rtl:mr-0"/>}
                     {row.product.name}
@@ -364,7 +370,8 @@ export default function Inventory() {
                     </React.Fragment>
                   ))}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
