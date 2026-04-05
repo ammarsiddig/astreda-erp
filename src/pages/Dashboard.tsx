@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
@@ -10,6 +10,7 @@ export default function Dashboard() {
   const { t, lang } = useTranslation();
   const navigate = useNavigate();
   const { state, activeShipmentId } = useAppStore();
+  const [selectedDebtorId, setSelectedDebtorId] = useState<string | null>(null);
 
   // Calculate KPIs
   const totalCash = state.bankAccounts.reduce(
@@ -113,7 +114,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {debtors.length > 0 ? debtors.map((debtor) => (
-                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => navigate(`/customers/${debtor.id}`)}>
+                <tr key={debtor.id} onClick={() => { setSelectedDebtorId(debtor.id); navigate(`/customers/${debtor.id}`); }} className={`border-b border-slate-50 transition-colors cursor-pointer ${selectedDebtorId === debtor.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{debtor.name}</td>
                   <td className="px-4 py-3">{state.cities.find(c => c.id === debtor.cityId)?.name}</td>
                   <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">

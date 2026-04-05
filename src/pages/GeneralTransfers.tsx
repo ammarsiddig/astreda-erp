@@ -18,6 +18,7 @@ export default function GeneralTransfers() {
   const [showEditModal, setShowEditModal] = useState<GeneralTransfer | null>(null);
   const [showViewModal, setShowViewModal] = useState<GeneralTransfer | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<GeneralTransfer | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
   const [filterDate, setFilterDate] = useState('');
@@ -227,7 +228,7 @@ export default function GeneralTransfers() {
               ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
               : state.partners.find(p => p.id === transfer.partnerId)?.name;
             return (
-              <div key={transfer.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(transfer)}>
+              <div key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm">{displayPartner || transfer.id}</p>
@@ -272,7 +273,7 @@ export default function GeneralTransfers() {
                   ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
                   : state.partners.find(p => p.id === transfer.partnerId)?.name;
                 return (
-                  <tr key={transfer.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(transfer)}>
+                  <tr key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
                     <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3">{getTypeBadge(transfer.transferType)}</td>

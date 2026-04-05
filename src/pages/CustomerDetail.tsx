@@ -18,6 +18,8 @@ export default function CustomerDetail() {
   const { state, updateState, activeShipmentId } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<'invoices' | 'payments'>('invoices');
+  const [selectedInvoiceRowId, setSelectedInvoiceRowId] = useState<string | null>(null);
+  const [selectedPaymentRowId, setSelectedPaymentRowId] = useState<string | null>(null);
 
   // Invoice Modal State
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -253,7 +255,7 @@ export default function CustomerDetail() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {invoices.length > 0 ? invoices.map((invoice) => (
-                <div key={invoice.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowPrintModal(invoice.id)}>
+                <div key={invoice.id} onClick={() => { setSelectedInvoiceRowId(invoice.id); setShowPrintModal(invoice.id); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedInvoiceRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
@@ -292,7 +294,7 @@ export default function CustomerDetail() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {invoices.length > 0 ? invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowPrintModal(invoice.id)}>
+                    <tr key={invoice.id} onClick={() => { setSelectedInvoiceRowId(invoice.id); setShowPrintModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedInvoiceRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                       <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3 text-slate-600">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name || '-'}</td>
@@ -349,7 +351,7 @@ export default function CustomerDetail() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {paymentsWithBalance.length > 0 ? paymentsWithBalance.map((payment) => (
-                <div key={payment.id} className="p-4 space-y-2 cursor-pointer" onClick={() => openEditPayment(payment)}>
+                <div key={payment.id} onClick={() => { setSelectedPaymentRowId(payment.id); openEditPayment(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedPaymentRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="text-xs text-slate-500">{format(new Date(payment.date), 'dd/MM/yyyy')}</p>
@@ -385,7 +387,7 @@ export default function CustomerDetail() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paymentsWithBalance.length > 0 ? paymentsWithBalance.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => openEditPayment(payment)}>
+                    <tr key={payment.id} onClick={() => { setSelectedPaymentRowId(payment.id); openEditPayment(payment); }} className={`transition-colors cursor-pointer ${selectedPaymentRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</td>
                       <td className="px-4 py-3">{payment.notes}</td>

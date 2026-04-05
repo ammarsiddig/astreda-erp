@@ -19,6 +19,7 @@ export default function Sales() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
   const [showViewModal, setShowViewModal] = useState<string | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const viewInvoice = useMemo(() => {
     return state.invoices.find(i => i.id === showViewModal);
@@ -214,7 +215,7 @@ export default function Sales() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-            <div key={invoice.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(invoice.id)}>
+            <div key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
@@ -264,7 +265,7 @@ export default function Sales() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(invoice.id)}>
+                <tr key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.customers.find(c => c.id === invoice.customerId)?.name}</td>

@@ -36,6 +36,7 @@ export default function Capital() {
   const { state, updateState, activeShipmentId } = useAppStore();
   const hasWriteAccess = canWrite(state.currentUser, state.roles, 'capital');
   const [activeTab, setActiveTab] = useState<Tab>('investors');
+  const [selectedInvestorRowId, setSelectedInvestorRowId] = useState<string | null>(null);
   const [showContribModal, setShowContribModal] = useState(false);
   const [contribPartnerId, setContribPartnerId] = useState('');
   const [contribAmountSAR, setContribAmountSAR] = useState<number | ''>('');
@@ -554,7 +555,7 @@ export default function Capital() {
               {/* Mobile cards */}
               <div className="md:hidden divide-y divide-slate-100">
                 {investorData.length > 0 ? investorData.map(d => (
-                  <div key={d.partner.id} className="p-4 space-y-2">
+                  <div key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <p className="font-bold text-slate-900 text-sm">{d.partner.name}</p>
@@ -588,7 +589,7 @@ export default function Capital() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {investorData.map(d => (
-                      <tr key={d.partner.id} className="transition-colors">
+                      <tr key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`transition-colors cursor-pointer ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                         <td className="px-4 py-3 font-semibold text-slate-900">{d.partner.name}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.capital)}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.returned)}</td>

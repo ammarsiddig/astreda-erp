@@ -20,6 +20,7 @@ export default function Expenses() {
   const [showEditModal, setShowEditModal] = useState<Expense | null>(null);
   const [showViewModal, setShowViewModal] = useState<Expense | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Expense | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
   const [filterDate, setFilterDate] = useState('');
@@ -164,7 +165,7 @@ export default function Expenses() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-            <div key={expense.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(expense)}>
+            <div key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{expense.id}</p>
@@ -215,7 +216,7 @@ export default function Expenses() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(expense)}>
+                <tr key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`transition-colors cursor-pointer ${selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{expense.id}</td>
                   <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.expenseCategories.find(c => c.id === expense.categoryId)?.name}</td>

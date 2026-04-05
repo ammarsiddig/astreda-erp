@@ -20,6 +20,7 @@ export default function Payments() {
   const [showEditModal, setShowEditModal] = useState<Payment | null>(null);
   const [showViewModal, setShowViewModal] = useState<Payment | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Payment | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
   const [filterDate, setFilterDate] = useState('');
@@ -163,7 +164,7 @@ export default function Payments() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredPayments.length > 0 ? filteredPayments.map((payment) => (
-            <div key={payment.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(payment)}>
+            <div key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{payment.id}</p>
@@ -214,7 +215,7 @@ export default function Payments() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredPayments.length > 0 ? filteredPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(payment)}>
+                <tr key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{payment.id}</td>
                   <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.customers.find(c => c.id === payment.customerId)?.name}</td>

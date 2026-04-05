@@ -22,6 +22,7 @@ export default function Customers() {
   const hasWriteAccess = canWrite(currentUser, state.roles, 'customers');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<Customer | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -144,7 +145,7 @@ export default function Customers() {
             const debt = getCustomerDebt(customer.id);
             const totalSales = getCustomerTotalSales(customer.id);
             return (
-              <div key={customer.id} className="p-4 space-y-2 cursor-pointer" onClick={() => navigate(`/customers/${customer.id}`)}>
+              <div key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
@@ -202,7 +203,7 @@ export default function Customers() {
                 const debt = getCustomerDebt(customer.id);
                 const totalSales = getCustomerTotalSales(customer.id);
                 return (
-                  <tr key={customer.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => navigate(`/customers/${customer.id}`)}>
+                  <tr key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`transition-colors cursor-pointer ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
                     <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>

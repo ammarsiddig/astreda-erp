@@ -20,6 +20,8 @@ export default function CarLoading() {
   const [showViewModal, setShowViewModal] = useState<InventoryTransaction | null>(null);
   const [showEditModal, setShowEditModal] = useState<InventoryTransaction | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<InventoryTransaction | null>(null);
+  const [selectedStockRowId, setSelectedStockRowId] = useState<string | null>(null);
+  const [selectedLogRowId, setSelectedLogRowId] = useState<string | null>(null);
 
   // Edit State
   const [editDate, setEditDate] = useState('');
@@ -189,7 +191,7 @@ export default function CarLoading() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {carData.length > 0 ? carData.map((row) => (
-                <tr key={row.product.id} className="transition-colors">
+                <tr key={row.product.id} onClick={() => setSelectedStockRowId(row.product.id)} className={`transition-colors cursor-pointer ${selectedStockRowId === row.product.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{row.product.name}</td>
                   <td className="px-4 py-3 text-center">{new Intl.NumberFormat('en-US').format(row.loaded)}</td>
                   <td className="px-4 py-3 text-center">{new Intl.NumberFormat('en-US').format(row.transferredOut)}</td>
@@ -219,7 +221,7 @@ export default function CarLoading() {
             .filter(t => t.shipmentId === activeShipmentId && t.type === 'load' && t.toLocation === selectedCarId)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .map(log => (
-              <div key={log.id} className="p-4 space-y-1 cursor-pointer" onClick={() => setShowViewModal(log)}>
+              <div key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`p-4 space-y-1 cursor-pointer transition-colors ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <p className="font-medium text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
@@ -251,7 +253,7 @@ export default function CarLoading() {
                 .filter(t => t.shipmentId === activeShipmentId && t.type === 'load' && t.toLocation === selectedCarId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} className="hover:bg-[#f0fdfa] cursor-pointer" onClick={() => setShowViewModal(log)}>
+                  <tr key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`transition-colors cursor-pointer ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
                     <td className="px-4 py-3 text-center font-bold text-slate-700">
