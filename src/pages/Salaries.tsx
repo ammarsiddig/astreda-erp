@@ -23,6 +23,8 @@ export default function Salaries() {
   const [showEditModal, setShowEditModal] = useState<Salary | null>(null);
   const [showViewModal, setShowViewModal] = useState<Salary | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Salary | null>(null);
+  const [selectedSalaryRowId, setSelectedSalaryRowId] = useState<string | null>(null);
+  const [selectedAdvanceRowId, setSelectedAdvanceRowId] = useState<string | null>(null);
   const [filterDate, setFilterDate] = useState('');
   const [filterEmployee, setFilterEmployee] = useState('');
 
@@ -384,7 +386,7 @@ export default function Salaries() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                <div key={salary.id} className="p-4 space-y-2">
+                <div key={salary.id} onClick={() => setSelectedSalaryRowId(salary.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{state.employees.find(e => e.id === salary.employeeId)?.name}</p>
@@ -397,9 +399,9 @@ export default function Salaries() {
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === salary.bankAccountId)?.name}</span>
                     <div className="flex gap-1">
-                      <button onClick={() => setShowViewModal(salary)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4" /></button>
-                      <button onClick={() => openEditModal(salary)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => setShowDeleteConfirm(salary)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); setShowViewModal(salary); }} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); openEditModal(salary); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(salary); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                 </div>
@@ -425,7 +427,7 @@ export default function Salaries() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                    <tr key={salary.id} className="hover:bg-[#f0fdfa] transition-colors">
+                    <tr key={salary.id} onClick={() => setSelectedSalaryRowId(salary.id)} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
                       <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>
@@ -439,21 +441,21 @@ export default function Salaries() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => setShowViewModal(salary)}
+                            onClick={(e) => { e.stopPropagation(); setShowViewModal(salary); }}
                             className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                             title={t('view')}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => openEditModal(salary)}
+                            onClick={(e) => { e.stopPropagation(); openEditModal(salary); }}
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                             title={t('edit')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setShowDeleteConfirm(salary)}
+                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(salary); }}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title={t('delete')}
                           >
@@ -538,7 +540,7 @@ export default function Salaries() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {filteredAdvances.length > 0 ? filteredAdvances.map((adv) => (
-                <div key={adv.id} className={`p-4 space-y-2 ${adv.settled ? 'bg-green-50' : ''}`}>
+                <div key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedAdvanceRowId === adv.id ? 'bg-teal-50' : adv.settled ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-amber-50'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{adv.description}</p>
@@ -558,7 +560,7 @@ export default function Salaries() {
                     <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === adv.bankAccountId)?.name}</span>
                     {!adv.settled && (
                       <button
-                        onClick={() => setShowSettleConfirm(adv.id)}
+                        onClick={(e) => { e.stopPropagation(); setShowSettleConfirm(adv.id); }}
                         className="px-3 py-1 bg-[#134e4a] text-white text-xs rounded-lg hover:bg-[#0c3531] transition-colors font-semibold"
                       >
                         تسوية
@@ -587,7 +589,7 @@ export default function Salaries() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredAdvances.length > 0 ? filteredAdvances.map((adv) => (
-                    <tr key={adv.id} className={`transition-colors ${adv.settled ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-amber-50'}`}>
+                    <tr key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`transition-colors cursor-pointer ${selectedAdvanceRowId === adv.id ? 'bg-teal-50' : adv.settled ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-amber-50'}`}>
                       <td className="px-4 py-3">{format(new Date(adv.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3 font-medium text-slate-900">{adv.description}</td>
                       <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">
@@ -610,7 +612,7 @@ export default function Salaries() {
                       <td className="px-4 py-3 text-center">
                         {!adv.settled && (
                           <button
-                            onClick={() => setShowSettleConfirm(adv.id)}
+                            onClick={(e) => { e.stopPropagation(); setShowSettleConfirm(adv.id); }}
                             className="px-3 py-1 bg-[#134e4a] text-white text-xs rounded-lg hover:bg-[#0c3531] transition-colors font-semibold"
                           >
                             تسوية
