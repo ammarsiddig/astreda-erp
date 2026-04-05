@@ -189,7 +189,7 @@ export default function CarLoading() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {carData.length > 0 ? carData.map((row) => (
-                <tr key={row.product.id} className="hover:bg-[#f0fdfa] transition-colors">
+                <tr key={row.product.id} className="transition-colors">
                   <td className="px-4 py-3 font-medium text-slate-900">{row.product.name}</td>
                   <td className="px-4 py-3 text-center">{new Intl.NumberFormat('en-US').format(row.loaded)}</td>
                   <td className="px-4 py-3 text-center">{new Intl.NumberFormat('en-US').format(row.transferredOut)}</td>

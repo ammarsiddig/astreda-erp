@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { formatCurrency, computeBankBalance } from '../lib/utils';
@@ -7,6 +8,7 @@ import { Wallet, Users, ShoppingCart, Receipt } from 'lucide-react';
 
 export default function Dashboard() {
   const { t, lang } = useTranslation();
+  const navigate = useNavigate();
   const { state, activeShipmentId } = useAppStore();
 
   // Calculate KPIs
@@ -111,7 +113,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {debtors.length > 0 ? debtors.map((debtor) => (
-                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-[#f0fdfa] transition-colors">
+                <tr key={debtor.id} className="border-b border-slate-50 hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => navigate(`/customers/${debtor.id}`)}>
                   <td className="px-4 py-3 font-medium text-slate-900">{debtor.name}</td>
                   <td className="px-4 py-3">{state.cities.find(c => c.id === debtor.cityId)?.name}</td>
                   <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">

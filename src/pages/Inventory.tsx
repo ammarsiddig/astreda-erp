@@ -340,7 +340,7 @@ export default function Inventory() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {inventoryData.map((row) => (
-                <tr key={row.product.id} className={`hover:bg-[#f0fdfa] transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+                <tr key={row.product.id} className={`transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-slate-900 flex items-center">
                     {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 mr-2 rtl:ml-2 rtl:mr-0"/>}
                     {row.product.name}

@@ -588,7 +588,7 @@ export default function Capital() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {investorData.map(d => (
-                      <tr key={d.partner.id} className="hover:bg-[#f0fdfa] transition-colors">
+                      <tr key={d.partner.id} className="transition-colors">
                         <td className="px-4 py-3 font-semibold text-slate-900">{d.partner.name}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.capital)}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.returned)}</td>

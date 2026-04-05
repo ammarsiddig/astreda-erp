@@ -444,7 +444,7 @@ export default function Ledger() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {ledgerData.length > 0 ? ledgerData.map((entry) => (
-                <tr key={entry.id} className="hover:bg-[#f0fdfa] transition-colors">
+                <tr key={entry.id} className="transition-colors">
                   <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3 text-slate-900 font-medium">{entry.description}</td>
                   <td className="px-4 py-3">
