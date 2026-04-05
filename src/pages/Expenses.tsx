@@ -20,6 +20,7 @@ export default function Expenses() {
   const [showEditModal, setShowEditModal] = useState<Expense | null>(null);
   const [showViewModal, setShowViewModal] = useState<Expense | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Expense | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
   const [filterDate, setFilterDate] = useState('');
@@ -164,7 +165,7 @@ export default function Expenses() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-            <div key={expense.id} className="p-4 space-y-2">
+            <div key={expense.id} onClick={() => setSelectedRowId(expense.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{expense.id}</p>
@@ -177,17 +178,17 @@ export default function Expenses() {
               <div className="flex justify-between items-center pt-1">
                 <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === expense.bankAccountId)?.name}</span>
                 <div className="flex gap-1">
-                  <button onClick={() => setShowViewModal(expense)}
+                  <button onClick={(e) => { e.stopPropagation(); setShowViewModal(expense); }}
                     className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                   >
                     <Eye className="w-4 h-4"/>
                   </button>
-                  {hasWriteAccess && <button onClick={() => openEditModal(expense)}
+                  {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(expense); }}
                     className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                   >
                     <Edit2 className="w-4 h-4"/>
                   </button>}
-                  {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(expense)}
+                  {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(expense); }}
                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4"/>
@@ -215,7 +216,7 @@ export default function Expenses() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-[#f0fdfa] transition-colors">
+                <tr key={expense.id} onClick={() => setSelectedRowId(expense.id)} className={`transition-colors cursor-pointer ${selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{expense.id}</td>
                   <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.expenseCategories.find(c => c.id === expense.categoryId)?.name}</td>
@@ -226,19 +227,19 @@ export default function Expenses() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center gap-2">
-                      <button onClick={() => setShowViewModal(expense)}
+                      <button onClick={(e) => { e.stopPropagation(); setShowViewModal(expense); }}
                         className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                         title={t('view')}
                       >
                         <Eye className="w-4 h-4"/>
                       </button>
-                      {hasWriteAccess && <button onClick={() => openEditModal(expense)}
+                      {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(expense); }}
                         className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                         title={t('edit')}
                       >
                         <Edit2 className="w-4 h-4"/>
                       </button>}
-                      {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(expense)}
+                      {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(expense); }}
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title={t('delete')}
                       >

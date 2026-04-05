@@ -30,6 +30,8 @@ export default function Inventory() {
   const [showEditModal, setShowEditModal] = useState<InventoryTransaction | null>(null);
   const [showViewModal, setShowViewModal] = useState<InventoryTransaction | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<InventoryTransaction | null>(null);
+  const [selectedStockRowId, setSelectedStockRowId] = useState<string | null>(null);
+  const [selectedLogRowId, setSelectedLogRowId] = useState<string | null>(null);
 
   // Receive Stock State
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().split('T')[0]);
@@ -339,8 +341,14 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {inventoryData.map((row) => (
-                <tr key={row.product.id} className={`hover:bg-[#f0fdfa] transition-colors ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+              {inventoryData.map((row) => {
+                const stockRowClass = selectedStockRowId === row.product.id
+                  ? 'bg-teal-50'
+                  : row.hasNegative
+                    ? 'hover:bg-[#f0fdfa] bg-red-50/50'
+                    : 'hover:bg-[#f0fdfa]';
+                return (
+                <tr key={row.product.id} onClick={() => setSelectedStockRowId(row.product.id)} className={`transition-colors cursor-pointer ${stockRowClass}`}>
                   <td className="px-4 py-3 font-medium text-slate-900 flex items-center">
                     {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 mr-2 rtl:ml-2 rtl:mr-0"/>}
                     {row.product.name}
@@ -362,7 +370,8 @@ export default function Inventory() {
                     </React.Fragment>
                   ))}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -379,7 +388,7 @@ export default function Inventory() {
             .filter(t => t.shipmentId === activeShipmentId)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .map(log => (
-              <div key={log.id} className="p-4 space-y-2">
+              <div key={log.id} onClick={() => setSelectedLogRowId(log.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
@@ -396,19 +405,19 @@ export default function Inventory() {
                   <span className="px-2 py-0.5 bg-slate-100 rounded">{log.toLocation === 'warehouse' ? t('warehouse') : state.cars.find(c => c.id === log.toLocation)?.name}</span>
                 </div>
                 <div className="flex justify-end gap-1 pt-1">
-                  <button onClick={() => setShowViewModal(log)}
+                  <button onClick={(e) => { e.stopPropagation(); setShowViewModal(log); }}
                     className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                     title={t('view')}
                   >
                     <Eye className="w-4 h-4"/>
                   </button>
-                  <button onClick={() => openEditModal(log)}
+                  <button onClick={(e) => { e.stopPropagation(); openEditModal(log); }}
                     className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                     title={t('edit')}
                   >
                     <Edit2 className="w-4 h-4"/>
                   </button>
-                  <button onClick={() => setShowDeleteConfirm(log)}
+                  <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(log); }}
                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title={t('delete')}
                   >
@@ -440,7 +449,7 @@ export default function Inventory() {
                 .filter(t => t.shipmentId === activeShipmentId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} className="hover:bg-[#f0fdfa]">
+                  <tr key={log.id} onClick={() => setSelectedLogRowId(log.id)} className={`transition-colors cursor-pointer ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium text-slate-500">{log.referenceId || '-'}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
@@ -455,19 +464,19 @@ export default function Inventory() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => setShowViewModal(log)}
+                        <button onClick={(e) => { e.stopPropagation(); setShowViewModal(log); }}
                           className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
                         </button>
-                        <button onClick={() => openEditModal(log)}
+                        <button onClick={(e) => { e.stopPropagation(); openEditModal(log); }}
                           className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           title={t('edit')}
                         >
                           <Edit2 className="w-4 h-4"/>
                         </button>
-                        <button onClick={() => setShowDeleteConfirm(log)}
+                        <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(log); }}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title={t('delete')}
                         >

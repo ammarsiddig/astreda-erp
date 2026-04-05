@@ -22,6 +22,7 @@ export default function Customers() {
   const hasWriteAccess = canWrite(currentUser, state.roles, 'customers');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<Customer | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -144,7 +145,7 @@ export default function Customers() {
             const debt = getCustomerDebt(customer.id);
             const totalSales = getCustomerTotalSales(customer.id);
             return (
-              <div key={customer.id} className="p-4 space-y-2">
+              <div key={customer.id} onClick={() => setSelectedRowId(customer.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
@@ -164,12 +165,12 @@ export default function Customers() {
                     <span className="font-medium">{t('totalPayments')}: <span className="text-emerald-600 font-bold">{formatCurrency(state.payments.filter(p => p.customerId === customer.id && p.shipmentId === activeShipmentId).reduce((sum, p) => sum + p.amount, 0))}</span></span>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => navigate(`/customers/${customer.id}`)}
+                    <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${customer.id}`); }}
                       className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                     >
                       <Eye className="w-4 h-4"/>
                     </button>
-                    {hasWriteAccess && <button onClick={() => openEditModal(customer)}
+                    {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(customer); }}
                       className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                     >
                       <Edit2 className="w-4 h-4"/>
@@ -202,7 +203,7 @@ export default function Customers() {
                 const debt = getCustomerDebt(customer.id);
                 const totalSales = getCustomerTotalSales(customer.id);
                 return (
-                  <tr key={customer.id} className="hover:bg-[#f0fdfa] transition-colors">
+                  <tr key={customer.id} onClick={() => setSelectedRowId(customer.id)} className={`transition-colors cursor-pointer ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
                     <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>
@@ -218,13 +219,13 @@ export default function Customers() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => navigate(`/customers/${customer.id}`)}
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${customer.id}`); }}
                           className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
                         </button>
-                        {hasWriteAccess && <button onClick={() => openEditModal(customer)}
+                        {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(customer); }}
                           className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           title={t('edit')}
                         >

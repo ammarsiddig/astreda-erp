@@ -18,6 +18,7 @@ export default function Ledger() {
 
   // Account Statement modal state
   const [showStatementModal, setShowStatementModal] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [stmtFromDate, setStmtFromDate] = useState('');
   const [stmtToDate, setStmtToDate] = useState('');
   const [stmtAccount, setStmtAccount] = useState('');
@@ -402,7 +403,7 @@ export default function Ledger() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {ledgerData.length > 0 ? ledgerData.map((entry) => (
-            <div key={entry.id} className="p-4 space-y-1">
+            <div key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`p-4 space-y-1 cursor-pointer transition-colors ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-slate-900 leading-snug line-clamp-2">{entry.description}</p>
@@ -444,7 +445,7 @@ export default function Ledger() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {ledgerData.length > 0 ? ledgerData.map((entry) => (
-                <tr key={entry.id} className="hover:bg-[#f0fdfa] transition-colors">
+                <tr key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`transition-colors cursor-pointer ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3 text-slate-900 font-medium">{entry.description}</td>
                   <td className="px-4 py-3">
