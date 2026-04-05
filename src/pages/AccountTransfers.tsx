@@ -196,7 +196,7 @@ export default function AccountTransfers() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
-            <div key={transfer.id} className="p-4 space-y-2">
+            <div key={transfer.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(transfer)}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{transfer.id}</p>
@@ -213,9 +213,9 @@ export default function AccountTransfers() {
                 {Number(transfer.transferFee) > 0 && <p>{t('transferFee')}: {formatCurrency(transfer.transferFee)}</p>}
               </div>
               <div className="flex gap-1 pt-1">
-                <button onClick={() => setShowViewModal(transfer)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
-                {hasWriteAccess && <button onClick={() => openEditModal(transfer)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
-                {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(transfer)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                <button onClick={(e) => { e.stopPropagation(); setShowViewModal(transfer); }} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
+                {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(transfer); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(transfer); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
               </div>
             </div>
           )) : (
@@ -239,7 +239,7 @@ export default function AccountTransfers() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
-                <tr key={transfer.id} className="hover:bg-[#f0fdfa] transition-colors">
+                <tr key={transfer.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(transfer)}>
                   <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
                   <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">
@@ -257,19 +257,19 @@ export default function AccountTransfers() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center gap-2">
-                      <button onClick={() => setShowViewModal(transfer)}
+                      <button onClick={(e) => { e.stopPropagation(); setShowViewModal(transfer); }}
                         className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                         title={t('view')}
                       >
                         <Eye className="w-4 h-4"/>
                       </button>
-                      {hasWriteAccess && <button onClick={() => openEditModal(transfer)}
+                      {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(transfer); }}
                         className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                         title={t('edit')}
                       >
                         <Edit2 className="w-4 h-4"/>
                       </button>}
-                      {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(transfer)}
+                      {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(transfer); }}
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title={t('delete')}
                       >

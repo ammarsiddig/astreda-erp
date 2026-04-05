@@ -219,7 +219,7 @@ export default function CarLoading() {
             .filter(t => t.shipmentId === activeShipmentId && t.type === 'load' && t.toLocation === selectedCarId)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .map(log => (
-              <div key={log.id} className="p-4 space-y-1">
+              <div key={log.id} className="p-4 space-y-1 cursor-pointer" onClick={() => setShowViewModal(log)}>
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <p className="font-medium text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
@@ -228,9 +228,9 @@ export default function CarLoading() {
                   <span className="font-bold text-slate-700 text-sm">{new Intl.NumberFormat('en-US').format(log.qty)}</span>
                 </div>
                 <div className="flex gap-1 pt-1">
-                  <button onClick={() => setShowViewModal(log)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
-                  {hasWriteAccess && <button onClick={() => openEditModal(log)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
-                  {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(log)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
+                  <button onClick={(e) => { e.stopPropagation(); setShowViewModal(log); }} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
+                  {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(log); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
+                  {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(log); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
                 </div>
               </div>
             ))}
@@ -251,7 +251,7 @@ export default function CarLoading() {
                 .filter(t => t.shipmentId === activeShipmentId && t.type === 'load' && t.toLocation === selectedCarId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} className="hover:bg-[#f0fdfa]">
+                  <tr key={log.id} className="hover:bg-[#f0fdfa] cursor-pointer" onClick={() => setShowViewModal(log)}>
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
                     <td className="px-4 py-3 text-center font-bold text-slate-700">
@@ -259,19 +259,19 @@ export default function CarLoading() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => setShowViewModal(log)}
+                        <button onClick={(e) => { e.stopPropagation(); setShowViewModal(log); }}
                           className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('view')}
                         >
                           <Eye className="w-4 h-4"/>
                         </button>
-                        {hasWriteAccess && <button onClick={() => openEditModal(log)}
+                        {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(log); }}
                           className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           title={t('edit')}
                         >
                           <Edit2 className="w-4 h-4"/>
                         </button>}
-                        {hasWriteAccess && <button onClick={() => setShowDeleteConfirm(log)}
+                        {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(log); }}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title={t('delete')}
                         >

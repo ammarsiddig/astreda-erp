@@ -214,7 +214,7 @@ export default function Sales() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-            <div key={invoice.id} className="p-4 space-y-2">
+            <div key={invoice.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(invoice.id)}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
@@ -231,12 +231,12 @@ export default function Sales() {
               <div className="flex justify-between items-center pt-1">
                 <span className="text-xs text-slate-500">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name}</span>
                 <div className="flex gap-1">
-                  {hasWriteAccess && <button onClick={() => handleOpenEditInvoice(invoice)}
+                  {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); handleOpenEditInvoice(invoice); }}
                     className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4"/>
                   </button>}
-                  <button onClick={() => setShowViewModal(invoice.id)}
+                  <button onClick={(e) => { e.stopPropagation(); setShowViewModal(invoice.id); }}
                     className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                   >
                     <Printer className="w-4 h-4"/>
@@ -264,7 +264,7 @@ export default function Sales() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors">
+                <tr key={invoice.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(invoice.id)}>
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.customers.find(c => c.id === invoice.customerId)?.name}</td>
@@ -278,13 +278,13 @@ export default function Sales() {
                     {formatCurrency(invoice.total)}
                   </td>
                   <td className="px-4 py-3 text-center flex justify-center gap-2">
-                    {hasWriteAccess && <button onClick={() => handleOpenEditInvoice(invoice)}
+                    {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); handleOpenEditInvoice(invoice); }}
                       className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                       title={t('edit')}
                     >
                       <Edit className="w-4 h-4"/>
                     </button>}
-                    <button onClick={() => setShowViewModal(invoice.id)}
+                    <button onClick={(e) => { e.stopPropagation(); setShowViewModal(invoice.id); }}
                       className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                       title={t('print')}
                     >

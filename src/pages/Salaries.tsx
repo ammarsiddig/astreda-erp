@@ -384,7 +384,7 @@ export default function Salaries() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                <div key={salary.id} className="p-4 space-y-2">
+                <div key={salary.id} className="p-4 space-y-2 cursor-pointer" onClick={() => setShowViewModal(salary)}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{state.employees.find(e => e.id === salary.employeeId)?.name}</p>
@@ -397,9 +397,9 @@ export default function Salaries() {
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === salary.bankAccountId)?.name}</span>
                     <div className="flex gap-1">
-                      <button onClick={() => setShowViewModal(salary)} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4" /></button>
-                      <button onClick={() => openEditModal(salary)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => setShowDeleteConfirm(salary)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); setShowViewModal(salary); }} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); openEditModal(salary); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(salary); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                 </div>
@@ -425,7 +425,7 @@ export default function Salaries() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                    <tr key={salary.id} className="hover:bg-[#f0fdfa] transition-colors">
+                    <tr key={salary.id} className="hover:bg-[#f0fdfa] transition-colors cursor-pointer" onClick={() => setShowViewModal(salary)}>
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
                       <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>
@@ -439,21 +439,21 @@ export default function Salaries() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => setShowViewModal(salary)}
+                            onClick={(e) => { e.stopPropagation(); setShowViewModal(salary); }}
                             className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
                             title={t('view')}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => openEditModal(salary)}
+                            onClick={(e) => { e.stopPropagation(); openEditModal(salary); }}
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                             title={t('edit')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setShowDeleteConfirm(salary)}
+                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(salary); }}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title={t('delete')}
                           >
