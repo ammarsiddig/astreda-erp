@@ -197,7 +197,7 @@ export default function AccountTransfers() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
-            <div key={transfer.id} onClick={() => setSelectedRowId(transfer.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+            <div key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{transfer.id}</p>
@@ -240,7 +240,7 @@ export default function AccountTransfers() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
-                <tr key={transfer.id} onClick={() => setSelectedRowId(transfer.id)} className={`transition-colors cursor-pointer ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                <tr key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
                   <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">

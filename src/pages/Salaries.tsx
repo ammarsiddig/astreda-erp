@@ -386,7 +386,7 @@ export default function Salaries() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                <div key={salary.id} onClick={() => setSelectedSalaryRowId(salary.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                <div key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{state.employees.find(e => e.id === salary.employeeId)?.name}</p>
@@ -427,7 +427,7 @@ export default function Salaries() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                    <tr key={salary.id} onClick={() => setSelectedSalaryRowId(salary.id)} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                    <tr key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
                       <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>

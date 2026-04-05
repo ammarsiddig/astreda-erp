@@ -388,7 +388,7 @@ export default function Inventory() {
             .filter(t => t.shipmentId === activeShipmentId)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .map(log => (
-              <div key={log.id} onClick={() => setSelectedLogRowId(log.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <div key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
@@ -449,7 +449,7 @@ export default function Inventory() {
                 .filter(t => t.shipmentId === activeShipmentId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} onClick={() => setSelectedLogRowId(log.id)} className={`transition-colors cursor-pointer ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <tr key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`transition-colors cursor-pointer ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3 font-medium text-slate-500">{log.referenceId || '-'}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>

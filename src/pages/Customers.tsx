@@ -145,7 +145,7 @@ export default function Customers() {
             const debt = getCustomerDebt(customer.id);
             const totalSales = getCustomerTotalSales(customer.id);
             return (
-              <div key={customer.id} onClick={() => setSelectedRowId(customer.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <div key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
@@ -203,7 +203,7 @@ export default function Customers() {
                 const debt = getCustomerDebt(customer.id);
                 const totalSales = getCustomerTotalSales(customer.id);
                 return (
-                  <tr key={customer.id} onClick={() => setSelectedRowId(customer.id)} className={`transition-colors cursor-pointer ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <tr key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`transition-colors cursor-pointer ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
                     <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>
