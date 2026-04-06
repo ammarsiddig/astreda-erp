@@ -368,7 +368,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (key === 'currentUser') continue; // Never overwrite local auth
         if (key === 'settlementResults') {
           // Record<string, T> — merge by key
-          merged[key] = { ...(prev as any)[key], ...value };
+          merged[key] = { ...(prev as any)[key], ...(value as Record<string, unknown>) };
         } else if (Array.isArray(value) && Array.isArray((prev as any)[key])) {
           // Merge arrays by ID: cloud items replace matching local ones, new items are added
           const prevArr: any[] = (prev as any)[key];
