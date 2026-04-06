@@ -9,6 +9,7 @@ import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction } from '../types';
 import { canWrite } from '../lib/permissions';
+import { generateId } from '../lib/utils';
 
 export default function CarLoading() {
   const { t, lang } = useTranslation();
@@ -107,8 +108,8 @@ export default function CarLoading() {
     if (!hasWriteAccess) return;
     if (!activeShipmentId || !selectedCarId) return;
 
-    const newTransactions = loadItems.filter(item => item.productId && item.qty > 0).map(item => ({
-      id: uuidv4(),
+    const newTransactions = loadItems.filter(item => item.productId && item.qty > 0).map((item, idx) => ({
+      id: generateId('IT', state.inventoryTransactions, idx),
       date: loadDate,
       shipmentId: activeShipmentId,
       productId: item.productId,
@@ -131,8 +132,8 @@ export default function CarLoading() {
     if (!activeShipmentId || !selectedCarId) return;
     const today = new Date().toISOString().split('T')[0];
 
-    const returnTransactions = productsWithStock.map(row => ({
-      id: uuidv4(),
+    const returnTransactions = productsWithStock.map((row, idx) => ({
+      id: generateId('IT', state.inventoryTransactions, idx),
       date: today,
       shipmentId: activeShipmentId,
       productId: row.product.id,

@@ -81,7 +81,7 @@ export default function GeneralTransfers() {
     if (validSplits.length === 0) return;
 
     const isEditing = !!showEditModal;
-    const transferId = isEditing ? showEditModal!.id : generateId('TR', state.generalTransfers.length);
+    const transferId = isEditing ? showEditModal!.id : generateId('TR', state.generalTransfers);
 
     const newTransfer: GeneralTransfer = {
       id: transferId,

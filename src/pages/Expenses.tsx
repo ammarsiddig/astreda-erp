@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, generateId } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 
@@ -51,7 +51,7 @@ export default function Expenses() {
 
     const expenseAmount = Number(amount);
     const isEditing = !!showEditModal;
-    const expenseId = isEditing ? showEditModal!.id : uuidv4();
+    const expenseId = isEditing ? showEditModal!.id : generateId('EX', state.expenses);
 
     const newExpense: Expense = {
       id: expenseId,

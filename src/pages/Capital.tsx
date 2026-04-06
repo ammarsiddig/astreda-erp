@@ -202,7 +202,7 @@ export default function Capital() {
     if (!hasWriteAccess) return;
     if (!contribPartnerId || !contribAmountSAR || !activeShipmentId) return;
     const newContrib: CapitalContribution = {
-      id: generateId('CC', (state.capitalContributions || []).length),
+      id: generateId('CC', state.capitalContributions || []),
       partnerId: contribPartnerId, shipmentId: activeShipmentId,
       amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined,
     };
@@ -252,7 +252,7 @@ export default function Capital() {
     const exRate = Number(drawExchangeRate) || 1;
     const amountSAR = totalSDG / exRate;
     const isEditing = !!editingDrawId;
-    const drawId = isEditing ? editingDrawId! : generateId('TR', state.generalTransfers.length);
+    const drawId = isEditing ? editingDrawId! : generateId('TR', state.generalTransfers);
     const newTransfer: GeneralTransfer = {
       id: drawId, date: drawDate, partnerId: drawPartnerId,
       transferType: 'drawings', amountSDG: totalSDG, exchangeRate: exRate,

@@ -125,7 +125,7 @@ export default function Salaries() {
 
     const salaryAmount = Number(amount);
     const isEditing = !!showEditModal;
-    const salaryId = isEditing ? showEditModal!.id : generateId('SA', state.salaries.length);
+    const salaryId = isEditing ? showEditModal!.id : generateId('SA', state.salaries);
     const emp = state.employees.find(e => e.id === employeeId);
 
     let finalNotes = notes;
@@ -265,7 +265,7 @@ export default function Salaries() {
 
     const advAmountNum = Number(advAmount);
     const emp = state.employees.find(e => e.id === advEmployee);
-    const newExpenseId = generateId('EX', state.expenses.length);
+    const newExpenseId = generateId('EX', state.expenses);
 
     const newExpense: Expense = {
       id: newExpenseId,

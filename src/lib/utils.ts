@@ -24,9 +24,15 @@ export function formatDate(dateString: string) {
   }).format(date);
 }
 
-export function generateId(prefix: string, currentCount: number) {
-  const paddedCount = String(currentCount + 1).padStart(5, '0');
-  return `${prefix}${paddedCount}`;
+export function generateId(prefix: string, items: { id: string }[], offset = 0) {
+  let maxNum = 0;
+  for (const item of items) {
+    if (item.id && item.id.startsWith(prefix)) {
+      const num = parseInt(item.id.slice(prefix.length), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  }
+  return `${prefix}${String(maxNum + 1 + offset).padStart(5, '0')}`;
 }
 
 /**

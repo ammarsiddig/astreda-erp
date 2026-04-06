@@ -3,9 +3,9 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { generateId, formatCurrency } from '../lib/utils';
 import Modal from './Modal';
 import SearchableSelect from './SearchableSelect';
-import { formatCurrency } from '../lib/utils';
 import { Invoice, InvoiceLine } from '../types';
 import { isSalesperson } from '../lib/permissions';
 
@@ -102,7 +102,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     const validLines = lines.filter(l => l.productId && l.qty > 0 && l.unitPrice > 0);
     if (validLines.length === 0) return;
 
-    const invoiceId = invoiceToEdit ? invoiceToEdit.id : uuidv4();
+    const invoiceId = invoiceToEdit ? invoiceToEdit.id : generateId('INV', state.invoices);
 
     const newInvoice: Invoice = {
       id: invoiceId,
@@ -141,8 +141,8 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     }
 
     // Create new inventory transactions
-    const newInventoryTransactions = validLines.map(line => ({
-      id: uuidv4(),
+    const newInventoryTransactions = validLines.map((line, idx) => ({
+      id: generateId('IT', state.inventoryTransactions, idx),
       date: invoiceDate,
       shipmentId: activeShipmentId,
       productId: line.productId,

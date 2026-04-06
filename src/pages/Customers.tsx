@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Users, Plus, Edit2, Eye, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../lib/utils';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
@@ -58,7 +59,7 @@ export default function Customers() {
       setShowEditModal(null);
     } else {
       const newCustomer: Customer = {
-        id: uuidv4(),
+        id: generateId('CU', state.customers),
         name,
         phone,
         cityId,

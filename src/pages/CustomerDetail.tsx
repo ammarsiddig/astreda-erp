@@ -5,7 +5,7 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Edit2, Trash2, Printer, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, generateId } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
@@ -126,7 +126,7 @@ export default function CustomerDetail() {
     if (!activeShipmentId || !bankAccountId) return;
 
     const isEditing = !!editingPayment;
-    const paymentId = isEditing ? editingPayment!.id : `PM-${Date.now()}`;
+    const paymentId = isEditing ? editingPayment!.id : generateId('PM', state.payments);
 
     const newPayment: Payment = {
       id: paymentId,

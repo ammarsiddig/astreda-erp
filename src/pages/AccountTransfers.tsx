@@ -52,7 +52,7 @@ export default function AccountTransfers() {
     }
 
     const isEditing = !!showEditModal;
-    const transferId = isEditing ? showEditModal!.id : generateId('MV', state.accountTransfers.length);
+    const transferId = isEditing ? showEditModal!.id : generateId('MV', state.accountTransfers);
 
     const newTransfer: AccountTransfer = {
       id: transferId,
