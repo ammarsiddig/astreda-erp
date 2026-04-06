@@ -55,7 +55,9 @@ export default function Inventory() {
   const [showShipmentTransferModal, setShowShipmentTransferModal] = useState(false);
   const [shipmentTransferDate, setShipmentTransferDate] = useState(new Date().toISOString().split('T')[0]);
   const [targetShipmentId, setTargetShipmentId] = useState('');
-  const [shipmentTransferItems, setShipmentTransferItems] = useState<{ productId: string; qty: number; unitCost: number }[]>([]);
+  const [shipmentTransferItems, setShipmentTransferItems] = useState<{ productId: string; qty: number }[]>([]);
+  const [shipmentTransferTotalAmount, setShipmentTransferTotalAmount] = useState<number | ''>('');
+  const [shipmentTransferBankAccountId, setShipmentTransferBankAccountId] = useState('');
   const [shipmentTransferNotes, setShipmentTransferNotes] = useState('');
 
   // Pre-populate remaining products when opening shipment transfer modal
@@ -64,9 +66,11 @@ export default function Inventory() {
       .filter(row => row.warehouseRemaining > 0 || row.cars.some(c => c.remaining > 0))
       .map(row => {
         const totalRemaining = row.warehouseRemaining + row.cars.reduce((sum, c) => sum + Math.max(0, c.remaining), 0);
-        return { productId: row.product.id, qty: totalRemaining, unitCost: 0 };
+        return { productId: row.product.id, qty: totalRemaining };
       });
-    setShipmentTransferItems(items.length > 0 ? items : [{ productId: '', qty: 0, unitCost: 0 }]);
+    setShipmentTransferItems(items.length > 0 ? items : [{ productId: '', qty: 0 }]);
+    setShipmentTransferTotalAmount('');
+    setShipmentTransferBankAccountId('');
     setTargetShipmentId('');
     setShipmentTransferNotes('');
     setShipmentTransferDate(new Date().toISOString().split('T')[0]);
@@ -282,7 +286,7 @@ export default function Inventory() {
     if (validItems.length === 0) return;
 
     const transferId = uuidv4();
-    const totalAmount = validItems.reduce((sum, item) => sum + item.qty * item.unitCost, 0);
+    const totalAmount = Number(shipmentTransferTotalAmount) || 0;
 
     // Create inventory transactions: remove from source shipment, add to target shipment
     const outTransactions: InventoryTransaction[] = validItems.map(item => ({
@@ -320,17 +324,17 @@ export default function Inventory() {
       items: validItems.map(item => ({
         productId: item.productId,
         qty: item.qty,
-        unitCost: item.unitCost,
-        total: item.qty * item.unitCost,
+        unitCost: 0,
+        total: 0,
       })),
       totalAmount,
       notes: shipmentTransferNotes || undefined,
     };
 
-    // Only create ledger entries if there's a financial amount
+    // Only create ledger entries if there's a financial amount and bank account selected
     const newLedgerEntries: typeof state.ledger = [];
-    if (totalAmount > 0 && state.bankAccounts.length > 0) {
-      const accountId = state.bankAccounts[0].id;
+    if (totalAmount > 0 && shipmentTransferBankAccountId) {
+      const accountId = shipmentTransferBankAccountId;
       newLedgerEntries.push({
         id: uuidv4(),
         date: shipmentTransferDate,
@@ -1027,108 +1031,100 @@ export default function Inventory() {
       </Modal>
 
       {/* Inter-Shipment Transfer Modal */}
-      <Modal isOpen={showShipmentTransferModal} onClose={() => setShowShipmentTransferModal(false)} title={t('transferToShipment')} size="xl">
+      <Modal isOpen={showShipmentTransferModal} onClose={() => setShowShipmentTransferModal(false)} title={t('transferToShipment')} size="lg">
         <form onSubmit={handleShipmentTransfer} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Date + From + To shipment — one row */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
               <input type="date" required value={shipmentTransferDate} onChange={(e) => setShipmentTransferDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('fromShipment')}</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('fromShipment')}</label>
               <input type="text" readOnly value={state.shipments.find(s => s.id === activeShipmentId)?.name || ''}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 outline-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 outline-none text-sm"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t('toShipment')}</label>
-            <select required value={targetShipmentId} onChange={(e) => setTargetShipmentId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
-            >
-              <option value="">{t('select')}</option>
-              {state.shipments.filter(s => s.id !== activeShipmentId).map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-slate-700">{t('selectProducts')}</label>
-            <div className="max-h-64 overflow-y-auto space-y-2">
-              {shipmentTransferItems.map((item, index) => {
-                const productName = state.products.find(p => p.id === item.productId)?.name;
-                const lineTotal = item.qty * item.unitCost;
-                return (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg">
-                    <div className="col-span-4">
-                      <select value={item.productId} onChange={(e) => {
-                          const newItems = [...shipmentTransferItems];
-                          newItems[index].productId = e.target.value;
-                          setShipmentTransferItems(newItems);
-                        }}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 outline-none"
-                      >
-                        <option value="">{t('product')}</option>
-                        {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <input type="number" min="0" placeholder={t('qty')} value={item.qty || ''} onChange={(e) => {
-                          const newItems = [...shipmentTransferItems];
-                          newItems[index].qty = parseInt(e.target.value) || 0;
-                          setShipmentTransferItems(newItems);
-                        }}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 outline-none"
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <input type="number" min="0" step="0.01" placeholder={t('unitCost')} value={item.unitCost || ''} onChange={(e) => {
-                          const newItems = [...shipmentTransferItems];
-                          newItems[index].unitCost = parseFloat(e.target.value) || 0;
-                          setShipmentTransferItems(newItems);
-                        }}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 outline-none"
-                      />
-                    </div>
-                    <div className="col-span-2 text-right">
-                      <span className="text-sm font-bold text-slate-700">{formatCurrency(lineTotal)}</span>
-                    </div>
-                    <div className="col-span-1 text-center">
-                      <button type="button" onClick={() => {
-                          const newItems = shipmentTransferItems.filter((_, i) => i !== index);
-                          setShipmentTransferItems(newItems.length > 0 ? newItems : [{ productId: '', qty: 0, unitCost: 0 }]);
-                        }}
-                        className="text-red-400 hover:text-red-600 text-xs"
-                      >✕</button>
-                    </div>
-                  </div>
-                );
-              })}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('toShipment')}</label>
+              <select required value={targetShipmentId} onChange={(e) => setTargetShipmentId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+              >
+                <option value="">{t('select')}</option>
+                {state.shipments.filter(s => s.id !== activeShipmentId).map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
             </div>
-            <button type="button" onClick={() => setShipmentTransferItems([...shipmentTransferItems, { productId: '', qty: 0, unitCost: 0 }])}
-              className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+          </div>
+
+          {/* Products — simple: product + qty per row */}
+          <div className="space-y-2">
+            <label className="block text-xs font-medium text-slate-500">{t('products')}</label>
+            <div className="max-h-52 overflow-y-auto space-y-1.5">
+              {shipmentTransferItems.map((item, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <select value={item.productId} onChange={(e) => {
+                      const newItems = [...shipmentTransferItems];
+                      newItems[index].productId = e.target.value;
+                      setShipmentTransferItems(newItems);
+                    }}
+                    className="flex-1 px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                  >
+                    <option value="">{t('product')}</option>
+                    {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <input type="number" min="0" placeholder={t('qty')} value={item.qty || ''} onChange={(e) => {
+                      const newItems = [...shipmentTransferItems];
+                      newItems[index].qty = parseInt(e.target.value) || 0;
+                      setShipmentTransferItems(newItems);
+                    }}
+                    className="w-20 px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none text-center"
+                  />
+                  <button type="button" onClick={() => {
+                      const newItems = shipmentTransferItems.filter((_, i) => i !== index);
+                      setShipmentTransferItems(newItems.length > 0 ? newItems : [{ productId: '', qty: 0 }]);
+                    }}
+                    className="text-red-400 hover:text-red-600 p-1"
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setShipmentTransferItems([...shipmentTransferItems, { productId: '', qty: 0 }])}
+              className="text-xs text-amber-600 hover:text-amber-700 font-medium"
             >+ {t('add')}</button>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex justify-between items-center">
-            <span className="text-sm font-semibold text-amber-800">{t('totalValue')}</span>
-            <span className="text-lg font-bold text-amber-700">
-              {formatCurrency(shipmentTransferItems.reduce((sum, item) => sum + item.qty * item.unitCost, 0))}
-            </span>
+          {/* Payment — total amount + bank account on one line */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('totalValue')}</label>
+              <input type="number" min="0" step="1" placeholder="0" value={shipmentTransferTotalAmount} onChange={(e) => setShipmentTransferTotalAmount(e.target.value ? Number(e.target.value) : '')}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('bankAccount')}</label>
+              <select value={shipmentTransferBankAccountId} onChange={(e) => setShipmentTransferBankAccountId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+              >
+                <option value="">{t('none')}</option>
+                {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
           </div>
 
+          {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
-            <textarea value={shipmentTransferNotes} onChange={(e) => setShipmentTransferNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" rows={2}
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t('notes')}</label>
+            <input type="text" value={shipmentTransferNotes} onChange={(e) => setShipmentTransferNotes(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm"
             />
           </div>
 
-          <div className="pt-4 flex justify-end gap-3">
+          <div className="flex justify-end gap-3">
             <button type="button" onClick={() => setShowShipmentTransferModal(false)}
               className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
             >{t('cancel')}</button>
