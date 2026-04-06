@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { Truck, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Truck, Plus, Eye, Edit2, Trash2, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
@@ -15,6 +15,7 @@ export default function CarLoading() {
   const hasWriteAccess = canWrite(state.currentUser, state.roles, 'carLoading');
   const [selectedCarId, setSelectedCarId] = useState<string>(state.cars[0]?.id || '');
   const [showLoadModal, setShowLoadModal] = useState(false);
+  const [showReturnAllConfirm, setShowReturnAllConfirm] = useState(false);
 
   // View/Edit/Delete State
   const [showViewModal, setShowViewModal] = useState<InventoryTransaction | null>(null);
@@ -123,6 +124,29 @@ export default function CarLoading() {
     setLoadItems([{ productId: '', qty: 0 }]);
   };
 
+  const productsWithStock = carData.filter(row => row.currentStock > 0);
+
+  const handleReturnAll = () => {
+    if (!activeShipmentId || !selectedCarId) return;
+    const today = new Date().toISOString().split('T')[0];
+
+    const returnTransactions = productsWithStock.map(row => ({
+      id: uuidv4(),
+      date: today,
+      shipmentId: activeShipmentId,
+      productId: row.product.id,
+      type: 'return' as const,
+      fromLocation: selectedCarId,
+      toLocation: 'warehouse',
+      qty: row.currentStock,
+    }));
+
+    updateState({
+      inventoryTransactions: [...state.inventoryTransactions, ...returnTransactions]
+    });
+    setShowReturnAllConfirm(false);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -144,6 +168,14 @@ export default function CarLoading() {
             <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
             {t('addLoadingEntry')}
           </button>}
+          {hasWriteAccess && productsWithStock.length > 0 && (
+            <button onClick={() => setShowReturnAllConfirm(true)}
+              className="flex items-center px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-semibold shadow-sm transition-colors"
+            >
+              <RotateCcw className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
+              {t('returnAllToWarehouse')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -431,6 +463,29 @@ export default function CarLoading() {
             <button onClick={handleDelete} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">
               {t('delete')}
             </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Return All Confirm */}
+      <Modal isOpen={showReturnAllConfirm} onClose={() => setShowReturnAllConfirm(false)} title={t('returnAllToWarehouse')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('confirmReturnAll')}</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+            {productsWithStock.map(row => (
+              <div key={row.product.id} className="flex justify-between text-sm">
+                <span className="text-slate-700">{row.product.name}</span>
+                <span className="font-bold text-slate-800">{new Intl.NumberFormat('en-US').format(row.currentStock)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowReturnAllConfirm(false)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >{t('cancel')}</button>
+            <button onClick={handleReturnAll}
+              className="px-5 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-semibold shadow-sm transition-colors"
+            >{t('confirm')}</button>
           </div>
         </div>
       </Modal>

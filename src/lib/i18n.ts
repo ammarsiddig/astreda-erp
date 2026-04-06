@@ -378,6 +378,8 @@ export const translations = {
     transferProducts: 'Transfer Products',
     selectProducts: 'Select products to transfer',
     allShipmentBalance: 'Total (All Shipments)',
+    returnAllToWarehouse: 'Return All to Warehouse',
+    confirmReturnAll: 'Are you sure you want to return all remaining products from this car to the warehouse?',
   },
   ar: {
     dashboard: 'لوحة التحكم',
@@ -758,6 +760,8 @@ export const translations = {
     transferProducts: 'تحويل المنتجات',
     selectProducts: 'اختر المنتجات للتحويل',
     allShipmentBalance: 'الإجمالي (كل الرسائل)',
+    returnAllToWarehouse: 'إرجاع الكل للمخزن',
+    confirmReturnAll: 'هل تريد إرجاع جميع المنتجات المتبقية من هذه السيارة إلى المخزن؟',
   }
 };
 
