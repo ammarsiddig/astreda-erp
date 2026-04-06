@@ -311,30 +311,42 @@ export const pushToCloud = flushQueue
  * Supabase.  When offline the diffs go into the local queue instead.
  */
 const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => {
-  for (const mapping of TABLE_MAPPINGS) {
+  // Process all changed tables in parallel for faster sync
+  const tasks = TABLE_MAPPINGS.map(async (mapping) => {
     const key = mapping.stateKey
     const prevVal = key === 'settlementResults' ? prev.settlementResults : (prev as any)[key]
     const currVal = key === 'settlementResults' ? curr.settlementResults : (curr as any)[key]
-    if (prevVal === currVal) continue // reference equality = no change
+    if (prevVal === currVal) return // reference equality = no change
     console.log(`[sync] diff detected: ${mapping.table} (${key})`)
 
     if (key === 'settlementResults') {
       const prevMap = (prevVal || {}) as Record<string, any>
       const currMap = (currVal || {}) as Record<string, any>
+
+      // Batch upserts
+      const upsertRows: Record<string, any>[] = []
+      const upsertIds: string[] = []
       for (const sid of Object.keys(currMap)) {
         if (prevMap[sid] !== currMap[sid]) {
-          const row = mapping.toRow(currMap[sid])
-          if (navigator.onLine && isSupabaseConfigured()) {
-            try {
-              const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: mapping.pkField ?? 'id' })
-              if (error) throw error
-              markWritten(mapping.table, sid)
-            } catch { enqueue({ table: mapping.table, pk: sid, op: 'UPSERT', data: row }) }
-          } else {
-            enqueue({ table: mapping.table, pk: sid, op: 'UPSERT', data: row })
-          }
+          upsertRows.push(mapping.toRow(currMap[sid]))
+          upsertIds.push(sid)
         }
       }
+      if (upsertRows.length > 0) {
+        if (navigator.onLine && isSupabaseConfigured()) {
+          try {
+            const { error } = await supabase!.from(mapping.table).upsert(upsertRows, { onConflict: mapping.pkField ?? 'id' })
+            if (error) throw error
+            upsertIds.forEach(sid => markWritten(mapping.table, sid))
+          } catch {
+            upsertRows.forEach((row, i) => enqueue({ table: mapping.table, pk: upsertIds[i], op: 'UPSERT', data: row }))
+          }
+        } else {
+          upsertRows.forEach((row, i) => enqueue({ table: mapping.table, pk: upsertIds[i], op: 'UPSERT', data: row }))
+        }
+      }
+
+      // Deletes
       for (const sid of Object.keys(prevMap)) {
         if (!(sid in currMap)) {
           if (navigator.onLine && isSupabaseConfigured()) {
@@ -354,50 +366,57 @@ const cloudFirstDiff = async (prev: AppState, curr: AppState): Promise<void> => 
       const pkField = mapping.pkField ?? 'id'
       const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
 
-      // Upserted / new items
+      // Batch all upserts into a single call
+      const upsertRows: Record<string, any>[] = []
+      const upsertPks: string[] = []
       for (const item of currArr) {
         const pk = pkGetter(item)
         const prevItem = prevArr.find(p => pkGetter(p) === pk)
         if (!prevItem || prevItem !== item) {
-          const row = mapping.toRow(item)
-          console.log(`[sync] UPSERT ${mapping.table}/${pk}`, row)
-          if (navigator.onLine && isSupabaseConfigured()) {
-            try {
-              const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
-              if (error) {
-                console.error(`[sync] ❌ UPSERT ${mapping.table}/${pk} failed:`, error.message, error)
-                throw error
-              }
-              console.log(`[sync] ✅ UPSERT ${mapping.table}/${pk} OK`)
-              markWritten(mapping.table, pk)
-            } catch (e: any) {
-              console.error(`[sync] ❌ ${mapping.table}/${pk} catch:`, e?.message || e)
-              enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
-            }
-          } else {
-            console.log(`[sync] ⏳ offline, queued ${mapping.table}/${pk}`)
-            enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
-          }
+          upsertRows.push(mapping.toRow(item))
+          upsertPks.push(pk)
         }
       }
-      // Deleted items
-      const currIds = new Set(currArr.map(pkGetter))
-      for (const item of prevArr) {
-        const pk = pkGetter(item)
-        if (!currIds.has(pk)) {
-          if (navigator.onLine && isSupabaseConfigured()) {
-            try {
-              const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
-              if (error) throw error
-              markWritten(mapping.table, pk)
-            } catch { enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} }) }
-          } else {
-            enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
+
+      if (upsertRows.length > 0) {
+        console.log(`[sync] batch UPSERT ${mapping.table}: ${upsertRows.length} rows`)
+        if (navigator.onLine && isSupabaseConfigured()) {
+          try {
+            const { error } = await supabase!.from(mapping.table).upsert(upsertRows, { onConflict: pkField })
+            if (error) {
+              console.error(`[sync] ❌ batch UPSERT ${mapping.table} failed:`, error.message)
+              throw error
+            }
+            console.log(`[sync] ✅ batch UPSERT ${mapping.table}: ${upsertRows.length} rows OK`)
+            upsertPks.forEach(pk => markWritten(mapping.table, pk))
+          } catch (e: any) {
+            console.error(`[sync] ❌ ${mapping.table} batch catch:`, e?.message || e)
+            upsertRows.forEach((row, i) => enqueue({ table: mapping.table, pk: upsertPks[i], op: 'UPSERT', data: row }))
           }
+        } else {
+          console.log(`[sync] ⏳ offline, queued ${mapping.table}: ${upsertRows.length} rows`)
+          upsertRows.forEach((row, i) => enqueue({ table: mapping.table, pk: upsertPks[i], op: 'UPSERT', data: row }))
+        }
+      }
+
+      // Batch deletes
+      const currIds = new Set(currArr.map(pkGetter))
+      const deletePks = prevArr.filter(item => !currIds.has(pkGetter(item))).map(pkGetter)
+      for (const pk of deletePks) {
+        if (navigator.onLine && isSupabaseConfigured()) {
+          try {
+            const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
+            if (error) throw error
+            markWritten(mapping.table, pk)
+          } catch { enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} }) }
+        } else {
+          enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
         }
       }
     }
-  }
+  })
+
+  await Promise.all(tasks)
 }
 
 // ─── Scalar settings keys tracked for cloud sync ────────────────────
@@ -435,7 +454,7 @@ export const markCloudReady = () => { cloudReady = true }
 // debouncedBase tracks the state at the START of the current debounce window.
 // When the timer fires we diff base vs latest, then advance the base.
 
-const DEBOUNCE_MS = 500
+const DEBOUNCE_MS = 100
 
 let debouncedBase: AppState | null = null
 let pushTimeout: ReturnType<typeof setTimeout> | null = null
@@ -497,45 +516,50 @@ export const pullFromCloud = async (
 ): Promise<boolean> => {
   if (!isSupabaseConfigured() || !navigator.onLine) return false
 
+  // Fetch ALL tables in parallel for much faster loading
+  const results = await Promise.allSettled([
+    ...TABLE_MAPPINGS.map(async (mapping) => {
+      const { data, error } = await supabase!.from(mapping.table).select('*')
+      if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); return null }
+      if (!data) return null
+      return { mapping, data }
+    }),
+    // Also fetch scalar settings in parallel
+    (async () => {
+      const { data } = await supabase!.from('app_settings').select('*').eq('id', 'singleton').single()
+      return data ? { isScalar: true as const, data } : null
+    })(),
+  ])
+
+  // Batch all updates into a single applyToState call to avoid multiple re-renders
+  const bulkUpdate: Partial<AppState> = {}
   let pulledAny = false
 
-  for (const mapping of TABLE_MAPPINGS) {
-    try {
-      const { data, error } = await supabase!.from(mapping.table).select('*')
-      if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); continue }
-      if (!data) continue
+  for (const result of results) {
+    if (result.status !== 'fulfilled' || !result.value) continue
+    pulledAny = true
 
-      pulledAny = true
+    if ('isScalar' in result.value) {
+      const data = result.value.data
+      bulkUpdate.language = data.language ?? 'ar'
+      bulkUpdate.userRole = data.user_role ?? 'manager'
+      bulkUpdate.exchangeRate = data.exchange_rate ?? 1
+      bulkUpdate.managementFeePercent = data.management_fee_percent ?? 0
+      bulkUpdate.managementFeeRecipientId = data.management_fee_recipient_id ?? '1'
+    } else {
+      const { mapping, data } = result.value
       const mapped = data.map(mapping.fromRow)
-
-      // settlementResults is a Record<string, SettlementResult>
       if (mapping.stateKey === 'settlementResults') {
         const record: Record<string, any> = {}
         for (const sr of mapped) record[sr.shipmentId] = sr
-        applyToState({ [mapping.stateKey]: record } as any)
+        ;(bulkUpdate as any)[mapping.stateKey] = record
       } else {
-        applyToState({ [mapping.stateKey]: mapped } as any)
+        ;(bulkUpdate as any)[mapping.stateKey] = mapped
       }
-    } catch (e) {
-      console.warn(`[sync] pull ${mapping.table} error:`, e)
     }
   }
 
-  // Pull scalar settings
-  try {
-    const { data } = await supabase!.from('app_settings').select('*').eq('id', 'singleton').single()
-    if (data) {
-      pulledAny = true
-      applyToState({
-        language: data.language ?? 'ar',
-        userRole: data.user_role ?? 'manager',
-        exchangeRate: data.exchange_rate ?? 1,
-        managementFeePercent: data.management_fee_percent ?? 0,
-        managementFeeRecipientId: data.management_fee_recipient_id ?? '1',
-      })
-    }
-  } catch { /* ignore */ }
-
+  if (pulledAny) applyToState(bulkUpdate)
   updateStatus({ lastSynced: new Date().toISOString() })
   return pulledAny
 }
