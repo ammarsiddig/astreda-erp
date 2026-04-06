@@ -502,6 +502,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const resetAndFullSync = useCallback(async () => {
     console.log('[store] resetAndFullSync: clearing sync state and performing full pull');
+    // clearCache is false: we preserve the current local state so the UI stays
+    // populated while the full pull runs in the background, avoiding a blank screen.
     clearSyncState({ clearQueue: true, clearCache: false });
     await pullFromCloud(syncApply);
   }, [syncApply]);

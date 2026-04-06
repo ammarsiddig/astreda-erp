@@ -204,7 +204,7 @@ export const clearSyncState = (options?: { clearQueue?: boolean; clearCache?: bo
   localStorage.removeItem(LAST_SYNC_KEY)
   if (options?.clearQueue) localStorage.removeItem(QUEUE_KEY_EXPORT)
   if (options?.clearCache) localStorage.removeItem(STATE_CACHE_KEY)
-  console.log('[sync] sync state cleared — next pull will be a full pull')
+  console.log(`[sync] sync state cleared (clearQueue=${options?.clearQueue ?? false}, clearCache=${options?.clearCache ?? false}) — next pull will be a full pull`)
 }
 
 // ─── Sync Status ──────────────────────────────────────────────────

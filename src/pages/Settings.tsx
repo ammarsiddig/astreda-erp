@@ -52,6 +52,7 @@ export default function Settings() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [resetDone, setResetDone] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   // ─── User Management State ─────────────────────────────────────
   const [showUserModal, setShowUserModal] = useState(false);
@@ -919,10 +920,13 @@ export default function Settings() {
             {resetDone && (
               <p className="text-sm text-emerald-600 font-medium mb-3">✅ {t('resetFullSyncDone')}</p>
             )}
+            {resetError && (
+              <p className="text-sm text-red-600 font-medium mb-3">⚠️ {resetError}</p>
+            )}
             <button
               type="button"
               disabled={isResetting}
-              onClick={() => { setResetDone(false); setShowResetConfirm(true); }}
+              onClick={() => { setResetDone(false); setResetError(null); setShowResetConfirm(true); }}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
             >
               <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
@@ -950,9 +954,12 @@ export default function Settings() {
                 setShowResetConfirm(false);
                 setIsResetting(true);
                 setResetDone(false);
+                setResetError(null);
                 try {
                   await resetAndFullSync();
                   setResetDone(true);
+                } catch (err) {
+                  setResetError(err instanceof Error ? err.message : t('errorOccurred'));
                 } finally {
                   setIsResetting(false);
                 }
