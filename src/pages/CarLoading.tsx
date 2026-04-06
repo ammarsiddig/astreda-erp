@@ -6,6 +6,7 @@ import { Truck, Plus, Eye, Edit2, Trash2, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction } from '../types';
 import { canWrite } from '../lib/permissions';
 
@@ -155,13 +156,12 @@ export default function CarLoading() {
           {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>}
         </div>
         <div className="flex items-center space-x-4 rtl:space-x-reverse">
-          <select value={selectedCarId} onChange={(e) => setSelectedCarId(e.target.value)}
-            className="px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none shadow-sm"
-          >
-            {state.cars.map(car => (
-              <option key={car.id} value={car.id}>{car.name}</option>
-            ))}
-          </select>
+          <SearchableSelect
+            value={selectedCarId}
+            onChange={(val) => setSelectedCarId(val)}
+            options={state.cars.map(car => ({ value: car.id, label: car.name }))}
+            placeholder={t('select')}
+          />
           {hasWriteAccess && <button onClick={() => setShowLoadModal(true)}
             className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors shadow-sm"
           >
@@ -333,18 +333,18 @@ export default function CarLoading() {
             <label className="block text-sm font-medium text-slate-700">{t('products')}</label>
             {loadItems.map((item, index) => (
               <div key={index} className="flex gap-3">
-                <select required value={item.productId} onChange={(e) => {
+                <SearchableSelect
+                  required
+                  value={item.productId}
+                  onChange={(val) => {
                     const newItems = [...loadItems];
-                    newItems[index].productId = e.target.value;
+                    newItems[index].productId = val;
                     setLoadItems(newItems);
                   }}
-                  className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {state.products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('select')}
+                  className="flex-1"
+                />
                 <input type="number" required min="1" value={item.qty || ''} onChange={(e) => {
                     const newItems = [...loadItems];
                     newItems[index].qty = parseInt(e.target.value) || 0;
@@ -422,13 +422,13 @@ export default function CarLoading() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('product')}</label>
-              <select required value={editProductId} onChange={(e) => setEditProductId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-              >
-                {state.products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                required
+                value={editProductId}
+                onChange={(val) => setEditProductId(val)}
+                options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                placeholder={t('product')}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('qty')}</label>

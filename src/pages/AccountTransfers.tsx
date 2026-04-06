@@ -6,6 +6,7 @@ import { ArrowRightLeft, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
@@ -319,27 +320,29 @@ export default function AccountTransfers() {
             {type === 'transfer' && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('fromAccount')}</label>
-                <select required value={fromBankAccountId} onChange={(e) => {
-                    setFromBankAccountId(e.target.value);
-                    const bank = state.bankAccounts.find(b => b.id === e.target.value);
+                <SearchableSelect
+                  required
+                  value={fromBankAccountId}
+                  onChange={(val) => {
+                    setFromBankAccountId(val);
+                    const bank = state.bankAccounts.find(b => b.id === val);
                     if (bank) setTransferFee(bank.transferFee);
                   }}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+                  options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                  placeholder={t('select')}
+                />
               </div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('toAccount')}</label>
-              <select required value={toBankAccountId} onChange={(e) => setToBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
+              <SearchableSelect
+                required
+                value={toBankAccountId}
+                onChange={(val) => setToBankAccountId(val)}
+                options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                placeholder={t('select')}
+              />
             </div>
 
             <div>

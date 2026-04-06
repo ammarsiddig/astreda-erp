@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { formatCurrency } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { Invoice } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
 
@@ -196,21 +197,21 @@ export default function Sales() {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('city')}</label>
-          <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-          >
-            <option value="">{t('all')}</option>
-            {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <SearchableSelect
+            value={filterCity}
+            onChange={(val) => setFilterCity(val)}
+            options={[{ value: '', label: t('all') }, ...state.cities.map(c => ({ value: c.id, label: c.name }))]}
+            placeholder={t('all')}
+          />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('salesperson')}</label>
-          <select value={filterSalesperson} onChange={(e) => setFilterSalesperson(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-          >
-            <option value="">{t('all')}</option>
-            {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <SearchableSelect
+            value={filterSalesperson}
+            onChange={(val) => setFilterSalesperson(val)}
+            options={[{ value: '', label: t('all') }, ...state.salespeople.map(s => ({ value: s.id, label: s.name }))]}
+            placeholder={t('all')}
+          />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('paymentType')}</label>

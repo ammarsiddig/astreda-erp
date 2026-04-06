@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from './Modal';
+import SearchableSelect from './SearchableSelect';
 import { formatCurrency } from '../lib/utils';
 import { Invoice, InvoiceLine } from '../types';
 import { isSalesperson } from '../lib/permissions';
@@ -192,10 +193,13 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('customer')}</label>
-            <select required value={customerId} onChange={handleCustomerChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none">
-              <option value="">{t('select')}</option>
-              {availableCustomers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <SearchableSelect
+              required
+              value={customerId}
+              onChange={(val) => handleCustomerChange({ target: { value: val } } as any)}
+              options={availableCustomers.map(c => ({ value: c.id, label: c.name }))}
+              placeholder={t('select')}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('salesperson')}</label>
@@ -243,12 +247,13 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
           {lines.map((line, index) => (
             <div key={index} className="flex gap-2 items-start">
               <div className="flex-1">
-                <select required value={line.productId} onChange={(e) => handleLineChange(index, 'productId', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-                >
-                  <option value="">{t('product')}</option>
-                  {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <SearchableSelect
+                  required
+                  value={line.productId}
+                  onChange={(val) => handleLineChange(index, 'productId', val)}
+                  options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('product')}
+                />
               </div>
               <div className="w-20">
                 <input type="number" required min="1" value={line.qty || ''} onChange={(e) => handleLineChange(index, 'qty', parseInt(e.target.value) || 0)}

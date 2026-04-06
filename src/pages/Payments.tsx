@@ -6,6 +6,7 @@ import { DollarSign, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
 import { Payment } from '../types';
@@ -162,12 +163,12 @@ export default function Payments() {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('customer')}</label>
-          <select value={filterCustomer} onChange={(e) => setFilterCustomer(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-          >
-            <option value="">{t('all')}</option>
-            {state.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <SearchableSelect
+            value={filterCustomer}
+            onChange={(val) => setFilterCustomer(val)}
+            options={[{ value: '', label: t('all') }, ...state.customers.map(c => ({ value: c.id, label: c.name }))]}
+            placeholder={t('all')}
+          />
         </div>
       </div>
 
@@ -288,12 +289,13 @@ export default function Payments() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('customer')}</label>
-              <select required value={customerId} onChange={(e) => setCustomerId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <SearchableSelect
+                required
+                value={customerId}
+                onChange={(val) => setCustomerId(val)}
+                options={state.customers.map(c => ({ value: c.id, label: c.name }))}
+                placeholder={t('select')}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')}</label>
@@ -303,12 +305,13 @@ export default function Payments() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
-              <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
+              <SearchableSelect
+                required
+                value={bankAccountId}
+                onChange={(val) => setBankAccountId(val)}
+                options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                placeholder={t('select')}
+              />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, Edit2, Trash2, Shield, Users, Eye, EyeOff } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { generateSeedData } from '../lib/seedData';
 import { canWrite } from '../lib/permissions';
 import { ALL_PAGE_KEYS } from '../lib/permissions';
@@ -420,17 +421,12 @@ export default function Settings() {
                 {/* Shipment selector */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-slate-700 mb-1">الرسالة</label>
-                  <select
+                  <SearchableSelect
                     value={profitShipmentId}
-                    onChange={e => setProfitShipmentId(e.target.value)}
-                    className="w-full sm:w-64 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-                  >
-                    {state.shipments.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}{s.isActive ? ' (نشطة)' : ''}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setProfitShipmentId(val)}
+                    options={state.shipments.map(s => ({ value: s.id, label: s.name + (s.isActive ? ' (نشطة)' : '') }))}
+                    placeholder="الرسالة"
+                  />
                 </div>
 
                 {(() => {
@@ -506,16 +502,12 @@ export default function Settings() {
                       {/* مستلم نسبة الإدارة */}
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">مستلم نسبة الإدارة</label>
-                        <select
+                        <SearchableSelect
                           value={mgmtFeeRecipientId}
-                          onChange={e => updateShipmentSettings({ managementFeeRecipientId: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-                        >
-                          <option value="">{t('select')}</option>
-                          {operatingPartners.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
+                          onChange={(val) => updateShipmentSettings({ managementFeeRecipientId: val })}
+                          options={[{ value: '', label: t('select') }, ...operatingPartners.map(p => ({ value: p.id, label: p.name }))]}
+                          placeholder={t('select')}
+                        />
                         <p className="text-xs text-slate-400 mt-1">الشركاء المشغلون فقط</p>
                       </div>
                     </div>
@@ -964,20 +956,23 @@ export default function Settings() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">الدور</label>
-              <select required value={userForm.roleId} onChange={e => setUserForm({ ...userForm, roleId: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none">
-                <option value="">{t('select')}</option>
-                {state.roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
+              <SearchableSelect
+                required
+                value={userForm.roleId}
+                onChange={(val) => setUserForm({ ...userForm, roleId: val })}
+                options={state.roles.map(r => ({ value: r.id, label: r.name }))}
+                placeholder={t('select')}
+              />
             </div>
             {state.roles.find(r => r.id === userForm.roleId)?.isSalesperson && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">المندوب المرتبط</label>
-                <select value={userForm.salespersonId} onChange={e => setUserForm({ ...userForm, salespersonId: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none">
-                  <option value="">{t('select')}</option>
-                  {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={userForm.salespersonId}
+                  onChange={(val) => setUserForm({ ...userForm, salespersonId: val })}
+                  options={[{ value: '', label: t('select') }, ...state.salespeople.map(s => ({ value: s.id, label: s.name }))]}
+                  placeholder={t('select')}
+                />
               </div>
             )}
             <div className="flex items-center pt-6">

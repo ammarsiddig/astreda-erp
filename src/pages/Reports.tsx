@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { formatCurrency } from '../lib/utils';
+import SearchableSelect from '../components/SearchableSelect';
 import { Printer, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -538,24 +539,24 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
         {activeTab === 'debt' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4">
-              <select value={debtCityFilter} onChange={e => setDebtCityFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-              >
-                <option value="">{t('allCities')}</option>
-                {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <select value={debtShipmentFilter} onChange={e => setDebtShipmentFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-              >
-                <option value="">{t('allShipments')}</option>
-                {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <select value={debtSalespersonFilter} onChange={e => setDebtSalespersonFilter(e.target.value)}
-                className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-              >
-                <option value="">{t('allSalespeople')}</option>
-                {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <SearchableSelect
+                value={debtCityFilter}
+                onChange={(val) => setDebtCityFilter(val)}
+                options={[{ value: '', label: t('allCities') }, ...state.cities.map(c => ({ value: c.id, label: c.name }))]}
+                placeholder={t('allCities')}
+              />
+              <SearchableSelect
+                value={debtShipmentFilter}
+                onChange={(val) => setDebtShipmentFilter(val)}
+                options={[{ value: '', label: t('allShipments') }, ...state.shipments.map(s => ({ value: s.id, label: s.name }))]}
+                placeholder={t('allShipments')}
+              />
+              <SearchableSelect
+                value={debtSalespersonFilter}
+                onChange={(val) => setDebtSalespersonFilter(val)}
+                options={[{ value: '', label: t('allSalespeople') }, ...state.salespeople.map(s => ({ value: s.id, label: s.name }))]}
+                placeholder={t('allSalespeople')}
+              />
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               {/* Mobile card list */}
@@ -617,20 +618,21 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
             <div className="flex flex-wrap gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">المدينة</label>
-                <select value={dailyDebtCity} onChange={e => setDailyDebtCity(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-                >
-                  <option value="">اختر المدينة...</option>
-                  {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={dailyDebtCity}
+                  onChange={(val) => setDailyDebtCity(val)}
+                  options={[{ value: '', label: 'اختر المدينة...' }, ...state.cities.map(c => ({ value: c.id, label: c.name }))]}
+                  placeholder="اختر المدينة..."
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الرسالة</label>
-                <select value={dailyDebtShipment} onChange={e => setDailyDebtShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-                >
-                  {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={dailyDebtShipment}
+                  onChange={(val) => setDailyDebtShipment(val)}
+                  options={state.shipments.map(s => ({ value: s.id, label: s.name }))}
+                  placeholder="الرسالة"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
@@ -700,12 +702,12 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
             <div className="flex flex-wrap justify-between items-center gap-4">
               <h3 className="text-lg font-bold text-slate-800">{t('salespersonPerformance')}</h3>
               <div className="flex items-center gap-3">
-                <select value={salespersonCityFilter} onChange={e => setSalespersonCityFilter(e.target.value)}
-                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none text-sm"
-                >
-                  <option value="">كل المدن</option>
-                  {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={salespersonCityFilter}
+                  onChange={(val) => setSalespersonCityFilter(val)}
+                  options={[{ value: '', label: 'كل المدن' }, ...state.cities.map(c => ({ value: c.id, label: c.name }))]}
+                  placeholder="كل المدن"
+                />
                 <button onClick={printSalespersonReport} disabled={salespersonData.length === 0}
                   className="flex items-center px-4 py-2 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors disabled:opacity-50"
                 >
@@ -884,12 +886,12 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
-                <select value={transfersShipment} onChange={e => setTransfersShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none text-sm"
-                >
-                  <option value="">الكل</option>
-                  {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={transfersShipment}
+                  onChange={(val) => setTransfersShipment(val)}
+                  options={[{ value: '', label: 'الكل' }, ...state.shipments.map(s => ({ value: s.id, label: s.name }))]}
+                  placeholder="الكل"
+                />
               </div>
               <button onClick={printTransfersReport}
                 className="flex items-center px-4 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors"
@@ -1060,21 +1062,21 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
-                <select value={expensesShipment} onChange={e => setExpensesShipment(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none text-sm"
-                >
-                  <option value="">الكل</option>
-                  {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={expensesShipment}
+                  onChange={(val) => setExpensesShipment(val)}
+                  options={[{ value: '', label: 'الكل' }, ...state.shipments.map(s => ({ value: s.id, label: s.name }))]}
+                  placeholder="الكل"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">السيارة</label>
-                <select value={expensesCarFilter} onChange={e => setExpensesCarFilter(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none text-sm"
-                >
-                  <option value="">كل السيارات</option>
-                  {state.cars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <SearchableSelect
+                  value={expensesCarFilter}
+                  onChange={(val) => setExpensesCarFilter(val)}
+                  options={[{ value: '', label: 'كل السيارات' }, ...state.cars.map(c => ({ value: c.id, label: c.name }))]}
+                  placeholder="كل السيارات"
+                />
               </div>
               <button onClick={printExpensesReport}
                 className="flex items-center px-4 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm transition-colors"

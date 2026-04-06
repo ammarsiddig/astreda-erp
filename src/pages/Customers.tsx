@@ -7,6 +7,7 @@ import { Users, Plus, Edit2, Eye, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
 import { Customer } from '../types';
@@ -268,30 +269,32 @@ export default function Customers() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('city')}</label>
-            <select required value={cityId} onChange={(e) => setCityId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-            >
-              <option value="">{t('select')}</option>
-              {state.cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <SearchableSelect
+              required
+              value={cityId}
+              onChange={(val) => setCityId(val)}
+              options={state.cities.map(c => ({ value: c.id, label: c.name }))}
+              placeholder={t('select')}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('salesperson')}</label>
-            <select required value={salespersonId} onChange={(e) => setSalespersonId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-            >
-              <option value="">{t('select')}</option>
-              {state.salespeople.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            <SearchableSelect
+              required
+              value={salespersonId}
+              onChange={(val) => setSalespersonId(val)}
+              options={state.salespeople.map(s => ({ value: s.id, label: s.name }))}
+              placeholder={t('select')}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('car')}</label>
-            <select value={carId} onChange={(e) => setCarId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-            >
-              <option value="">{t('select')}</option>
-              {state.cars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <SearchableSelect
+              value={carId}
+              onChange={(val) => setCarId(val)}
+              options={state.cars.map(c => ({ value: c.id, label: c.name }))}
+              placeholder={t('select')}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>

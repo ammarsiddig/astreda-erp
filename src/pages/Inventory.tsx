@@ -6,6 +6,7 @@ import { PackagePlus, ArrowRightLeft, AlertCircle, Edit2, Eye, Trash2, Send, Dol
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction, ShipmentTransfer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
 import { formatCurrency } from '../lib/utils';
@@ -697,18 +698,18 @@ export default function Inventory() {
             <label className="block text-sm font-medium text-slate-700">{t('products')}</label>
             {receiveItems.map((item, index) => (
               <div key={index} className="flex gap-3">
-                <select required value={item.productId} onChange={(e) => {
+                <SearchableSelect
+                  required
+                  value={item.productId}
+                  onChange={(val) => {
                     const newItems = [...receiveItems];
-                    newItems[index].productId = e.target.value;
+                    newItems[index].productId = val;
                     setReceiveItems(newItems);
                   }}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {state.products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('select')}
+                  className="flex-1"
+                />
                 <input type="number" required min="1" value={item.qty || ''} onChange={(e) => {
                     const newItems = [...receiveItems];
                     newItems[index].qty = parseInt(e.target.value) || 0;
@@ -780,18 +781,18 @@ export default function Inventory() {
             <label className="block text-sm font-medium text-slate-700">{t('products')}</label>
             {transferItems.map((item, index) => (
               <div key={index} className="flex gap-3">
-                <select required value={item.productId} onChange={(e) => {
+                <SearchableSelect
+                  required
+                  value={item.productId}
+                  onChange={(val) => {
                     const newItems = [...transferItems];
-                    newItems[index].productId = e.target.value;
+                    newItems[index].productId = val;
                     setTransferItems(newItems);
                   }}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {state.products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('select')}
+                  className="flex-1"
+                />
                 <input type="number" required min="1" value={item.qty || ''} onChange={(e) => {
                     const newItems = [...transferItems];
                     newItems[index].qty = parseInt(e.target.value) || 0;
@@ -876,18 +877,18 @@ export default function Inventory() {
             <label className="block text-sm font-medium text-slate-700">{t('products')}</label>
             {carTransferItems.map((item, index) => (
               <div key={index} className="flex gap-3">
-                <select required value={item.productId} onChange={(e) => {
+                <SearchableSelect
+                  required
+                  value={item.productId}
+                  onChange={(val) => {
                     const newItems = [...carTransferItems];
-                    newItems[index].productId = e.target.value;
+                    newItems[index].productId = val;
                     setCarTransferItems(newItems);
                   }}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {state.products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('select')}
+                  className="flex-1"
+                />
                 <input type="number" required min="1" value={item.qty || ''} onChange={(e) => {
                     const newItems = [...carTransferItems];
                     newItems[index].qty = parseInt(e.target.value) || 0;
@@ -949,14 +950,13 @@ export default function Inventory() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('product')}</label>
-              <select
+              <SearchableSelect
                 required
                 value={editProductId}
-                onChange={(e) => setEditProductId(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
-              >
-                {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+                onChange={(val) => setEditProductId(val)}
+                options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                placeholder={t('select')}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('qty')}</label>
@@ -1130,16 +1130,17 @@ export default function Inventory() {
             <div className="max-h-52 overflow-y-auto space-y-1.5">
               {shipmentTransferItems.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <select value={item.productId} onChange={(e) => {
+                  <SearchableSelect
+                    value={item.productId}
+                    onChange={(val) => {
                       const newItems = [...shipmentTransferItems];
-                      newItems[index].productId = e.target.value;
+                      newItems[index].productId = val;
                       setShipmentTransferItems(newItems);
                     }}
-                    className="flex-1 px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
-                  >
-                    <option value="">{t('product')}</option>
-                    {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                    options={state.products.map(p => ({ value: p.id, label: p.name }))}
+                    placeholder={t('product')}
+                    className="flex-1"
+                  />
                   <input type="number" min="0" placeholder={t('qty')} value={item.qty || ''} onChange={(e) => {
                       const newItems = [...shipmentTransferItems];
                       newItems[index].qty = parseInt(e.target.value) || 0;

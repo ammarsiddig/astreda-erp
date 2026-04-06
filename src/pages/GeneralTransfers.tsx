@@ -6,6 +6,7 @@ import { ArrowLeftRight, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId } from '../lib/utils';
 import { GeneralTransfer, GeneralTransferType } from '../types';
 import { canWrite } from '../lib/permissions';
@@ -200,12 +201,12 @@ export default function GeneralTransfers() {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('partner')}</label>
-          <select value={filterPartner} onChange={(e) => setFilterPartner(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-          >
-            <option value="">{t('all')}</option>
-            {state.partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <SearchableSelect
+            value={filterPartner}
+            onChange={(val) => setFilterPartner(val)}
+            options={[{ value: '', label: t('all') }, ...state.partners.map(p => ({ value: p.id, label: p.name }))]}
+            placeholder={t('all')}
+          />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('capitalType')}</label>
@@ -369,22 +370,24 @@ export default function GeneralTransfers() {
             {transferType === 'drawings' ? (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">الشريك</label>
-                <select required value={partnerId} onChange={(e) => setPartnerId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {operatingPartners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <SearchableSelect
+                  required
+                  value={partnerId}
+                  onChange={(val) => setPartnerId(val)}
+                  options={operatingPartners.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('select')}
+                />
               </div>
             ) : (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('beneficiary')}</label>
-                <select required value={beneficiaryPartnerId} onChange={(e) => setBeneficiaryPartnerId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-                >
-                  <option value="">{t('select')}</option>
-                  {state.partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <SearchableSelect
+                  required
+                  value={beneficiaryPartnerId}
+                  onChange={(val) => setBeneficiaryPartnerId(val)}
+                  options={state.partners.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder={t('select')}
+                />
               </div>
             )}
             <div>
@@ -412,15 +415,13 @@ export default function GeneralTransfers() {
             {splits.map((split, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <div className="flex-1">
-                  <select
+                  <SearchableSelect
                     required
                     value={split.bankAccountId}
-                    onChange={(e) => handleSplitChange(index, 'bankAccountId', e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-                  >
-                    <option value="">{t('bankAccount')}</option>
-                    {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                  </select>
+                    onChange={(val) => handleSplitChange(index, 'bankAccountId', val)}
+                    options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                    placeholder={t('bankAccount')}
+                  />
                 </div>
                 <div className="flex-1">
                   <input

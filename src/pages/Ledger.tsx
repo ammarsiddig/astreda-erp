@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { formatCurrency } from '../lib/utils';
+import SearchableSelect from '../components/SearchableSelect';
 import { Printer, FileText } from 'lucide-react';
 
 export default function Ledger() {
@@ -371,14 +372,12 @@ export default function Ledger() {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('bankAccount')}</label>
-          <select
+          <SearchableSelect
             value={filterAccount}
-            onChange={(e) => setFilterAccount(e.target.value)}
-            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-          >
-            <option value="">{t('all')}</option>
-            {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
+            onChange={(val) => setFilterAccount(val)}
+            options={[{ value: '', label: t('all') }, ...state.bankAccounts.map(b => ({ value: b.id, label: b.name }))]}
+            placeholder={t('all')}
+          />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('source')}</label>
@@ -521,14 +520,12 @@ export default function Ledger() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
-                <select
+                <SearchableSelect
                   value={stmtAccount}
-                  onChange={(e) => setStmtAccount(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-                >
-                  <option value="">{t('allAccounts')}</option>
-                  {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+                  onChange={(val) => setStmtAccount(val)}
+                  options={[{ value: '', label: t('allAccounts') }, ...state.bankAccounts.map(b => ({ value: b.id, label: b.name }))]}
+                  placeholder={t('allAccounts')}
+                />
               </div>
 
               <div>

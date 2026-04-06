@@ -6,6 +6,7 @@ import { Plus, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId } from '../lib/utils';
 import { Salary, Expense } from '../types';
 import { canWrite } from '../lib/permissions';
@@ -370,14 +371,12 @@ export default function Salaries() {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">{t('employee')}</label>
-              <select
+              <SearchableSelect
                 value={filterEmployee}
-                onChange={(e) => setFilterEmployee(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
-              >
-                <option value="">{t('all')}</option>
-                {state.employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-              </select>
+                onChange={(val) => setFilterEmployee(val)}
+                options={[{ value: '', label: t('all') }, ...state.employees.map(e => ({ value: e.id, label: e.name }))]}
+                placeholder={t('all')}
+              />
             </div>
           </div>
 
@@ -501,14 +500,12 @@ export default function Salaries() {
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">الموظف</label>
-              <select
+              <SearchableSelect
                 value={advFilterEmployee}
-                onChange={(e) => setAdvFilterEmployee(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
-              >
-                <option value="">الكل</option>
-                {state.employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-              </select>
+                onChange={(val) => setAdvFilterEmployee(val)}
+                options={[{ value: '', label: 'الكل' }, ...state.employees.map(e => ({ value: e.id, label: e.name }))]}
+                placeholder="الكل"
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">الحالة</label>
@@ -524,14 +521,12 @@ export default function Salaries() {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">الرسالة</label>
-              <select
+              <SearchableSelect
                 value={advFilterShipment}
-                onChange={(e) => setAdvFilterShipment(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
-              >
-                <option value="">الكل</option>
-                {state.shipments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+                onChange={(val) => setAdvFilterShipment(val)}
+                options={[{ value: '', label: 'الكل' }, ...state.shipments.map(s => ({ value: s.id, label: s.name }))]}
+                placeholder="الكل"
+              />
             </div>
           </div>
 
@@ -669,15 +664,13 @@ export default function Salaries() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('employee')}</label>
-              <select
+              <SearchableSelect
                 required
                 value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-              </select>
+                onChange={(val) => setEmployeeId(val)}
+                options={state.employees.map(e => ({ value: e.id, label: e.name }))}
+                placeholder={t('select')}
+              />
             </div>
 
             {/* Open advances info for selected employee */}
@@ -738,15 +731,13 @@ export default function Salaries() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
-              <select
+              <SearchableSelect
                 required
                 value={bankAccountId}
-                onChange={(e) => setBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
+                onChange={(val) => setBankAccountId(val)}
+                options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                placeholder={t('select')}
+              />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
@@ -925,15 +916,13 @@ export default function Salaries() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">الموظف</label>
-              <select
+              <SearchableSelect
                 required
                 value={advEmployee}
-                onChange={(e) => setAdvEmployee(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-              </select>
+                onChange={(val) => setAdvEmployee(val)}
+                options={state.employees.map(e => ({ value: e.id, label: e.name }))}
+                placeholder={t('select')}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ</label>
@@ -949,15 +938,13 @@ export default function Salaries() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">الحساب</label>
-              <select
+              <SearchableSelect
                 required
                 value={advBankAccountId}
-                onChange={(e) => setAdvBankAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
-              >
-                <option value="">{t('select')}</option>
-                {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
+                onChange={(val) => setAdvBankAccountId(val)}
+                options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                placeholder={t('select')}
+              />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">ملاحظات</label>

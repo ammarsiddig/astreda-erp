@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId, computeBankBalance } from '../lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import type { CapitalContribution, GeneralTransfer, SettlementResult } from '../types';
@@ -962,11 +963,13 @@ export default function Capital() {
         <form onSubmit={handleSaveContribution} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">المساهم</label>
-            <select value={contribPartnerId} onChange={e => setContribPartnerId(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none">
-              <option value="">اختر المساهم...</option>
-              {state.partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <SearchableSelect
+              required
+              value={contribPartnerId}
+              onChange={(val) => setContribPartnerId(val)}
+              options={state.partners.map(p => ({ value: p.id, label: p.name }))}
+              placeholder="اختر المساهم..."
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ (SAR)</label>
@@ -996,11 +999,13 @@ export default function Capital() {
         <form onSubmit={handleSaveDrawing} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">الشريك</label>
-            <select value={drawPartnerId} onChange={e => setDrawPartnerId(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none">
-              <option value="">اختر الشريك...</option>
-              {operatingPartners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <SearchableSelect
+              required
+              value={drawPartnerId}
+              onChange={(val) => setDrawPartnerId(val)}
+              options={operatingPartners.map(p => ({ value: p.id, label: p.name }))}
+              placeholder="اختر الشريك..."
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
@@ -1016,11 +1021,14 @@ export default function Capital() {
             <label className="block text-sm font-medium text-slate-700 mb-1">الحسابات والمبالغ (SDG)</label>
             {drawSplits.map((split, idx) => (
               <div key={idx} className="flex gap-2 mb-2">
-                <select value={split.bankAccountId} onChange={e => { const ns = [...drawSplits]; ns[idx] = { ...ns[idx], bankAccountId: e.target.value }; setDrawSplits(ns); }} required
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#14b8a6] outline-none">
-                  <option value="">الحساب...</option>
-                  {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+                <SearchableSelect
+                  required
+                  value={split.bankAccountId}
+                  onChange={(val) => { const ns = [...drawSplits]; ns[idx] = { ...ns[idx], bankAccountId: val }; setDrawSplits(ns); }}
+                  options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+                  placeholder="الحساب..."
+                  className="flex-1"
+                />
                 <input type="number" min="0" step="1" value={split.amount || ''} onChange={e => { const ns = [...drawSplits]; ns[idx] = { ...ns[idx], amount: Number(e.target.value) || 0 }; setDrawSplits(ns); }} required
                   className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#14b8a6] outline-none" placeholder="المبلغ" />
                 {drawSplits.length > 1 && (

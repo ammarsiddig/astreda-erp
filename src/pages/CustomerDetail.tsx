@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { formatCurrency } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
 import Modal from '../components/Modal';
+import SearchableSelect from '../components/SearchableSelect';
 import { v4 as uuidv4 } from 'uuid';
 import { Payment } from '../types';
 
@@ -493,12 +494,13 @@ export default function CustomerDetail() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('bankAccount')}</label>
-            <select required value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
-            >
-              <option value="">{t('select')}</option>
-              {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            <SearchableSelect
+              required
+              value={bankAccountId}
+              onChange={(val) => setBankAccountId(val)}
+              options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
+              placeholder={t('select')}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
