@@ -553,9 +553,9 @@ export const pullFromCloud = async (
 ): Promise<boolean> => {
   if (!isSupabaseConfigured() || !navigator.onLine) return false
 
-  const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+  const withTimeout = <T>(p: PromiseLike<T>, ms: number): Promise<T> =>
     Promise.race([
-      promise,
+      Promise.resolve(p),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
     ])
 
