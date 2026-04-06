@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { hashPassword, isPasswordHashed } from '../lib/utils';
@@ -352,14 +352,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Flag: when true the state change came from cloud, so onStateChange should not push it back
   const isApplyingCloudRef = useRef(false);
 
-  // Sync-safe updateState that won't overwrite currentUser from remote
+  // Sync-safe updateState that merges arrays by ID instead of replacing them.
+  // This prevents local changes from being overwritten by cloud pulls.
   const syncApply = useCallback((updates: Partial<AppState>) => {
     isApplyingCloudRef.current = true;
     setState(prev => {
-      const merged = { ...prev, ...updates };
-      // Never let remote sync overwrite local auth session
+      const merged: any = { ...prev };
+      for (const [key, value] of Object.entries(updates)) {
+        if (key === 'currentUser') continue; // Never overwrite local auth
+        if (key === 'settlementResults') {
+          // Record<string, T> — merge by key
+          merged[key] = { ...(prev as any)[key], ...value };
+        } else if (Array.isArray(value) && Array.isArray((prev as any)[key])) {
+          // Merge arrays by ID: cloud items replace matching local ones, new items are added
+          const prevArr: any[] = (prev as any)[key];
+          const cloudArr: any[] = value;
+          const cloudMap = new Map<string, any>();
+          for (const item of cloudArr) {
+            const pk = item.shipmentId ?? item.id;
+            if (pk) cloudMap.set(pk, item);
+          }
+          // Start with cloud items, then add any local items not in cloud
+          const localOnly = prevArr.filter(item => {
+            const pk = item.shipmentId ?? item.id;
+            return pk && !cloudMap.has(pk);
+          });
+          merged[key] = [...cloudArr, ...localOnly];
+        } else {
+          merged[key] = value;
+        }
+      }
       merged.currentUser = prev.currentUser;
-      return merged;
+      return merged as AppState;
     });
   }, []);
 
@@ -469,8 +493,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fullPushToCloud(stateRef.current);
   }, []);
 
+  // Memoize context value so consumers don't re-render when the provider's
+  // own parent re-renders (or when unrelated sibling state changes occur).
+  const contextValue = useMemo(
+    () => ({ state, setState, updateState, activeShipmentId, login, logout, manualSync, fullPush, isCloudLoading }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, activeShipmentId, isCloudLoading]
+  );
+
   return (
-    <AppContext.Provider value={{ state, setState, updateState, activeShipmentId, login, logout, manualSync, fullPush, isCloudLoading }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

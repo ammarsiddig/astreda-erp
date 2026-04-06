@@ -21,6 +21,12 @@ export default function Sales() {
   const [showViewModal, setShowViewModal] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
+  // O(1) lookup maps — avoids .find() inside render loops
+  const customerMap  = useMemo(() => new Map(state.customers.map(c => [c.id, c])),    [state.customers]);
+  const salespersonMap = useMemo(() => new Map(state.salespeople.map(s => [s.id, s])), [state.salespeople]);
+  const cityMap      = useMemo(() => new Map(state.cities.map(c => [c.id, c])),        [state.cities]);
+  const productMap   = useMemo(() => new Map(state.products.map(p => [p.id, p])),      [state.products]);
+
   const viewInvoice = useMemo(() => {
     return state.invoices.find(i => i.id === showViewModal);
   }, [state.invoices, showViewModal]);
@@ -227,7 +233,7 @@ export default function Sales() {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
-                  <p className="text-xs text-slate-500">{state.customers.find(c => c.id === invoice.customerId)?.name}</p>
+                  <p className="text-xs text-slate-500">{customerMap.get(invoice.customerId)?.name}</p>
                   <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -238,7 +244,7 @@ export default function Sales() {
                 </div>
               </div>
               <div className="flex justify-between items-center pt-1">
-                <span className="text-xs text-slate-500">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name}</span>
+                <span className="text-xs text-slate-500">{salespersonMap.get(invoice.salespersonId)?.name}</span>
                 <div className="flex gap-1">
                   {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); handleOpenEditInvoice(invoice); }}
                     className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
@@ -276,8 +282,8 @@ export default function Sales() {
                 <tr key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
-                  <td className="px-4 py-3">{state.customers.find(c => c.id === invoice.customerId)?.name}</td>
-                  <td className="px-4 py-3">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name}</td>
+                  <td className="px-4 py-3">{customerMap.get(invoice.customerId)?.name}</td>
+                  <td className="px-4 py-3">{salespersonMap.get(invoice.salespersonId)?.name}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${ invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }`}>
                       {t(invoice.paymentType)}
@@ -338,16 +344,16 @@ export default function Sales() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 px-6 py-4 border-b border-slate-100">
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{t('customer')}</p>
-                  <p className="text-sm font-bold text-slate-800">{state.customers.find(c => c.id === viewInvoice.customerId)?.name}</p>
+                  <p className="text-sm font-bold text-slate-800">{customerMap.get(viewInvoice.customerId)?.name}</p>
                 </div>
                 <div className="space-y-2">
                   <div>
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('city')}</p>
-                    <p className="text-sm font-semibold text-slate-800">{state.cities.find(c => c.id === viewInvoice.cityId)?.name}</p>
+                    <p className="text-sm font-semibold text-slate-800">{cityMap.get(viewInvoice.cityId)?.name}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('salesperson')}</p>
-                    <p className="text-sm font-semibold text-slate-800">{state.salespeople.find(s => s.id === viewInvoice.salespersonId)?.name}</p>
+                    <p className="text-sm font-semibold text-slate-800">{salespersonMap.get(viewInvoice.salespersonId)?.name}</p>
                   </div>
                 </div>
               </div>
@@ -365,7 +371,7 @@ export default function Sales() {
                 <tbody className="divide-y divide-slate-100">
                   {viewInvoice.lines.map((line, idx) => (
                     <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                      <td className="px-4 py-2.5 font-medium text-slate-800">{state.products.find(p => p.id === line.productId)?.name}</td>
+                      <td className="px-4 py-2.5 font-medium text-slate-800">{productMap.get(line.productId)?.name}</td>
                       <td className="px-4 py-2.5 text-center">{new Intl.NumberFormat('en-US').format(line.qty)}</td>
                       <td className="px-4 py-2.5 text-center">{new Intl.NumberFormat('en-US').format(line.unitPrice)}</td>
                       <td className="px-4 py-2.5 text-left font-semibold">{new Intl.NumberFormat('en-US').format(line.total)}</td>

@@ -34,6 +34,10 @@ export default function Payments() {
   const [bankAccountId, setBankAccountId] = useState('');
   const [notes, setNotes] = useState('');
 
+  // O(1) lookup maps — avoids .find() inside render loops
+  const customerMap = useMemo(() => new Map(state.customers.map(c => [c.id, c])), [state.customers]);
+  const bankAccountMap = useMemo(() => new Map(state.bankAccounts.map(b => [b.id, b])), [state.bankAccounts]);
+
   const filteredPayments = useMemo(() => {
     return state.payments.filter(p => {
       if (p.shipmentId !== activeShipmentId) return false;
@@ -176,14 +180,14 @@ export default function Payments() {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{payment.id}</p>
-                  <p className="text-xs text-slate-700">{state.customers.find(c => c.id === payment.customerId)?.name}</p>
+                  <p className="text-xs text-slate-700">{customerMap.get(payment.customerId)?.name}</p>
                   <p className="text-xs text-slate-400">{format(new Date(payment.date), 'dd/MM/yyyy')}</p>
                 </div>
                 <span className="font-bold text-emerald-600 text-sm flex-shrink-0">{formatCurrency(payment.amount)}</span>
               </div>
               {payment.notes && <p className="text-xs text-slate-500 truncate">{payment.notes}</p>}
               <div className="flex justify-between items-center pt-1">
-                <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</span>
+                <span className="text-xs text-slate-400">{bankAccountMap.get(payment.bankAccountId)?.name}</span>
                 <div className="flex gap-1">
                   <button onClick={(e) => { e.stopPropagation(); setShowViewModal(payment); }}
                     className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
@@ -226,8 +230,8 @@ export default function Payments() {
                 <tr key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{payment.id}</td>
                   <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
-                  <td className="px-4 py-3">{state.customers.find(c => c.id === payment.customerId)?.name}</td>
-                  <td className="px-4 py-3">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</td>
+                  <td className="px-4 py-3">{customerMap.get(payment.customerId)?.name}</td>
+                  <td className="px-4 py-3">{bankAccountMap.get(payment.bankAccountId)?.name}</td>
                   <td className="px-4 py-3 text-slate-500">{payment.notes}</td>
                   <td className="px-4 py-3 font-bold text-emerald-600 text-right rtl:text-left">
                     {formatCurrency(payment.amount)}
@@ -346,11 +350,11 @@ export default function Payments() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('customer')}</label>
-                <p className="font-medium">{state.customers.find(c => c.id === showViewModal.customerId)?.name}</p>
+                <p className="font-medium">{customerMap.get(showViewModal.customerId)?.name}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('bankAccount')}</label>
-                <p className="font-medium">{state.bankAccounts.find(b => b.id === showViewModal.bankAccountId)?.name}</p>
+                <p className="font-medium">{bankAccountMap.get(showViewModal.bankAccountId)?.name}</p>
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500">{t('notes')}</label>

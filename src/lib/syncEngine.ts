@@ -621,6 +621,39 @@ export const fullPushToCloud = async (state: AppState): Promise<void> => {
 
 // ─── Real-time Subscriptions ──────────────────────────────────────
 
+// Batch multiple incoming realtime events into a single setState call.
+// Without this, 5 tables updating at once = 5 re-renders of the entire app.
+const REALTIME_BATCH_MS = 50
+let _realtimePatches: Array<(s: AppState) => Partial<AppState>> = []
+let _realtimeBatchTimer: ReturnType<typeof setTimeout> | null = null
+
+function queueRealtimePatch(
+  patchFn: (s: AppState) => Partial<AppState>,
+  applyToState: (updates: Partial<AppState>) => void,
+  getState: () => AppState
+) {
+  _realtimePatches.push(patchFn)
+  if (_realtimeBatchTimer) clearTimeout(_realtimeBatchTimer)
+  _realtimeBatchTimer = setTimeout(() => {
+    _realtimeBatchTimer = null
+    const patches = _realtimePatches.splice(0)
+    if (patches.length === 0) return
+    const base = getState()
+    let merged: AppState = base
+    for (const patch of patches) {
+      merged = { ...merged, ...patch(merged) }
+    }
+    // Only send keys that actually changed
+    const diff: Partial<AppState> = {}
+    for (const k of Object.keys(merged) as (keyof AppState)[]) {
+      if ((merged as any)[k] !== (base as any)[k]) {
+        (diff as any)[k] = (merged as any)[k]
+      }
+    }
+    if (Object.keys(diff).length > 0) applyToState(diff)
+  }, REALTIME_BATCH_MS)
+}
+
 export const setupRealtimeSync = (
   applyToState: (updates: Partial<AppState>) => void,
   getState: () => AppState
@@ -638,9 +671,9 @@ export const setupRealtimeSync = (
       'postgres_changes',
       { event: '*', schema: 'public', table: mapping.table },
       (payload) => {
-        const state = getState()
         const key = mapping.stateKey
         const pkField = mapping.pkField ?? 'id'
+        const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
 
         if (payload.eventType === 'DELETE') {
           console.log(`[realtime] DELETE ${mapping.table}`, payload.old)
@@ -649,45 +682,37 @@ export const setupRealtimeSync = (
             console.warn(`[realtime] DELETE ${mapping.table}: no PK in payload.old — ensure REPLICA IDENTITY FULL is set`)
             return
           }
-          // Suppress echo from our own write
           if (isEcho(mapping.table, String(deletedPk))) return
           console.log(`[realtime] applying DELETE ${mapping.table}/${deletedPk}`)
-
-          if (key === 'settlementResults') {
-            const record = { ...(state.settlementResults || {}) }
-            delete record[deletedPk]
-            applyToState({ settlementResults: record })
-          } else {
-            const arr = ((state as any)[key] || []) as any[]
-            const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
-            applyToState({ [key]: arr.filter(i => pkGetter(i) !== deletedPk) } as any)
-          }
+          queueRealtimePatch(s => {
+            if (key === 'settlementResults') {
+              const record = { ...(s.settlementResults || {}) }
+              delete record[deletedPk]
+              return { settlementResults: record }
+            }
+            const arr = ((s as any)[key] || []) as any[]
+            return { [key]: arr.filter((i: any) => pkGetter(i) !== deletedPk) } as any
+          }, applyToState, getState)
           return
         }
 
         // INSERT or UPDATE
         const newItem = mapping.fromRow(payload.new)
-        const pkGetter = (item: any) => (pkField === 'shipment_id') ? item.shipmentId : item.id
         const pk = pkGetter(newItem)
-
-        // Suppress echo from our own write
         if (isEcho(mapping.table, String(pk))) return
-
         console.log(`[realtime] ${payload.eventType} ${mapping.table}/${pk}`)
 
-        if (key === 'settlementResults') {
-          applyToState({ settlementResults: { ...(state.settlementResults || {}), [newItem.shipmentId]: newItem } })
-        } else {
-          const arr = ((state as any)[key] || []) as any[]
-          const idx = arr.findIndex(i => pkGetter(i) === pk)
-          if (idx === -1) {
-            applyToState({ [key]: [...arr, newItem] } as any)
-          } else {
-            const updated = [...arr]
-            updated[idx] = newItem
-            applyToState({ [key]: updated } as any)
+        queueRealtimePatch(s => {
+          if (key === 'settlementResults') {
+            return { settlementResults: { ...(s.settlementResults || {}), [newItem.shipmentId]: newItem } }
           }
-        }
+          const arr = ((s as any)[key] || []) as any[]
+          const idx = arr.findIndex((i: any) => pkGetter(i) === pk)
+          if (idx === -1) return { [key]: [...arr, newItem] } as any
+          const updated = [...arr]
+          updated[idx] = newItem
+          return { [key]: updated } as any
+        }, applyToState, getState)
       }
     )
   }
