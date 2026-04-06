@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { Plus, Edit2, Trash2, Shield, Users, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, Shield, Users, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
@@ -35,7 +35,7 @@ const PAGE_LABELS: Record<PageKey, string> = {
 
 export default function Settings() {
   const { t } = useTranslation();
-  const { state, updateState } = useAppStore();
+  const { state, updateState, resetAndFullSync } = useAppStore();
   const hasSettingsWrite = canWrite(state.currentUser, state.roles, 'settings');
   const [activeTab, setActiveTab] = useState<'products' | 'salespeople' | 'cities' | 'cars' | 'bankAccounts' | 'expenseCategories' | 'partners' | 'shipments' | 'partnerSettings' | 'users' | 'roles'>('products');
 
@@ -47,6 +47,11 @@ export default function Settings() {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<SettingsRecord | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+
+  // ─── Reset & Full Sync State ───────────────────────────────────
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   // ─── User Management State ─────────────────────────────────────
   const [showUserModal, setShowUserModal] = useState(false);
@@ -906,8 +911,60 @@ export default function Settings() {
               🔄 تحميل بيانات تجريبية
             </button>}
           </div>
+
+          {/* ─── Reset & Full Sync ─── */}
+          <div className="mt-6 bg-white rounded-xl shadow-sm border border-red-100 p-6">
+            <h2 className="text-lg font-bold text-slate-800 mb-2">{t('syncData')}</h2>
+            <p className="text-sm text-slate-500 mb-5">{t('resetFullSyncDesc')}</p>
+            {resetDone && (
+              <p className="text-sm text-emerald-600 font-medium mb-3">✅ {t('resetFullSyncDone')}</p>
+            )}
+            <button
+              type="button"
+              disabled={isResetting}
+              onClick={() => { setResetDone(false); setShowResetConfirm(true); }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
+              {isResetting ? t('resetFullSyncRunning') : t('resetFullSync')}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* ─── Reset & Full Sync Confirmation Modal ─── */}
+      <Modal isOpen={showResetConfirm} onClose={() => setShowResetConfirm(false)} title={t('resetFullSync')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600 text-sm">{t('resetFullSyncConfirm')}</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowResetConfirm(false)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setShowResetConfirm(false);
+                setIsResetting(true);
+                setResetDone(false);
+                try {
+                  await resetAndFullSync();
+                  setResetDone(true);
+                } finally {
+                  setIsResetting(false);
+                }
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              {t('resetFullSync')}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingItem ? t('edit') : t('add')} size="2xl">
         <form onSubmit={handleSave} className="space-y-4">

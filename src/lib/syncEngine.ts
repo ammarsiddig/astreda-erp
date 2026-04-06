@@ -178,7 +178,15 @@ export const TABLE_MAPPINGS: TableMapping[] = [
 
 // ─── Last-sync timestamp for incremental pulls ───────────────────
 
-const LAST_SYNC_KEY = 'astrida_last_sync_ts'
+export const LAST_SYNC_KEY = 'astrida_last_sync_ts'
+export const QUEUE_KEY_EXPORT = 'astrida_sync_queue'
+export const STATE_CACHE_KEY = 'astreda_erp_state'
+
+/**
+ * Tables that are always pulled in full regardless of incremental-sync mode.
+ * Add tables here when their rows may lack reliable `updated_at` tracking.
+ */
+export const ALWAYS_FULL_PULL_TABLES: readonly string[] = ['customers']
 
 function getLastSyncTs(): string | null {
   return localStorage.getItem(LAST_SYNC_KEY)
@@ -186,6 +194,17 @@ function getLastSyncTs(): string | null {
 
 function setLastSyncTs(ts: string) {
   localStorage.setItem(LAST_SYNC_KEY, ts)
+}
+
+/**
+ * Clear the incremental-sync timestamp, offline queue, and (optionally) the
+ * local state cache so the next `pullFromCloud()` performs a full re-fetch.
+ */
+export const clearSyncState = (options?: { clearQueue?: boolean; clearCache?: boolean }): void => {
+  localStorage.removeItem(LAST_SYNC_KEY)
+  if (options?.clearQueue) localStorage.removeItem(QUEUE_KEY_EXPORT)
+  if (options?.clearCache) localStorage.removeItem(STATE_CACHE_KEY)
+  console.log('[sync] sync state cleared — next pull will be a full pull')
 }
 
 // ─── Sync Status ──────────────────────────────────────────────────
@@ -220,7 +239,7 @@ const updateStatus = (patch: Partial<SyncStatus>) => {
 
 // ─── Offline Queue ────────────────────────────────────────────────
 
-const QUEUE_KEY = 'astrida_sync_queue'
+const QUEUE_KEY = QUEUE_KEY_EXPORT
 
 interface QueueItem {
   id: string
@@ -544,20 +563,25 @@ export const pullFromCloud = async (
   const isIncremental = !!lastSync
   const timeoutMs = isIncremental ? 5000 : 10000
 
-  console.log(`[sync] pull mode: ${isIncremental ? 'incremental since ' + lastSync : 'full'}`)
+  console.log(`[sync] pull mode: ${isIncremental ? 'incremental since ' + lastSync : 'full'} | lastSyncTs=${lastSync ?? 'none'}`)
   const pullStartTs = new Date().toISOString()
 
   // Fetch ALL tables in parallel
   const results = await Promise.allSettled([
     ...TABLE_MAPPINGS.map(async (mapping) => {
       let query = supabase!.from(mapping.table).select('*')
-      // Incremental: only fetch rows updated since last sync
-      if (isIncremental) {
+      // Incremental: only fetch rows updated since last sync,
+      // BUT always do a full pull for tables in ALWAYS_FULL_PULL_TABLES
+      // (e.g. customers, which may lack reliable updated_at tracking)
+      if (isIncremental && !ALWAYS_FULL_PULL_TABLES.includes(mapping.table)) {
         query = query.gte('updated_at', lastSync)
       }
       const { data, error } = await withTimeout(query, timeoutMs)
       if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); return null }
       if (!data) return null
+      if (isIncremental && ALWAYS_FULL_PULL_TABLES.includes(mapping.table)) {
+        console.log(`[sync] ${mapping.table}: forced full pull (${data.length} rows)`)
+      }
       return { mapping, data, isIncremental }
     }),
     (async () => {
@@ -592,6 +616,10 @@ export const pullFromCloud = async (
         ;(bulkUpdate as any)[mapping.stateKey] = record
       } else {
         ;(bulkUpdate as any)[mapping.stateKey] = mapped
+      }
+      // Debug: log customer count after pull
+      if (mapping.table === 'customers') {
+        console.log(`[sync] customers pulled: ${mapped.length} rows (mode: ${isIncremental ? 'incremental+forced-full' : 'full'})`)
       }
     }
   }
