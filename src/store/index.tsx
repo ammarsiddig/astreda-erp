@@ -378,11 +378,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const pk = item.shipmentId ?? item.id;
             if (pk) cloudMap.set(pk, item);
           }
-          // Start with cloud items, then add any local items not in cloud
+          // Start with cloud items, then add any local items not in cloud.
+          // Shallow-clone local-only items so the diff engine detects them
+          // (by reference inequality) and pushes them to Supabase.
           const localOnly = prevArr.filter(item => {
             const pk = item.shipmentId ?? item.id;
             return pk && !cloudMap.has(pk);
-          });
+          }).map(item => ({ ...item }));
           merged[key] = [...cloudArr, ...localOnly];
         } else {
           merged[key] = value;
@@ -412,6 +414,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } finally {
         markCloudReady();
         setIsCloudLoading(false);
+
+        // Reconciliation: push all local data to Supabase to ensure nothing
+        // is stranded in localStorage (e.g. migration data that was never synced).
+        // Deferred so React has time to flush the merged state first.
+        setTimeout(() => {
+          fullPushToCloud(stateRef.current).catch(e =>
+            console.warn('[cloud-first] reconciliation push failed:', e)
+          );
+        }, 1000);
       }
     })();
 
