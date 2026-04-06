@@ -14,7 +14,15 @@
       "Bash(find \"c:/Users/Ammar/Desktop/zip/src/pages\" -name \"*.tsx\" -exec grep -l \"useMemo\\\\|useCallback\" {} \\\\;)",
       "Bash(grep -E \"\\\\.js$\")",
       "Read(//c/Users/Ammar/Desktop/zip/**)",
-      "Bash(wc -l \"c:/Users/Ammar/Desktop/zip/src/pages\"/*.tsx)"
+      "Bash(wc -l \"c:/Users/Ammar/Desktop/zip/src/pages\"/*.tsx)",
+      "Bash(python3 -c ':*)",
+      "Bash(python -c ':*)",
+      "Bash(python -m ensurepip --upgrade)",
+      "Bash(python -m pip install openpyxl --quiet)",
+      "Bash(where node:*)",
+      "Bash(node -e \"console.log\\('node ok'\\)\")",
+      "Bash(cd /tmp)",
+      "Bash(node -e ':*)"
     ]
   }
 }
