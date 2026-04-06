@@ -150,6 +150,7 @@ const initialState: AppState = {
     { id: '3', name: 'اوكاش', transferFee: 0 },
     { id: '4', name: 'عصام(بنكك)', transferFee: 0 },
     { id: '5', name: 'حسن(بنكك)', transferFee: 0 },
+    { id: '6', name: 'خصومات', transferFee: 0 },
   ],
   shipments: [
     { id: '1', name: 'الرسالة12', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
@@ -180,7 +181,11 @@ const initialState: AppState = {
     { id: '7', name: 'حسام', isOperatingPartner: false },
     { id: '8', name: 'مازن', isOperatingPartner: false },
     { id: '9', name: 'احمد جبرة', isOperatingPartner: false },
-    { id: '10', name: 'وائل', isOperatingPartner: false },
+    { id: '10', name: 'حمادة كنه', isOperatingPartner: false },
+    { id: '11', name: 'وائل', isOperatingPartner: false },
+    { id: '12', name: 'عمر', isOperatingPartner: false },
+    { id: '13', name: 'هيثم', isOperatingPartner: false },
+    { id: '14', name: 'الارباح', isOperatingPartner: false },
   ],
   expenseCategories: [
     { id: '1', name: 'وقود' },

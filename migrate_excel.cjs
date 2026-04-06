@@ -128,6 +128,7 @@ const BANK_ACCOUNTS = [
   { id: '3', name: 'اوكاش',       transferFee: 0 },
   { id: '4', name: 'عصام(بنكك)',  transferFee: 0 },
   { id: '5', name: 'حسن(بنكك)',   transferFee: 0 },
+  { id: '6', name: 'خصومات',      transferFee: 0 },
 ];
 
 /** Strip Arabic tatweel (ـ U+0640) and normalise whitespace */
@@ -145,6 +146,7 @@ function normBank(raw) {
   if (n.includes('اوكاش')) return '3';
   if (n.includes('عصام'))  return '4';
   if (n.includes('حسن'))   return '5';
+  if (n.includes('خصوم'))  return '6';
   warn('bank', raw); return null;
 }
 
@@ -190,6 +192,9 @@ const PARTNERS = [
   { id: '11', name: 'وائل',       isOperatingPartner: false },
   { id: '12', name: 'عمر',        isOperatingPartner: false },
   { id: '13', name: 'هيثم',       isOperatingPartner: false },
+  { id: '3',  name: 'تحاويل عامه', isOperatingPartner: false },
+  { id: '4',  name: 'العربات',     isOperatingPartner: false },
+  { id: '14', name: 'الارباح',     isOperatingPartner: false },
 ];
 
 const PARTNER_MAP = {
@@ -204,10 +209,13 @@ const PARTNER_MAP = {
   'وائل': '11',
   'عمر': '12',
   'هيثم': '13',
+  'تحاويل عامه': '3',
+  'العربات': '4',
+  'الارباح': '14',
 };
 
-// Beneficiaries to SKIP in general transfers (non-investor)
-const SKIP_PARTNERS = new Set(['العربات', 'تحاويل عامه', 'الارباح', '']);
+// Beneficiaries to SKIP in general transfers (empty only)
+const SKIP_PARTNERS = new Set(['']);
 
 // ── Expense Categories ────────────────────────────────────────
 const EXPENSE_CATEGORIES = [
@@ -493,13 +501,15 @@ console.log(`  ✅  ${payments.length} payments`);
 console.log('💸  Parsing expenses (المصروفات)...');
 
 const expenses = [];
+let _autoExpN = 900;
 
 for (const r of sheetRows('المصروفات').slice(1)) {
-  const expId   = str(r[8]);
+  let expId   = str(r[8]);
   const date    = excelDate(r[0]);
   const amount  = Number(r[3]) || 0;
 
-  if (!expId || !date || !amount) continue;
+  if (!date || !amount) continue;
+  if (!expId) expId = `EX0${_autoExpN++}`; // auto-generate ID for rows missing one
 
   const catName  = str(r[1]);
   const desc     = str(r[2]) || catName;
@@ -578,6 +588,7 @@ console.log(`  ✅  ${salaries.length} salary records`);
 console.log('🔄  Parsing general transfers (التحاويل_العامة)...');
 
 const generalTransfers = [];
+let _autoTrN = 900;
 
 for (const r of sheetRows('التحاويل_العامة').slice(1)) {
   const date       = excelDate(r[0]);
@@ -586,10 +597,10 @@ for (const r of sheetRows('التحاويل_العامة').slice(1)) {
   const beneficiary = str(r[3]);
 
   if (!date || !desc || !beneficiary) continue;
-  if (SKIP_PARTNERS.has(beneficiary)) continue;    // non-investor — skip
+  if (SKIP_PARTNERS.has(beneficiary)) continue;
 
-  const trId = str(r[13]);
-  if (!trId) continue;
+  let trId = str(r[13]);
+  if (!trId) trId = `GT0${_autoTrN++}`; // auto-generate ID for rows missing one
 
   const hassan      = Number(r[4])  || 0;   // حسن(بنكك)
   const essam       = Number(r[5])  || 0;   // عصام(بنكك)
