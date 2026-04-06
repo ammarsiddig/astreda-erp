@@ -278,7 +278,7 @@ export default function Inventory() {
     e.preventDefault();
     if (!activeShipmentId || !targetShipmentId) return;
 
-    const validItems = shipmentTransferItems.filter(item => item.productId && item.qty > 0 && item.unitCost > 0);
+    const validItems = shipmentTransferItems.filter(item => item.productId && item.qty > 0);
     if (validItems.length === 0) return;
 
     const transferId = uuidv4();
@@ -327,36 +327,38 @@ export default function Inventory() {
       notes: shipmentTransferNotes || undefined,
     };
 
-    // Create ledger entries: credit to source shipment, debit from target shipment
-    // (the target "pays" the source for the products)
-    const sourceLedgerEntry = {
-      id: uuidv4(),
-      date: shipmentTransferDate,
-      toAccount: state.bankAccounts[0]?.id || '',
-      description: `Inter-shipment transfer (in) - ${state.shipments.find(s => s.id === targetShipmentId)?.name}`,
-      amountIn: totalAmount,
-      amountOut: 0,
-      sourceModule: 'shipment_transfer' as const,
-      linkedId: transferId,
-      shipmentId: activeShipmentId,
-    };
-
-    const targetLedgerEntry = {
-      id: uuidv4(),
-      date: shipmentTransferDate,
-      toAccount: state.bankAccounts[0]?.id || '',
-      description: `Inter-shipment transfer (cost) - ${state.shipments.find(s => s.id === activeShipmentId)?.name}`,
-      amountIn: 0,
-      amountOut: totalAmount,
-      sourceModule: 'shipment_transfer' as const,
-      linkedId: transferId,
-      shipmentId: targetShipmentId,
-    };
+    // Only create ledger entries if there's a financial amount
+    const newLedgerEntries: typeof state.ledger = [];
+    if (totalAmount > 0 && state.bankAccounts.length > 0) {
+      const accountId = state.bankAccounts[0].id;
+      newLedgerEntries.push({
+        id: uuidv4(),
+        date: shipmentTransferDate,
+        toAccount: accountId,
+        description: `Inter-shipment transfer (in) - ${state.shipments.find(s => s.id === targetShipmentId)?.name}`,
+        amountIn: totalAmount,
+        amountOut: 0,
+        sourceModule: 'shipment_transfer' as const,
+        linkedId: transferId,
+        shipmentId: activeShipmentId,
+      });
+      newLedgerEntries.push({
+        id: uuidv4(),
+        date: shipmentTransferDate,
+        toAccount: accountId,
+        description: `Inter-shipment transfer (cost) - ${state.shipments.find(s => s.id === activeShipmentId)?.name}`,
+        amountIn: 0,
+        amountOut: totalAmount,
+        sourceModule: 'shipment_transfer' as const,
+        linkedId: transferId,
+        shipmentId: targetShipmentId,
+      });
+    }
 
     updateState({
       inventoryTransactions: [...state.inventoryTransactions, ...outTransactions, ...inTransactions],
       shipmentTransfers: [...state.shipmentTransfers, transfer],
-      ledger: [...state.ledger, sourceLedgerEntry, targetLedgerEntry],
+      ledger: [...state.ledger, ...newLedgerEntries],
     });
 
     setShowShipmentTransferModal(false);
