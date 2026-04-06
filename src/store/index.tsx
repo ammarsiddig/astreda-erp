@@ -368,23 +368,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     initNetworkMonitoring();
     const cleanup = setupRealtimeSync(syncApply, () => stateRef.current);
 
-    // Cloud-First: pull from Supabase, then flush any offline queue
+    // Pull from Supabase in the background — app renders from localStorage cache instantly
     (async () => {
       try {
         const pulled = await pullFromCloud(syncApply);
         if (pulled) {
-          console.log('[cloud-first] ✅ بيانات محمّلة من Supabase');
-          // Ensure defaults exist after cloud pull
+          console.log('[cloud-first] ✅ data loaded from Supabase');
           setState(prev => ensureDefaults(prev));
-        } else {
-          console.log('[cloud-first] ℹ️ لا بيانات في Supabase — استخدام localStorage');
         }
-        // Flush any queued offline changes
         await flushQueue();
       } catch (e) {
-        console.warn('[cloud-first] ⚠️ فشل السحب من Supabase — استخدام localStorage', e);
+        console.warn('[cloud-first] ⚠️ pull failed — using localStorage cache', e);
       } finally {
-        // Now allow onStateChange to push diffs — cloud data is authoritative
         markCloudReady();
         setIsCloudLoading(false);
       }
@@ -394,8 +389,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [syncApply]);
 
   // Persist to localStorage (cache) AND notify sync engine on every state change
+  // Debounce localStorage writes to avoid blocking the main thread
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    localStorage.setItem('astreda_erp_state', JSON.stringify(state));
+    // Debounce localStorage save — heavy JSON.stringify on large state
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem('astreda_erp_state', JSON.stringify(state));
+    }, 300);
+
     document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = state.language;
     // Skip pushing back to Supabase when the update itself came from the cloud

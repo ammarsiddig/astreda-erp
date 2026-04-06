@@ -516,17 +516,29 @@ export const pullFromCloud = async (
 ): Promise<boolean> => {
   if (!isSupabaseConfigured() || !navigator.onLine) return false
 
-  // Fetch ALL tables in parallel for much faster loading
+  // Helper: race a promise against a timeout
+  const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+    ])
+
+  // Fetch ALL tables in parallel with a 8s timeout per table
   const results = await Promise.allSettled([
     ...TABLE_MAPPINGS.map(async (mapping) => {
-      const { data, error } = await supabase!.from(mapping.table).select('*')
+      const { data, error } = await withTimeout(
+        supabase!.from(mapping.table).select('*'),
+        8000
+      )
       if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); return null }
       if (!data) return null
       return { mapping, data }
     }),
-    // Also fetch scalar settings in parallel
     (async () => {
-      const { data } = await supabase!.from('app_settings').select('*').eq('id', 'singleton').single()
+      const { data } = await withTimeout(
+        supabase!.from('app_settings').select('*').eq('id', 'singleton').single(),
+        8000
+      )
       return data ? { isScalar: true as const, data } : null
     })(),
   ])

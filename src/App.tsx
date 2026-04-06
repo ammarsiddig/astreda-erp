@@ -56,26 +56,11 @@ function RoleLandingPage() {
   return <Dashboard />;
 }
 
-function CloudLoadingScreen() {
-  return (
-    <div className="flex items-center justify-center h-screen bg-[#f0fdfa]">
-      <div className="text-center space-y-4">
-        <div className="w-10 h-10 border-4 border-[#14b8a6] border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-sm text-slate-500 font-medium">Loading data...</p>
-      </div>
-    </div>
-  );
-}
-
 function AppRoutes() {
-  const { state, isCloudLoading } = useAppStore();
+  const { state } = useAppStore();
 
   if (!state.currentUser) {
     return <Login />;
-  }
-
-  if (isCloudLoading) {
-    return <CloudLoadingScreen />;
   }
 
   return (

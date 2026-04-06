@@ -8,9 +8,16 @@ const FALLBACK_KEY = 'sb_publishable_mBWbKcJWrKQZBrp46uDIxg_x6G7rGPJ'
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || FALLBACK_URL
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || FALLBACK_KEY
 
-console.log('[supabase] URL:', supabaseUrl)
-console.log('[supabase] Key present:', !!supabaseAnonKey)
-
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    params: { eventsPerSecond: 20 },
+  },
+  global: {
+    headers: { 'Accept-Encoding': 'gzip' },
+  },
+  db: {
+    schema: 'public',
+  },
+})
 
 export const isSupabaseConfigured = (): boolean => true
