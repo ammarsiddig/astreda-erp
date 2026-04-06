@@ -380,6 +380,7 @@ export const translations = {
     allShipmentBalance: 'Total (All Shipments)',
     returnAllToWarehouse: 'Return All to Warehouse',
     confirmReturnAll: 'Are you sure you want to return all remaining products from this car to the warehouse?',
+    shipmentPayment: 'Shipment Payment',
   },
   ar: {
     dashboard: 'لوحة التحكم',
@@ -762,6 +763,7 @@ export const translations = {
     allShipmentBalance: 'الإجمالي (كل الرسائل)',
     returnAllToWarehouse: 'إرجاع الكل للمخزن',
     confirmReturnAll: 'هل تريد إرجاع جميع المنتجات المتبقية من هذه السيارة إلى المخزن؟',
+    shipmentPayment: 'دفعة بين الرسائل',
   }
 };
 

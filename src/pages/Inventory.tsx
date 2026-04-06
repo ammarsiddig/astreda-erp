@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { PackagePlus, ArrowRightLeft, AlertCircle, Edit2, Eye, Trash2, Send } from 'lucide-react';
+import { PackagePlus, ArrowRightLeft, AlertCircle, Edit2, Eye, Trash2, Send, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
@@ -59,6 +59,14 @@ export default function Inventory() {
   const [shipmentTransferTotalAmount, setShipmentTransferTotalAmount] = useState<number | ''>('');
   const [shipmentTransferBankAccountId, setShipmentTransferBankAccountId] = useState('');
   const [shipmentTransferNotes, setShipmentTransferNotes] = useState('');
+
+  // Shipment Payment State (standalone balance transfer between shipments)
+  const [showShipmentPaymentModal, setShowShipmentPaymentModal] = useState(false);
+  const [shipmentPaymentDate, setShipmentPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [shipmentPaymentTargetId, setShipmentPaymentTargetId] = useState('');
+  const [shipmentPaymentAmount, setShipmentPaymentAmount] = useState<number | ''>('');
+  const [shipmentPaymentBankAccountId, setShipmentPaymentBankAccountId] = useState('');
+  const [shipmentPaymentNotes, setShipmentPaymentNotes] = useState('');
 
   // Pre-populate remaining products when opening shipment transfer modal
   const openShipmentTransferModal = () => {
@@ -365,6 +373,59 @@ export default function Inventory() {
     setShowShipmentTransferModal(false);
   };
 
+  const openShipmentPaymentModal = () => {
+    setShipmentPaymentDate(new Date().toISOString().split('T')[0]);
+    setShipmentPaymentTargetId('');
+    setShipmentPaymentAmount('');
+    setShipmentPaymentBankAccountId('');
+    setShipmentPaymentNotes('');
+    setShowShipmentPaymentModal(true);
+  };
+
+  const handleShipmentPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShipmentId || !shipmentPaymentTargetId || !shipmentPaymentBankAccountId) return;
+    const amount = Number(shipmentPaymentAmount);
+    if (!amount || amount <= 0) return;
+
+    const paymentId = uuidv4();
+    const accountId = shipmentPaymentBankAccountId;
+    const sourceShipmentName = state.shipments.find(s => s.id === activeShipmentId)?.name || '';
+    const targetShipmentName = state.shipments.find(s => s.id === shipmentPaymentTargetId)?.name || '';
+
+    // Two ledger entries: out from source shipment, in to target shipment (same account)
+    const newLedgerEntries = [
+      {
+        id: uuidv4(),
+        date: shipmentPaymentDate,
+        toAccount: accountId,
+        description: `${t('shipmentPayment')}: ${sourceShipmentName} → ${targetShipmentName}`,
+        amountIn: 0,
+        amountOut: amount,
+        sourceModule: 'shipment_transfer' as const,
+        linkedId: paymentId,
+        shipmentId: activeShipmentId,
+      },
+      {
+        id: uuidv4(),
+        date: shipmentPaymentDate,
+        toAccount: accountId,
+        description: `${t('shipmentPayment')}: ${sourceShipmentName} → ${targetShipmentName}`,
+        amountIn: amount,
+        amountOut: 0,
+        sourceModule: 'shipment_transfer' as const,
+        linkedId: paymentId,
+        shipmentId: shipmentPaymentTargetId,
+      },
+    ];
+
+    updateState({
+      ledger: [...state.ledger, ...newLedgerEntries],
+    });
+
+    setShowShipmentPaymentModal(false);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -398,6 +459,12 @@ export default function Inventory() {
           >
             <Send className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
             {t('transferToShipment')}
+          </button>
+          <button onClick={openShipmentPaymentModal}
+            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+          >
+            <DollarSign className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
+            {t('shipmentPayment')}
           </button>
         </div>}
       </div>
@@ -1127,6 +1194,71 @@ export default function Inventory() {
             >{t('cancel')}</button>
             <button type="submit"
               className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm transition-colors"
+            >{t('save')}</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Inter-Shipment Payment Modal */}
+      <Modal isOpen={showShipmentPaymentModal} onClose={() => setShowShipmentPaymentModal(false)} title={t('shipmentPayment')} size="md">
+        <form onSubmit={handleShipmentPayment} className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
+              <input type="date" required value={shipmentPaymentDate} onChange={(e) => setShipmentPaymentDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('fromShipment')}</label>
+              <input type="text" readOnly value={state.shipments.find(s => s.id === activeShipmentId)?.name || ''}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('toShipment')}</label>
+              <select required value={shipmentPaymentTargetId} onChange={(e) => setShipmentPaymentTargetId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+              >
+                <option value="">{t('select')}</option>
+                {state.shipments.filter(s => s.id !== activeShipmentId).map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('amount')}</label>
+              <input type="number" min="1" step="1" required placeholder="0" value={shipmentPaymentAmount} onChange={(e) => setShipmentPaymentAmount(e.target.value ? Number(e.target.value) : '')}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('bankAccount')}</label>
+              <select required value={shipmentPaymentBankAccountId} onChange={(e) => setShipmentPaymentBankAccountId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+              >
+                <option value="">{t('select')}</option>
+                {state.bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t('notes')}</label>
+            <input type="text" value={shipmentPaymentNotes} onChange={(e) => setShipmentPaymentNotes(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setShowShipmentPaymentModal(false)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >{t('cancel')}</button>
+            <button type="submit"
+              className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold shadow-sm transition-colors"
             >{t('save')}</button>
           </div>
         </form>
