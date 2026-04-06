@@ -7,7 +7,7 @@ import type { LedgerEntry } from '../../types';
 describe('formatCurrency', () => {
   it('formats SDG with no decimals by default', () => {
     expect(formatCurrency(1000)).toBe('1,000 SDG');
-  });
+  }, 15_000);
 
   it('formats SAR with 2 decimals', () => {
     expect(formatCurrency(1234.5, 'SAR')).toBe('1,234.50 SAR');

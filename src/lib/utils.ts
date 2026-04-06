@@ -70,9 +70,6 @@ export function computeBankBalance(accountId: string, ledger: LedgerEntry[]): nu
   return ledger.reduce((bal, entry) => {
     if (entry.toAccount === accountId) {
       bal += entry.amountIn;
-      // Only deduct amountOut here when there is no fromAccount
-      // (i.e. expense/salary/general-transfer paying from this account).
-      // For account-transfer entries, amountOut belongs to fromAccount, not toAccount.
       if (!entry.fromAccount) bal -= entry.amountOut;
     }
     if (entry.fromAccount === accountId) {
@@ -80,4 +77,19 @@ export function computeBankBalance(accountId: string, ledger: LedgerEntry[]): nu
     }
     return bal;
   }, 0);
+}
+
+export function computeShipmentBalance(shipmentId: string, accountId: string, ledger: LedgerEntry[]): number {
+  return ledger
+    .filter(e => e.shipmentId === shipmentId)
+    .reduce((bal, entry) => {
+      if (entry.toAccount === accountId) {
+        bal += entry.amountIn;
+        if (!entry.fromAccount) bal -= entry.amountOut;
+      }
+      if (entry.fromAccount === accountId) {
+        bal -= entry.amountOut;
+      }
+      return bal;
+    }, 0);
 }

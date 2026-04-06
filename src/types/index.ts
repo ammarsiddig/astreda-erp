@@ -99,12 +99,14 @@ export interface InventoryTransaction {
   date: string;
   shipmentId: string;
   productId: string;
-  type: 'receive' | 'load' | 'transfer' | 'sell' | 'return';
+  type: 'receive' | 'load' | 'transfer' | 'sell' | 'return' | 'shipment_transfer';
   fromLocation: 'warehouse' | string; // string is carId
   toLocation: 'warehouse' | string; // string is carId
   qty: number;
   referenceId?: string; // invoiceId, etc.
   invoiceId?: string;
+  fromShipmentId?: string; // for inter-shipment transfers
+  toShipmentId?: string; // for inter-shipment transfers
   notes?: string;
 }
 
@@ -202,7 +204,7 @@ export interface LedgerEntry {
   description: string;
   amountIn: number;
   amountOut: number;
-  sourceModule: 'payment' | 'expense' | 'salary' | 'general_transfer' | 'account_transfer' | 'sale_cash';
+  sourceModule: 'payment' | 'expense' | 'salary' | 'general_transfer' | 'account_transfer' | 'sale_cash' | 'shipment_transfer';
   linkedId: string;
   referenceId?: string;
   invoiceId?: string;
@@ -234,6 +236,23 @@ export interface SettlementResult {
   investorProfits: { partnerId: string; profit: number }[];
 }
 
+export interface ShipmentTransferLine {
+  productId: string;
+  qty: number;
+  unitCost: number;
+  total: number;
+}
+
+export interface ShipmentTransfer {
+  id: string;
+  date: string;
+  fromShipmentId: string;
+  toShipmentId: string;
+  items: ShipmentTransferLine[];
+  totalAmount: number;
+  notes?: string;
+}
+
 export interface AppState {
   language: Language;
   userRole: UserRole;
@@ -261,6 +280,7 @@ export interface AppState {
   savedSettlements: SavedSettlement[];
   capitalContributions: CapitalContribution[];
   settlementResults: { [shipmentId: string]: SettlementResult };
+  shipmentTransfers: ShipmentTransfer[];
   roles: Role[];
   users: User[];
   currentUser: User | null;

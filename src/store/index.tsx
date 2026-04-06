@@ -212,6 +212,7 @@ const initialState: AppState = {
   savedSettlements: [],
   capitalContributions: [],
   settlementResults: {},
+  shipmentTransfers: [],
   roles: DEFAULT_ROLES,
   users: DEFAULT_USERS,
   currentUser: null,

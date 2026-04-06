@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
 import { Payment } from '../types';
 import { canWrite } from '../lib/permissions';
 
@@ -23,7 +23,8 @@ export default function Payments() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
-  const [filterDate, setFilterDate] = useState('');
+  const [filterFromDate, setFilterFromDate] = useState('');
+  const [filterToDate, setFilterToDate] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('');
 
   // Form State
@@ -36,11 +37,12 @@ export default function Payments() {
   const filteredPayments = useMemo(() => {
     return state.payments.filter(p => {
       if (p.shipmentId !== activeShipmentId) return false;
-      if (filterDate && !p.date.startsWith(filterDate)) return false;
+      if (filterFromDate && p.date < filterFromDate) return false;
+      if (filterToDate && p.date > filterToDate) return false;
       if (filterCustomer && p.customerId !== filterCustomer) return false;
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [state.payments, activeShipmentId, filterDate, filterCustomer]);
+  }, [state.payments, activeShipmentId, filterFromDate, filterToDate, filterCustomer]);
 
   const handleSavePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ export default function Payments() {
 
     const paymentAmount = Number(amount);
     const isEditing = !!showEditModal;
-    const paymentId = isEditing ? showEditModal!.id : generateId('PM', state.payments.length);
+    const paymentId = isEditing ? showEditModal!.id : uuidv4();
 
     const newPayment: Payment = {
       id: paymentId,
@@ -141,10 +143,16 @@ export default function Payments() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
-          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('fromDate')}</label>
+          <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)}
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('toDate')}</label>
+          <input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           />
         </div>

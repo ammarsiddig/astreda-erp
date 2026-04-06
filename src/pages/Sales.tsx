@@ -26,7 +26,8 @@ export default function Sales() {
   }, [state.invoices, showViewModal]);
 
   // Filters
-  const [filterDate, setFilterDate] = useState('');
+  const [filterFromDate, setFilterFromDate] = useState('');
+  const [filterToDate, setFilterToDate] = useState('');
   const [filterCity, setFilterCity] = useState('');
   const [filterSalesperson, setFilterSalesperson] = useState('');
   const [filterPaymentType, setFilterPaymentType] = useState('');
@@ -35,13 +36,14 @@ export default function Sales() {
     return state.invoices.filter(inv => {
       if (inv.shipmentId !== activeShipmentId) return false;
       if (isSpRole && currentUser?.salespersonId && inv.salespersonId !== currentUser.salespersonId) return false;
-      if (filterDate && !inv.date.startsWith(filterDate)) return false;
+      if (filterFromDate && inv.date < filterFromDate) return false;
+      if (filterToDate && inv.date > filterToDate) return false;
       if (filterCity && inv.cityId !== filterCity) return false;
       if (filterSalesperson && inv.salespersonId !== filterSalesperson) return false;
       if (filterPaymentType && inv.paymentType !== filterPaymentType) return false;
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [state.invoices, activeShipmentId, filterDate, filterCity, filterSalesperson, filterPaymentType, isSpRole, currentUser]);
+  }, [state.invoices, activeShipmentId, filterFromDate, filterToDate, filterCity, filterSalesperson, filterPaymentType, isSpRole, currentUser]);
 
   const handleOpenNewInvoice = () => {
     setInvoiceToEdit(null);
@@ -175,8 +177,14 @@ export default function Sales() {
       {/* Filters */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
-          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('fromDate')}</label>
+          <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)}
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('toDate')}</label>
+          <input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           />
         </div>

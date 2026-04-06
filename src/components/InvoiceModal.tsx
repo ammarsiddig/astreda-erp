@@ -4,7 +4,7 @@ import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from './Modal';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
 import { Invoice, InvoiceLine } from '../types';
 import { isSalesperson } from '../lib/permissions';
 
@@ -101,7 +101,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     const validLines = lines.filter(l => l.productId && l.qty > 0 && l.unitPrice > 0);
     if (validLines.length === 0) return;
 
-    const invoiceId = invoiceToEdit ? invoiceToEdit.id : generateId('INV', state.invoices.length);
+    const invoiceId = invoiceToEdit ? invoiceToEdit.id : uuidv4();
 
     const newInvoice: Invoice = {
       id: invoiceId,

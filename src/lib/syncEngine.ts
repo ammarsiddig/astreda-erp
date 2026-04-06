@@ -159,6 +159,21 @@ export const TABLE_MAPPINGS: TableMapping[] = [
       investorProfits: typeof row.investor_profits === 'string' ? JSON.parse(row.investor_profits) : row.investor_profits,
     }),
   },
+  {
+    table: 'shipment_transfers', stateKey: 'shipmentTransfers',
+    toRow: (st) => ({
+      id: st.id, date: st.date,
+      from_shipment_id: st.fromShipmentId, to_shipment_id: st.toShipmentId,
+      items: JSON.stringify(st.items),
+      total_amount: st.totalAmount, notes: st.notes,
+    }),
+    fromRow: (row) => ({
+      id: row.id, date: row.date,
+      fromShipmentId: row.from_shipment_id, toShipmentId: row.to_shipment_id,
+      items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items,
+      totalAmount: row.total_amount, notes: row.notes,
+    }),
+  },
 ]
 
 // ─── Sync Status ──────────────────────────────────────────────────

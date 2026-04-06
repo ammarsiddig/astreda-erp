@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { canView, getUserRole } from '../lib/permissions';
 import { PageKey } from '../types';
 import { SyncStatusIndicator } from './SyncStatusIndicator';
+import Modal from './Modal';
 
 const navItems: { path: string; icon: any; labelKey: string; pageKey: PageKey }[] = [
   { path: '/', icon: LayoutDashboard, labelKey: 'dashboard', pageKey: 'dashboard' },
@@ -45,6 +46,7 @@ export default function Layout() {
   const { t, lang } = useTranslation();
   const { state, updateState, logout, manualSync } = useAppStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingShipmentId, setPendingShipmentId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const currentUser = state.currentUser;
@@ -58,11 +60,17 @@ export default function Layout() {
   const activeShipment = state.shipments.find((s) => s.isActive);
 
   const handleShipmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPendingShipmentId(e.target.value);
+  };
+
+  const confirmShipmentChange = () => {
+    if (!pendingShipmentId) return;
     const newShipments = state.shipments.map((s) => ({
       ...s,
-      isActive: s.id === e.target.value,
+      isActive: s.id === pendingShipmentId,
     }));
     updateState({ shipments: newShipments });
+    setPendingShipmentId(null);
   };
 
   const handleLogout = () => {
@@ -240,10 +248,10 @@ export default function Layout() {
             <button
               onClick={handleLogout}
               className="flex items-center bg-red-50 text-red-600 border border-red-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-100 transition-colors gap-1"
-              title="تسجيل الخروج"
+              title={t('logout')}
             >
               <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">خروج</span>
+              <span className="hidden sm:inline">{t('logout')}</span>
             </button>
           </div>
         </header>
@@ -255,6 +263,24 @@ export default function Layout() {
           </div>
         </main>
       </div>
+
+      {/* Shipment Change Confirmation */}
+      <Modal isOpen={!!pendingShipmentId} onClose={() => setPendingShipmentId(null)} title={t('confirm')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('confirmShipmentChange')}</p>
+          <p className="text-sm font-semibold text-slate-800">
+            {state.shipments.find(s => s.id === pendingShipmentId)?.name}
+          </p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setPendingShipmentId(null)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >{t('cancel')}</button>
+            <button onClick={confirmShipmentChange}
+              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
+            >{t('confirm')}</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

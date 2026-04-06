@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { PackagePlus, ArrowRightLeft, AlertCircle, Edit2, Eye, Trash2 } from 'lucide-react';
+import { PackagePlus, ArrowRightLeft, AlertCircle, Edit2, Eye, Trash2, Send } from 'lucide-react';
 import { format } from 'date-fns';
-import { generateId } from '../lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
-import { InventoryTransaction } from '../types';
+import { InventoryTransaction, ShipmentTransfer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
+import { formatCurrency } from '../lib/utils';
 
 export default function Inventory() {
   const { t, lang } = useTranslation();
@@ -50,6 +50,28 @@ export default function Inventory() {
   const [carTransferItems, setCarTransferItems] = useState<{ productId: string; qty: number }[]>([{ productId: '', qty: 0 }]);
   const [carTransferNotes, setCarTransferNotes] = useState('');
   const [carTransferError, setCarTransferError] = useState('');
+
+  // Shipment Transfer State
+  const [showShipmentTransferModal, setShowShipmentTransferModal] = useState(false);
+  const [shipmentTransferDate, setShipmentTransferDate] = useState(new Date().toISOString().split('T')[0]);
+  const [targetShipmentId, setTargetShipmentId] = useState('');
+  const [shipmentTransferItems, setShipmentTransferItems] = useState<{ productId: string; qty: number; unitCost: number }[]>([]);
+  const [shipmentTransferNotes, setShipmentTransferNotes] = useState('');
+
+  // Pre-populate remaining products when opening shipment transfer modal
+  const openShipmentTransferModal = () => {
+    const items = inventoryData
+      .filter(row => row.warehouseRemaining > 0 || row.cars.some(c => c.remaining > 0))
+      .map(row => {
+        const totalRemaining = row.warehouseRemaining + row.cars.reduce((sum, c) => sum + Math.max(0, c.remaining), 0);
+        return { productId: row.product.id, qty: totalRemaining, unitCost: 0 };
+      });
+    setShipmentTransferItems(items.length > 0 ? items : [{ productId: '', qty: 0, unitCost: 0 }]);
+    setTargetShipmentId('');
+    setShipmentTransferNotes('');
+    setShipmentTransferDate(new Date().toISOString().split('T')[0]);
+    setShowShipmentTransferModal(true);
+  };
 
   // ... (rest of the calculation logic)
   const inventoryData = state.products.map(product => {
@@ -99,12 +121,19 @@ export default function Inventory() {
 
     const warehouseRemaining = received - totalLoaded + totalReturned;
 
-    const hasNegative = warehouseRemaining < 0 || loadedToCars.some(c => c.remaining < 0);
+    // Subtract products transferred OUT to another shipment
+    const transferredOutToShipment = transactions
+      .filter(t => t.type === 'shipment_transfer' && t.fromLocation === 'warehouse')
+      .reduce((sum, t) => sum + t.qty, 0);
+
+    const adjustedWarehouseRemaining = warehouseRemaining - transferredOutToShipment;
+
+    const hasNegative = adjustedWarehouseRemaining < 0 || loadedToCars.some(c => c.remaining < 0);
 
     return {
       product,
       received,
-      warehouseRemaining,
+      warehouseRemaining: adjustedWarehouseRemaining,
       cars: loadedToCars,
       hasNegative
     };
@@ -219,7 +248,7 @@ export default function Inventory() {
       }
     }
 
-    const transferId = generateId('STR', state.inventoryTransactions.filter(t => t.referenceId?.startsWith('STR')).length);
+    const transferId = uuidv4();
 
     const newTransactions = validItems.map(item => ({
       id: uuidv4(),
@@ -243,6 +272,94 @@ export default function Inventory() {
     setCarTransferNotes('');
     setCarTransferFrom('');
     setCarTransferTo('');
+  };
+
+  const handleShipmentTransfer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShipmentId || !targetShipmentId) return;
+
+    const validItems = shipmentTransferItems.filter(item => item.productId && item.qty > 0 && item.unitCost > 0);
+    if (validItems.length === 0) return;
+
+    const transferId = uuidv4();
+    const totalAmount = validItems.reduce((sum, item) => sum + item.qty * item.unitCost, 0);
+
+    // Create inventory transactions: remove from source shipment, add to target shipment
+    const outTransactions: InventoryTransaction[] = validItems.map(item => ({
+      id: uuidv4(),
+      date: shipmentTransferDate,
+      shipmentId: activeShipmentId,
+      productId: item.productId,
+      type: 'shipment_transfer' as const,
+      fromLocation: 'warehouse',
+      toLocation: `shipment:${targetShipmentId}`,
+      qty: item.qty,
+      referenceId: transferId,
+      toShipmentId: targetShipmentId,
+    }));
+
+    const inTransactions: InventoryTransaction[] = validItems.map(item => ({
+      id: uuidv4(),
+      date: shipmentTransferDate,
+      shipmentId: targetShipmentId,
+      productId: item.productId,
+      type: 'receive' as const,
+      fromLocation: `shipment:${activeShipmentId}`,
+      toLocation: 'warehouse',
+      qty: item.qty,
+      referenceId: transferId,
+      fromShipmentId: activeShipmentId,
+    }));
+
+    // Create ShipmentTransfer record
+    const transfer: ShipmentTransfer = {
+      id: transferId,
+      date: shipmentTransferDate,
+      fromShipmentId: activeShipmentId,
+      toShipmentId: targetShipmentId,
+      items: validItems.map(item => ({
+        productId: item.productId,
+        qty: item.qty,
+        unitCost: item.unitCost,
+        total: item.qty * item.unitCost,
+      })),
+      totalAmount,
+      notes: shipmentTransferNotes || undefined,
+    };
+
+    // Create ledger entries: credit to source shipment, debit from target shipment
+    // (the target "pays" the source for the products)
+    const sourceLedgerEntry = {
+      id: uuidv4(),
+      date: shipmentTransferDate,
+      toAccount: state.bankAccounts[0]?.id || '',
+      description: `Inter-shipment transfer (in) - ${state.shipments.find(s => s.id === targetShipmentId)?.name}`,
+      amountIn: totalAmount,
+      amountOut: 0,
+      sourceModule: 'shipment_transfer' as const,
+      linkedId: transferId,
+      shipmentId: activeShipmentId,
+    };
+
+    const targetLedgerEntry = {
+      id: uuidv4(),
+      date: shipmentTransferDate,
+      toAccount: state.bankAccounts[0]?.id || '',
+      description: `Inter-shipment transfer (cost) - ${state.shipments.find(s => s.id === activeShipmentId)?.name}`,
+      amountIn: 0,
+      amountOut: totalAmount,
+      sourceModule: 'shipment_transfer' as const,
+      linkedId: transferId,
+      shipmentId: targetShipmentId,
+    };
+
+    updateState({
+      inventoryTransactions: [...state.inventoryTransactions, ...outTransactions, ...inTransactions],
+      shipmentTransfers: [...state.shipmentTransfers, transfer],
+      ledger: [...state.ledger, sourceLedgerEntry, targetLedgerEntry],
+    });
+
+    setShowShipmentTransferModal(false);
   };
 
   return (
@@ -272,6 +389,12 @@ export default function Inventory() {
           >
             <ArrowRightLeft className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
             {t('transferBetweenCars')}
+          </button>
+          <button onClick={openShipmentTransferModal}
+            className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors shadow-sm"
+          >
+            <Send className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0"/>
+            {t('transferToShipment')}
           </button>
         </div>}
       </div>
@@ -899,6 +1022,119 @@ export default function Inventory() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Inter-Shipment Transfer Modal */}
+      <Modal isOpen={showShipmentTransferModal} onClose={() => setShowShipmentTransferModal(false)} title={t('transferToShipment')} size="xl">
+        <form onSubmit={handleShipmentTransfer} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('date')}</label>
+              <input type="date" required value={shipmentTransferDate} onChange={(e) => setShipmentTransferDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('fromShipment')}</label>
+              <input type="text" readOnly value={state.shipments.find(s => s.id === activeShipmentId)?.name || ''}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('toShipment')}</label>
+            <select required value={targetShipmentId} onChange={(e) => setTargetShipmentId(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
+            >
+              <option value="">{t('select')}</option>
+              {state.shipments.filter(s => s.id !== activeShipmentId).map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700">{t('selectProducts')}</label>
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {shipmentTransferItems.map((item, index) => {
+                const productName = state.products.find(p => p.id === item.productId)?.name;
+                const lineTotal = item.qty * item.unitCost;
+                return (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg">
+                    <div className="col-span-4">
+                      <select value={item.productId} onChange={(e) => {
+                          const newItems = [...shipmentTransferItems];
+                          newItems[index].productId = e.target.value;
+                          setShipmentTransferItems(newItems);
+                        }}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                      >
+                        <option value="">{t('product')}</option>
+                        {state.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <input type="number" min="0" placeholder={t('qty')} value={item.qty || ''} onChange={(e) => {
+                          const newItems = [...shipmentTransferItems];
+                          newItems[index].qty = parseInt(e.target.value) || 0;
+                          setShipmentTransferItems(newItems);
+                        }}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <input type="number" min="0" step="0.01" placeholder={t('unitCost')} value={item.unitCost || ''} onChange={(e) => {
+                          const newItems = [...shipmentTransferItems];
+                          newItems[index].unitCost = parseFloat(e.target.value) || 0;
+                          setShipmentTransferItems(newItems);
+                        }}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                      />
+                    </div>
+                    <div className="col-span-2 text-right">
+                      <span className="text-sm font-bold text-slate-700">{formatCurrency(lineTotal)}</span>
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <button type="button" onClick={() => {
+                          const newItems = shipmentTransferItems.filter((_, i) => i !== index);
+                          setShipmentTransferItems(newItems.length > 0 ? newItems : [{ productId: '', qty: 0, unitCost: 0 }]);
+                        }}
+                        className="text-red-400 hover:text-red-600 text-xs"
+                      >✕</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button type="button" onClick={() => setShipmentTransferItems([...shipmentTransferItems, { productId: '', qty: 0, unitCost: 0 }])}
+              className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+            >+ {t('add')}</button>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex justify-between items-center">
+            <span className="text-sm font-semibold text-amber-800">{t('totalValue')}</span>
+            <span className="text-lg font-bold text-amber-700">
+              {formatCurrency(shipmentTransferItems.reduce((sum, item) => sum + item.qty * item.unitCost, 0))}
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
+            <textarea value={shipmentTransferNotes} onChange={(e) => setShipmentTransferNotes(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" rows={2}
+            />
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={() => setShowShipmentTransferModal(false)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >{t('cancel')}</button>
+            <button type="submit"
+              className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm transition-colors"
+            >{t('save')}</button>
+          </div>
+        </form>
       </Modal>
     </motion.div>
   );

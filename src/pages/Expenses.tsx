@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 
@@ -23,7 +23,8 @@ export default function Expenses() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
-  const [filterDate, setFilterDate] = useState('');
+  const [filterFromDate, setFilterFromDate] = useState('');
+  const [filterToDate, setFilterToDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
 
   // Form State
@@ -36,11 +37,12 @@ export default function Expenses() {
   const filteredExpenses = useMemo(() => {
     return state.expenses.filter(e => {
       if (e.shipmentId !== activeShipmentId) return false;
-      if (filterDate && !e.date.startsWith(filterDate)) return false;
+      if (filterFromDate && e.date < filterFromDate) return false;
+      if (filterToDate && e.date > filterToDate) return false;
       if (filterCategory && e.categoryId !== filterCategory) return false;
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [state.expenses, activeShipmentId, filterDate, filterCategory]);
+  }, [state.expenses, activeShipmentId, filterFromDate, filterToDate, filterCategory]);
 
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ export default function Expenses() {
 
     const expenseAmount = Number(amount);
     const isEditing = !!showEditModal;
-    const expenseId = isEditing ? showEditModal!.id : generateId('EX', state.expenses.length);
+    const expenseId = isEditing ? showEditModal!.id : uuidv4();
 
     const newExpense: Expense = {
       id: expenseId,
@@ -142,10 +144,16 @@ export default function Expenses() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
-          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('fromDate')}</label>
+          <input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)}
+            className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('toDate')}</label>
+          <input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)}
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           />
         </div>

@@ -266,6 +266,7 @@ export function generateSeedData(): AppState {
     savedSettlements: [],
     capitalContributions,
     settlementResults: {},
+    shipmentTransfers: [],
     roles: [],
     users: [],
     currentUser: null,
