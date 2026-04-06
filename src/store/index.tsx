@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { hashPassword, isPasswordHashed } from '../lib/utils';
-import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady, requestImmediatePush } from '../lib/syncEngine';
+import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady, requestImmediatePush, clearSyncState } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -232,6 +232,7 @@ interface AppContextType {
   logout: () => void;
   manualSync: () => Promise<void>;
   fullPush: () => Promise<void>;
+  resetAndFullSync: () => Promise<void>;
   isCloudLoading: boolean;
 }
 
@@ -367,7 +368,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (key === 'currentUser') continue; // Never overwrite local auth
         if (key === 'settlementResults') {
           // Record<string, T> — merge by key
-          merged[key] = { ...(prev as any)[key], ...value };
+          merged[key] = { ...(prev as any)[key], ...(value as Record<string, unknown>) };
         } else if (Array.isArray(value) && Array.isArray((prev as any)[key])) {
           // Merge arrays by ID: cloud items replace matching local ones, new items are added
           const prevArr: any[] = (prev as any)[key];
@@ -499,10 +500,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fullPushToCloud(stateRef.current);
   }, []);
 
+  const resetAndFullSync = useCallback(async () => {
+    console.log('[store] resetAndFullSync: clearing sync state and performing full pull');
+    // clearCache is false: we preserve the current local state so the UI stays
+    // populated while the full pull runs in the background, avoiding a blank screen.
+    clearSyncState({ clearQueue: true, clearCache: false });
+    await pullFromCloud(syncApply);
+  }, [syncApply]);
+
   // Memoize context value so consumers don't re-render when the provider's
   // own parent re-renders (or when unrelated sibling state changes occur).
   const contextValue = useMemo(
-    () => ({ state, setState, updateState, activeShipmentId, login, logout, manualSync, fullPush, isCloudLoading }),
+    () => ({ state, setState, updateState, activeShipmentId, login, logout, manualSync, fullPush, resetAndFullSync, isCloudLoading }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, activeShipmentId, isCloudLoading]
   );

@@ -381,6 +381,12 @@ export const translations = {
     returnAllToWarehouse: 'Return All to Warehouse',
     confirmReturnAll: 'Are you sure you want to return all remaining products from this car to the warehouse?',
     shipmentPayment: 'Shipment Payment',
+    resetFullSync: 'Reset & Full Sync',
+    resetFullSyncDesc: 'Clear the incremental sync timestamp and re-download all data from the cloud. Use this to fix missing or inconsistent data on this device.',
+    resetFullSyncConfirm: 'This will clear the local sync state and re-fetch all data from the cloud. Your locally queued (offline) changes will be discarded. Are you sure?',
+    resetFullSyncRunning: 'Resetting and syncing…',
+    resetFullSyncDone: 'Full sync complete.',
+    syncData: 'Sync Data',
   },
   ar: {
     dashboard: 'لوحة التحكم',
@@ -764,6 +770,12 @@ export const translations = {
     returnAllToWarehouse: 'إرجاع الكل للمخزن',
     confirmReturnAll: 'هل تريد إرجاع جميع المنتجات المتبقية من هذه السيارة إلى المخزن؟',
     shipmentPayment: 'دفعة بين الرسائل',
+    resetFullSync: 'إعادة ضبط ومزامنة كاملة',
+    resetFullSyncDesc: 'امسح طابع وقت المزامنة التدريجية وأعد تحميل جميع البيانات من السحابة. استخدم هذا لإصلاح البيانات المفقودة أو غير المتطابقة على هذا الجهاز.',
+    resetFullSyncConfirm: 'سيتم مسح حالة المزامنة المحلية وإعادة تحميل جميع البيانات من السحابة. سيتم تجاهل التغييرات المحلية المنتظرة (غير المتصل). هل أنت متأكد؟',
+    resetFullSyncRunning: 'جارٍ الإعادة والمزامنة…',
+    resetFullSyncDone: 'اكتملت المزامنة الكاملة.',
+    syncData: 'مزامنة البيانات',
   }
 };
 
