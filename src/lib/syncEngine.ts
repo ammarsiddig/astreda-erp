@@ -176,6 +176,18 @@ export const TABLE_MAPPINGS: TableMapping[] = [
   },
 ]
 
+// ─── Last-sync timestamp for incremental pulls ───────────────────
+
+const LAST_SYNC_KEY = 'astrida_last_sync_ts'
+
+function getLastSyncTs(): string | null {
+  return localStorage.getItem(LAST_SYNC_KEY)
+}
+
+function setLastSyncTs(ts: string) {
+  localStorage.setItem(LAST_SYNC_KEY, ts)
+}
+
 // ─── Sync Status ──────────────────────────────────────────────────
 
 export interface SyncStatus {
@@ -516,34 +528,41 @@ export const pullFromCloud = async (
 ): Promise<boolean> => {
   if (!isSupabaseConfigured() || !navigator.onLine) return false
 
-  // Helper: race a promise against a timeout
   const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
     Promise.race([
       promise,
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
     ])
 
-  // Fetch ALL tables in parallel with a 8s timeout per table
+  const lastSync = getLastSyncTs()
+  const isIncremental = !!lastSync
+  const timeoutMs = isIncremental ? 5000 : 10000
+
+  console.log(`[sync] pull mode: ${isIncremental ? 'incremental since ' + lastSync : 'full'}`)
+  const pullStartTs = new Date().toISOString()
+
+  // Fetch ALL tables in parallel
   const results = await Promise.allSettled([
     ...TABLE_MAPPINGS.map(async (mapping) => {
-      const { data, error } = await withTimeout(
-        supabase!.from(mapping.table).select('*'),
-        8000
-      )
+      let query = supabase!.from(mapping.table).select('*')
+      // Incremental: only fetch rows updated since last sync
+      if (isIncremental) {
+        query = query.gte('updated_at', lastSync)
+      }
+      const { data, error } = await withTimeout(query, timeoutMs)
       if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); return null }
       if (!data) return null
-      return { mapping, data }
+      return { mapping, data, isIncremental }
     }),
     (async () => {
       const { data } = await withTimeout(
         supabase!.from('app_settings').select('*').eq('id', 'singleton').single(),
-        8000
+        timeoutMs
       )
       return data ? { isScalar: true as const, data } : null
     })(),
   ])
 
-  // Batch all updates into a single applyToState call to avoid multiple re-renders
   const bulkUpdate: Partial<AppState> = {}
   let pulledAny = false
 
@@ -571,7 +590,11 @@ export const pullFromCloud = async (
     }
   }
 
-  if (pulledAny) applyToState(bulkUpdate)
+  if (pulledAny) {
+    applyToState(bulkUpdate)
+    // Save the timestamp so the next pull is incremental
+    setLastSyncTs(pullStartTs)
+  }
   updateStatus({ lastSynced: new Date().toISOString() })
   return pulledAny
 }
@@ -821,16 +844,38 @@ export const fetchUsersFromCloud = async (): Promise<import('../types').User[] |
   }
 }
 
+// ─── Keep-Alive Ping ──────────────────────────────────────────────
+// Supabase free tier pauses the DB after ~5 minutes of inactivity.
+// A lightweight ping every 4 minutes prevents cold starts.
+
+let keepAliveTimer: ReturnType<typeof setInterval> | null = null
+
+function startKeepAlive() {
+  if (keepAliveTimer) return
+  keepAliveTimer = setInterval(async () => {
+    if (!navigator.onLine || !isSupabaseConfigured()) return
+    try {
+      await supabase!.from('app_settings').select('id').eq('id', 'singleton').single()
+    } catch { /* ignore */ }
+  }, 4 * 60 * 1000) // every 4 minutes
+}
+
+function stopKeepAlive() {
+  if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null }
+}
+
 // ─── Network Monitoring ───────────────────────────────────────────
 
 export const initNetworkMonitoring = (): void => {
   window.addEventListener('online', () => {
     updateStatus({ isOnline: true })
-    // When coming back online, flush any queued offline changes
     flushQueue()
+    startKeepAlive()
   })
   window.addEventListener('offline', () => {
     updateStatus({ isOnline: false })
+    stopKeepAlive()
   })
   updateStatus({ isOnline: navigator.onLine, pendingChanges: getQueue().length })
+  if (navigator.onLine) startKeepAlive()
 }
