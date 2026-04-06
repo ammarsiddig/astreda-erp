@@ -247,6 +247,17 @@ CREATE TABLE settlement_results (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE shipment_transfers (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  from_shipment_id TEXT NOT NULL,
+  to_shipment_id TEXT NOT NULL,
+  items JSONB NOT NULL DEFAULT '[]',
+  total_amount DECIMAL(12,2) DEFAULT 0,
+  notes TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ─── App Settings (scalar state fields) ─────────────────────────
 
 CREATE TABLE app_settings (
@@ -326,6 +337,7 @@ CREATE TRIGGER tr_ledger BEFORE UPDATE ON ledger FOR EACH ROW EXECUTE FUNCTION u
 CREATE TRIGGER tr_saved_settlements BEFORE UPDATE ON saved_settlements FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER tr_capital_contributions BEFORE UPDATE ON capital_contributions FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER tr_settlement_results BEFORE UPDATE ON settlement_results FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER tr_shipment_transfers BEFORE UPDATE ON shipment_transfers FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER tr_app_settings BEFORE UPDATE ON app_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =============================================
@@ -354,6 +366,7 @@ ALTER TABLE ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_settlements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capital_contributions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settlement_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shipment_transfers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_queue ENABLE ROW LEVEL SECURITY;
 
@@ -380,6 +393,7 @@ CREATE POLICY "allow_all" ON ledger FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON saved_settlements FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON capital_contributions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON settlement_results FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all" ON shipment_transfers FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON app_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON sync_queue FOR ALL USING (true) WITH CHECK (true);
 
@@ -410,6 +424,7 @@ ALTER TABLE ledger REPLICA IDENTITY FULL;
 ALTER TABLE saved_settlements REPLICA IDENTITY FULL;
 ALTER TABLE capital_contributions REPLICA IDENTITY FULL;
 ALTER TABLE settlement_results REPLICA IDENTITY FULL;
+ALTER TABLE shipment_transfers REPLICA IDENTITY FULL;
 ALTER TABLE app_settings REPLICA IDENTITY FULL;
 
 -- =============================================
@@ -438,6 +453,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE ledger;
 ALTER PUBLICATION supabase_realtime ADD TABLE saved_settlements;
 ALTER PUBLICATION supabase_realtime ADD TABLE capital_contributions;
 ALTER PUBLICATION supabase_realtime ADD TABLE settlement_results;
+ALTER PUBLICATION supabase_realtime ADD TABLE shipment_transfers;
 ALTER PUBLICATION supabase_realtime ADD TABLE app_settings;
 
 -- =============================================

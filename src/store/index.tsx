@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { hashPassword, isPasswordHashed } from '../lib/utils';
-import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady } from '../lib/syncEngine';
+import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady, requestImmediatePush } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -434,6 +434,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [state]);
 
   const updateState = (updates: Partial<AppState>) => {
+    requestImmediatePush();
     setState((prev) => ({ ...prev, ...updates }));
   };
 

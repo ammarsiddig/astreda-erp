@@ -471,13 +471,17 @@ const DEBOUNCE_MS = 100
 let debouncedBase: AppState | null = null
 let pushTimeout: ReturnType<typeof setTimeout> | null = null
 
-/** Can also be called externally to re-arm the debounce flush. */
+/** Signal that the next state change should push with 0ms debounce (instant). */
+let _nextPushImmediate = false
+export const requestImmediatePush = () => { _nextPushImmediate = true }
+
+/** Can also be called externally to force-flush immediately. */
 export const autoPush = (): void => {
   if (!debouncedBase) return
-  scheduleDebouncedPush(debouncedBase)
+  scheduleDebouncedPush(debouncedBase, 0)
 }
 
-function scheduleDebouncedPush(base: AppState) {
+function scheduleDebouncedPush(base: AppState, delayMs: number = DEBOUNCE_MS) {
   if (pushTimeout) clearTimeout(pushTimeout)
   pushTimeout = setTimeout(() => {
     pushTimeout = null
@@ -490,7 +494,7 @@ function scheduleDebouncedPush(base: AppState) {
     if (scalarChanged) {
       pushScalarSettings(curr).catch((e) => console.warn('[sync] scalar push error:', e))
     }
-  }, DEBOUNCE_MS)
+  }, delayMs)
 }
 
 export const onStateChange = (state: AppState) => {
@@ -508,7 +512,9 @@ export const onStateChange = (state: AppState) => {
 
   const base = debouncedBase
   debouncedBase = state  // always keep latest so the timer closure sees it
-  scheduleDebouncedPush(base)
+  const delay = _nextPushImmediate ? 0 : DEBOUNCE_MS
+  _nextPushImmediate = false
+  scheduleDebouncedPush(base, delay)
 }
 
 // Serialize diffs so concurrent flushes don't race each other
@@ -683,88 +689,141 @@ export const setupRealtimeSync = (
 ): (() => void) => {
   if (!isSupabaseConfigured()) return () => {}
 
-  const tables = TABLE_MAPPINGS.map(m => m.table)
-  console.log('[realtime] subscribing to tables:', tables)
+  let channel: ReturnType<typeof supabase.channel> | null = null
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let reconnectAttempts = 0
+  let disposed = false
+  const MAX_RECONNECT_DELAY = 30_000 // 30s cap
 
-  const channel = supabase!.channel('astrida_realtime')
+  function createChannel() {
+    if (disposed) return
+    const tables = TABLE_MAPPINGS.map(m => m.table)
+    console.log('[realtime] subscribing to tables:', tables)
 
-  // Subscribe to all data tables
-  for (const mapping of TABLE_MAPPINGS) {
-    channel.on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: mapping.table },
-      (payload) => {
-        const key = mapping.stateKey
-        const pkField = mapping.pkField ?? 'id'
-        const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
+    channel = supabase!.channel('astrida_realtime')
 
-        if (payload.eventType === 'DELETE') {
-          console.log(`[realtime] DELETE ${mapping.table}`, payload.old)
-          const deletedPk = (payload.old as any)?.[pkField]
-          if (!deletedPk) {
-            console.warn(`[realtime] DELETE ${mapping.table}: no PK in payload.old — ensure REPLICA IDENTITY FULL is set`)
+    // Subscribe to all data tables
+    for (const mapping of TABLE_MAPPINGS) {
+      channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: mapping.table },
+        (payload) => {
+          const key = mapping.stateKey
+          const pkField = mapping.pkField ?? 'id'
+          const pkGetter = (item: any) => pkField === 'shipment_id' ? item.shipmentId : item.id
+
+          if (payload.eventType === 'DELETE') {
+            console.log(`[realtime] DELETE ${mapping.table}`, payload.old)
+            const deletedPk = (payload.old as any)?.[pkField]
+            if (!deletedPk) {
+              console.warn(`[realtime] DELETE ${mapping.table}: no PK in payload.old — ensure REPLICA IDENTITY FULL is set`)
+              return
+            }
+            if (isEcho(mapping.table, String(deletedPk))) return
+            console.log(`[realtime] applying DELETE ${mapping.table}/${deletedPk}`)
+            queueRealtimePatch(s => {
+              if (key === 'settlementResults') {
+                const record = { ...(s.settlementResults || {}) }
+                delete record[deletedPk]
+                return { settlementResults: record }
+              }
+              const arr = ((s as any)[key] || []) as any[]
+              return { [key]: arr.filter((i: any) => pkGetter(i) !== deletedPk) } as any
+            }, applyToState, getState)
             return
           }
-          if (isEcho(mapping.table, String(deletedPk))) return
-          console.log(`[realtime] applying DELETE ${mapping.table}/${deletedPk}`)
+
+          // INSERT or UPDATE
+          const newItem = mapping.fromRow(payload.new)
+          const pk = pkGetter(newItem)
+          if (isEcho(mapping.table, String(pk))) return
+          console.log(`[realtime] ${payload.eventType} ${mapping.table}/${pk}`)
+
           queueRealtimePatch(s => {
             if (key === 'settlementResults') {
-              const record = { ...(s.settlementResults || {}) }
-              delete record[deletedPk]
-              return { settlementResults: record }
+              return { settlementResults: { ...(s.settlementResults || {}), [newItem.shipmentId]: newItem } }
             }
             const arr = ((s as any)[key] || []) as any[]
-            return { [key]: arr.filter((i: any) => pkGetter(i) !== deletedPk) } as any
+            const idx = arr.findIndex((i: any) => pkGetter(i) === pk)
+            if (idx === -1) return { [key]: [...arr, newItem] } as any
+            const updated = [...arr]
+            updated[idx] = newItem
+            return { [key]: updated } as any
           }, applyToState, getState)
-          return
         }
+      )
+    }
 
-        // INSERT or UPDATE
-        const newItem = mapping.fromRow(payload.new)
-        const pk = pkGetter(newItem)
-        if (isEcho(mapping.table, String(pk))) return
-        console.log(`[realtime] ${payload.eventType} ${mapping.table}/${pk}`)
-
-        queueRealtimePatch(s => {
-          if (key === 'settlementResults') {
-            return { settlementResults: { ...(s.settlementResults || {}), [newItem.shipmentId]: newItem } }
-          }
-          const arr = ((s as any)[key] || []) as any[]
-          const idx = arr.findIndex((i: any) => pkGetter(i) === pk)
-          if (idx === -1) return { [key]: [...arr, newItem] } as any
-          const updated = [...arr]
-          updated[idx] = newItem
-          return { [key]: updated } as any
-        }, applyToState, getState)
+    // Subscribe to app_settings changes (scalar settings like language, exchangeRate)
+    channel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'app_settings' },
+      (payload) => {
+        if (payload.eventType === 'DELETE') return
+        const data = payload.new as any
+        if (!data || data.id !== 'singleton') return
+        if (isEcho('app_settings', 'singleton')) return
+        console.log('[realtime] app_settings updated')
+        applyToState({
+          language: data.language ?? 'ar',
+          userRole: data.user_role ?? 'manager',
+          exchangeRate: data.exchange_rate ?? 1,
+          managementFeePercent: data.management_fee_percent ?? 0,
+          managementFeeRecipientId: data.management_fee_recipient_id ?? '1',
+        })
       }
     )
+
+    channel.subscribe((status) => {
+      console.log(`[realtime] channel status: ${status}`)
+      if (status === 'SUBSCRIBED') {
+        reconnectAttempts = 0
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        scheduleReconnect()
+      }
+    })
   }
 
-  // Subscribe to app_settings changes (scalar settings like language, exchangeRate)
-  channel.on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'app_settings' },
-    (payload) => {
-      if (payload.eventType === 'DELETE') return
-      const data = payload.new as any
-      if (!data || data.id !== 'singleton') return
-      if (isEcho('app_settings', 'singleton')) return
-      console.log('[realtime] app_settings updated')
-      applyToState({
-        language: data.language ?? 'ar',
-        userRole: data.user_role ?? 'manager',
-        exchangeRate: data.exchange_rate ?? 1,
-        managementFeePercent: data.management_fee_percent ?? 0,
-        managementFeeRecipientId: data.management_fee_recipient_id ?? '1',
-      })
+  function scheduleReconnect() {
+    if (disposed || reconnectTimer) return
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY)
+    reconnectAttempts++
+    console.log(`[realtime] reconnecting in ${delay}ms (attempt ${reconnectAttempts})`)
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null
+      teardown()
+      createChannel()
+    }, delay)
+  }
+
+  function teardown() {
+    if (channel) {
+      try { supabase!.removeChannel(channel) } catch { /* ignore */ }
+      channel = null
     }
-  )
+  }
 
-  channel.subscribe((status) => {
-    console.log(`[realtime] channel status: ${status}`)
-  })
+  // When phone wakes from sleep, reconnect + pull fresh data
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible' && !disposed) {
+      console.log('[realtime] app became visible — reconnecting + pulling')
+      teardown()
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+      reconnectAttempts = 0
+      createChannel()
+      pullFromCloud(applyToState).catch(e => console.warn('[realtime] visibility pull failed:', e))
+    }
+  }
 
-  return () => { supabase!.removeChannel(channel) }
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  createChannel()
+
+  return () => {
+    disposed = true
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+    teardown()
+  }
 }
 
 // ─── Direct record helpers (for explicit writes from components) ───
