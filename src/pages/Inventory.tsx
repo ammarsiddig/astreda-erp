@@ -63,11 +63,8 @@ export default function Inventory() {
   // Pre-populate remaining products when opening shipment transfer modal
   const openShipmentTransferModal = () => {
     const items = inventoryData
-      .filter(row => row.warehouseRemaining > 0 || row.cars.some(c => c.remaining > 0))
-      .map(row => {
-        const totalRemaining = row.warehouseRemaining + row.cars.reduce((sum, c) => sum + Math.max(0, c.remaining), 0);
-        return { productId: row.product.id, qty: totalRemaining };
-      });
+      .filter(row => row.warehouseRemaining > 0)
+      .map(row => ({ productId: row.product.id, qty: row.warehouseRemaining }));
     setShipmentTransferItems(items.length > 0 ? items : [{ productId: '', qty: 0 }]);
     setShipmentTransferTotalAmount('');
     setShipmentTransferBankAccountId('');
