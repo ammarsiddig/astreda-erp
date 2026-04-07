@@ -539,21 +539,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // ── Per-device active shipment (NOT synced to cloud) ─────────────
-  // Each device independently selects which shipment to work on.
-  // Stored in localStorage so it survives page reloads but never leaves the device.
-  const ACTIVE_SHIPMENT_KEY = 'astreda_active_shipment';
-  const [activeShipmentId, _setActiveShipmentId] = useState<string | undefined>(() => {
-    const saved = localStorage.getItem(ACTIVE_SHIPMENT_KEY);
-    if (saved && state.shipments.some(s => s.id === saved)) return saved;
-    // Fallback: pick the first open shipment, or just the first shipment
-    return state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
-  });
-
-  const setActiveShipmentId = useCallback((id: string) => {
-    _setActiveShipmentId(id);
-    localStorage.setItem(ACTIVE_SHIPMENT_KEY, id);
-  }, []);
+  // ── Active shipment selector (convenience filter) ────────────────
+  // Simple React state — just remembers which shipment the user is working
+  // with so forms auto-fill the shipment field. Defaults to first open shipment.
+  const [activeShipmentId, setActiveShipmentId] = useState<string | undefined>(
+    () => state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id
+  );
 
   // If shipments list changes (e.g. cloud pull adds/removes), ensure selection is still valid
   useEffect(() => {
@@ -562,7 +553,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Current selection is gone — pick a new one
     const fallback = state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
     if (fallback) setActiveShipmentId(fallback);
-  }, [state.shipments, activeShipmentId, setActiveShipmentId]);
+  }, [state.shipments, activeShipmentId]);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Cloud-First: fetch fresh users from Supabase before authenticating.
