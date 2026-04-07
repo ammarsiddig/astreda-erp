@@ -42,7 +42,7 @@ CREATE TABLE bank_accounts (
 CREATE TABLE shipments (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  is_closed BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT false,
   shareholders_percent DECIMAL(5,2),
   management_fee_percent DECIMAL(5,2),
   management_fee_recipient_id TEXT,

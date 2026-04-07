@@ -55,16 +55,18 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     table: 'shipments', stateKey: 'shipments',
     toRow: (item: Record<string, any>) => {
       const row = objectToSnake(item)
-      delete row.is_active          // legacy column — no longer used
+      // DB keeps is_active column — map from app's isClosed
+      row.is_active = !item.isClosed
+      delete row.is_closed  // DB doesn't have this column
       return row
     },
     fromRow: (row: Record<string, any>) => {
       const obj = objectToCamel(row)
-      // Migrate legacy is_active → isClosed if DB hasn't been updated yet
-      if ('isActive' in obj && !('isClosed' in obj)) {
+      // DB has is_active → map to app's isClosed
+      if ('isActive' in obj) {
         obj.isClosed = !obj.isActive
+        delete obj.isActive
       }
-      delete obj.isActive
       return obj
     },
   },
@@ -303,9 +305,18 @@ export async function flushQueue(): Promise<void> {
 
   for (const item of queue) {
     try {
-      const pkCol = TABLE_MAPPINGS.find(m => m.table === item.table)?.pkField ?? 'id'
+      const mapping = TABLE_MAPPINGS.find(m => m.table === item.table)
+      const pkCol = mapping?.pkField ?? 'id'
       if (item.op === 'UPSERT') {
-        const { error } = await supabase!.from(item.table).upsert(item.data, { onConflict: pkCol })
+        // Re-run toRow to fix stale column names (e.g. is_closed → is_active migration)
+        let row = item.data
+        if (mapping) {
+          try {
+            const camelObj = objectToCamel(item.data)
+            row = mapping.toRow(camelObj)
+          } catch { /* use original data if conversion fails */ }
+        }
+        const { error } = await supabase!.from(item.table).upsert(row, { onConflict: pkCol })
         if (error) throw error
       } else {
         const { error } = await supabase!.from(item.table).delete().eq(pkCol, item.pk)
