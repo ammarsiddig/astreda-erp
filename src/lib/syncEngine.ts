@@ -45,6 +45,29 @@ const objectToCamel = (obj: Record<string, any>): Record<string, any> => {
   return out
 }
 
+// Auto-detect which column name the DB uses for shipment open/closed status.
+// Some DBs still have is_active, others migrated to is_closed.
+let _shipmentDbColumn: 'is_active' | 'is_closed' | null = null
+let _probing = false
+
+async function probeShipmentColumn(): Promise<void> {
+  if (_shipmentDbColumn || _probing || !isSupabaseConfigured()) return
+  _probing = true
+  try {
+    const { data } = await supabase!.from('shipments').select('*').limit(1)
+    if (data && data.length > 0) {
+      const row = data[0]
+      if ('is_closed' in row) _shipmentDbColumn = 'is_closed'
+      else if ('is_active' in row) _shipmentDbColumn = 'is_active'
+    }
+    // If table is empty, try inserting — just default to is_active
+    if (!_shipmentDbColumn) _shipmentDbColumn = 'is_active'
+  } catch {
+    _shipmentDbColumn = 'is_active'
+  }
+  _probing = false
+}
+
 export const TABLE_MAPPINGS: TableMapping[] = [
   { table: 'products', stateKey: 'products', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'salespeople', stateKey: 'salespeople', toRow: objectToSnake, fromRow: objectToCamel },
@@ -55,15 +78,24 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     table: 'shipments', stateKey: 'shipments',
     toRow: (item: Record<string, any>) => {
       const row = objectToSnake(item)
-      // DB keeps is_active column — map from app's isClosed
-      row.is_active = !item.isClosed
-      delete row.is_closed  // DB doesn't have this column
+      // Send whichever column the DB actually has
+      if (_shipmentDbColumn === 'is_closed') {
+        row.is_closed = !!item.isClosed
+        delete row.is_active
+      } else {
+        // Default: is_active (original schema)
+        row.is_active = !item.isClosed
+        delete row.is_closed
+      }
       return row
     },
     fromRow: (row: Record<string, any>) => {
       const obj = objectToCamel(row)
-      // DB has is_active → map to app's isClosed
-      if ('isActive' in obj) {
+      // Detect which column the DB returned and remember it
+      if ('isClosed' in obj) {
+        _shipmentDbColumn = 'is_closed'
+      } else if ('isActive' in obj) {
+        _shipmentDbColumn = 'is_active'
         obj.isClosed = !obj.isActive
         delete obj.isActive
       }
@@ -324,13 +356,19 @@ export async function flushQueue(): Promise<void> {
       const mapping = TABLE_MAPPINGS.find(m => m.table === item.table)
       const pkCol = mapping?.pkField ?? 'id'
       if (item.op === 'UPSERT') {
-        // Sanitize row: remove columns that don't belong (e.g. stale is_closed)
+        // Sanitize row: fix stale column names for shipments
         const row = { ...item.data }
         if (item.table === 'shipments') {
-          // Ensure correct column: is_active (not is_closed)
-          if ('is_closed' in row) {
-            row.is_active = !row.is_closed
-            delete row.is_closed
+          if (_shipmentDbColumn === 'is_closed') {
+            if ('is_active' in row) {
+              row.is_closed = !row.is_active
+              delete row.is_active
+            }
+          } else {
+            if ('is_closed' in row) {
+              row.is_active = !row.is_closed
+              delete row.is_closed
+            }
           }
         }
         const { error } = await supabase!.from(item.table).upsert(row, { onConflict: pkCol })
@@ -390,6 +428,9 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
 
+  // Ensure we know which DB column to use for shipments before building the row
+  if (mapping.table === 'shipments' && !_shipmentDbColumn) await probeShipmentColumn()
+
   const row = mapping.toRow(item)
   const pkField = mapping.pkField ?? 'id'
   const pk = String(row[pkField])
@@ -418,6 +459,9 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
   if (items.length === 0) return true
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
+
+  // Ensure we know which DB column to use for shipments before building rows
+  if (mapping.table === 'shipments' && !_shipmentDbColumn) await probeShipmentColumn()
 
   const rows = items.map(mapping.toRow)
   const pkField = mapping.pkField ?? 'id'
