@@ -358,6 +358,7 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
     const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
     if (error) throw error
     markWritten(mapping.table, pk)
+    addToast('success', '✅ تم الحفظ')
     return true
   } catch (e: any) {
     console.error(`[sync] UPSERT ${mapping.table}/${pk} failed:`, e?.message || e)
@@ -388,6 +389,7 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
     const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
     if (error) throw error
     rows.forEach(row => markWritten(mapping.table, String(row[pkField])))
+    addToast('success', '✅ تم الحفظ')
     return true
   } catch (e: any) {
     console.error(`[sync] batch UPSERT ${mapping.table} failed:`, e?.message || e)
@@ -416,6 +418,7 @@ export async function deleteRecord(stateKey: keyof AppState, pk: string): Promis
     const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
     if (error) throw error
     markWritten(mapping.table, pk)
+    addToast('success', '✅ تم الحذف')
     return true
   } catch (e: any) {
     console.error(`[sync] DELETE ${mapping.table}/${pk} failed:`, e?.message || e)
@@ -441,6 +444,7 @@ export async function deleteRecords(stateKey: keyof AppState, pks: string[]): Pr
     const { error } = await supabase!.from(mapping.table).delete().in(pkField, pks)
     if (error) throw error
     pks.forEach(pk => markWritten(mapping.table, pk))
+    addToast('success', '✅ تم الحذف')
     return true
   } catch (e: any) {
     console.error(`[sync] batch DELETE ${mapping.table} failed:`, e?.message || e)

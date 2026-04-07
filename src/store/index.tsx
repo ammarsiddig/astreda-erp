@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { hashPassword, isPasswordHashed } from '../lib/utils';
-import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus } from '../lib/syncEngine';
+import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -407,18 +407,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     document.documentElement.lang = state.language;
   }, [state]);
 
-  // updateState: for local-only state changes (scalar settings, etc.)
-  // Components should use upsertRecord/deleteRecord for data writes
+  // updateState: local state update + automatic Supabase push for ALL data types
+  // Pages do NOT need to call upsertRecord/deleteRecord manually — this handles it.
   const updateState = (updates: Partial<AppState>) => {
-    setState((prev) => {
-      const next = { ...prev, ...updates };
-      // Push scalar settings to cloud if any changed
-      const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
-      if (scalarKeys.some(k => k in updates)) {
-        pushScalarSettings(next as AppState);
+    // Capture prev state BEFORE updating for diff computation
+    const prev = stateRef.current;
+
+    setState((s) => ({ ...s, ...updates }));
+
+    // Push scalar settings to cloud if any changed
+    const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
+    if (scalarKeys.some(k => k in updates)) {
+      pushScalarSettings({ ...prev, ...updates } as AppState);
+    }
+
+    // Auto-sync array and object changes to Supabase (fire-and-forget)
+    for (const key of Object.keys(updates) as (keyof AppState)[]) {
+      if (scalarKeys.includes(key) || key === 'currentUser') continue;
+      const newVal = updates[key];
+      const oldVal = prev[key];
+
+      // settlementResults is Record<shipmentId, result> — sync each changed entry
+      if (key === 'settlementResults' && typeof newVal === 'object' && !Array.isArray(newVal)) {
+        const oldMap = (oldVal ?? {}) as Record<string, any>;
+        const newMap = newVal as Record<string, any>;
+        for (const shipId of Object.keys(newMap)) {
+          if (JSON.stringify(oldMap[shipId]) !== JSON.stringify(newMap[shipId])) {
+            upsertRecord('settlementResults', { shipmentId: shipId, ...newMap[shipId] });
+          }
+        }
+        continue;
       }
-      return next;
-    });
+
+      // Array data — diff by primary key, push changes
+      if (Array.isArray(newVal) && Array.isArray(oldVal)) {
+        const mapping = TABLE_MAPPINGS.find(m => m.stateKey === key);
+        if (!mapping) continue;
+        const pkProp = mapping.pkField === 'shipment_id' ? 'shipmentId' : (mapping.pkField ?? 'id');
+        const pkGetter = (item: any) => String(item[pkProp] ?? item.id);
+
+        const oldMap = new Map<string, any>();
+        for (const item of oldVal as any[]) oldMap.set(pkGetter(item), item);
+
+        const newMap = new Map<string, any>();
+        for (const item of newVal as any[]) newMap.set(pkGetter(item), item);
+
+        // Find upserts (added or modified)
+        const toUpsert: any[] = [];
+        for (const [pk, item] of newMap) {
+          const old = oldMap.get(pk);
+          if (!old || JSON.stringify(old) !== JSON.stringify(item)) {
+            toUpsert.push(item);
+          }
+        }
+
+        // Find deletes (removed)
+        const toDelete: string[] = [];
+        for (const pk of oldMap.keys()) {
+          if (!newMap.has(pk)) toDelete.push(pk);
+        }
+
+        if (toUpsert.length > 0) upsertRecords(key, toUpsert);
+        if (toDelete.length > 0) deleteRecords(key, toDelete);
+      }
+    }
   };
 
   const activeShipmentId = state.shipments.find((s) => s.isActive)?.id;
