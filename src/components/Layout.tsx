@@ -46,7 +46,7 @@ function getRoleBadgeColor(roleName: string): string {
 
 export default function Layout() {
   const { t, lang } = useTranslation();
-  const { state, updateState, logout, manualSync } = useAppStore();
+  const { state, updateState, logout, manualSync, activeShipmentId, setActiveShipmentId } = useAppStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingShipmentId, setPendingShipmentId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function Layout() {
     updateState({ language: lang === 'ar' ? 'en' : 'ar' });
   };
 
-  const activeShipment = state.shipments.find((s) => s.isActive);
+  const activeShipment = state.shipments.find((s) => s.id === activeShipmentId);
 
   const handleShipmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setPendingShipmentId(e.target.value);
@@ -67,11 +67,7 @@ export default function Layout() {
 
   const confirmShipmentChange = () => {
     if (!pendingShipmentId) return;
-    const newShipments = state.shipments.map((s) => ({
-      ...s,
-      isActive: s.id === pendingShipmentId,
-    }));
-    updateState({ shipments: newShipments });
+    setActiveShipmentId(pendingShipmentId);
     setPendingShipmentId(null);
   };
 

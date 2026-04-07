@@ -41,7 +41,7 @@ export default function Settings() {
 
   // Profit distribution settings — which shipment is being configured
   const [profitShipmentId, setProfitShipmentId] = useState<string>(
-    () => state.shipments.find(s => s.isActive)?.id || state.shipments[0]?.id || ''
+    () => state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id || ''
   );
 
   const [showModal, setShowModal] = useState(false);
@@ -93,23 +93,11 @@ export default function Settings() {
     const list = (state[activeTab as keyof typeof state] as unknown) as SettingsRecord[];
 
     if (editingItem) {
-      let updatedList = list.map(item => item.id === editingItem.id ? { ...item, ...formData } : item);
-      if (activeTab === 'shipments' && formData.isActive) {
-        updatedList = updatedList.map((item) => ({
-          ...item,
-          isActive: item.id === editingItem.id ? true : false,
-        }));
-      }
+      const updatedList = list.map(item => item.id === editingItem.id ? { ...item, ...formData } : item);
       updateState({ [activeTab]: updatedList });
     } else {
       const newItem: SettingsRecord = { id: uuidv4(), ...formData };
-      let newList = [...list, newItem];
-      if (activeTab === 'shipments' && formData.isActive) {
-        newList = newList.map((item) => ({
-          ...item,
-          isActive: item.id === newItem.id ? true : false,
-        }));
-      }
+      const newList = [...list, newItem];
       updateState({ [activeTab]: newList });
     }
 
@@ -197,13 +185,13 @@ export default function Settings() {
             <div className="flex items-center mt-4">
               <input
                 type="checkbox"
-                id="isActive"
-                checked={fBool('isActive')}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                id="isClosed"
+                checked={fBool('isClosed')}
+                onChange={(e) => setFormData({ ...formData, isClosed: e.target.checked })}
                 className="w-4 h-4 text-[#134e4a] border-slate-300 rounded focus:ring-[#14b8a6]"
               />
-              <label htmlFor="isActive" className="ml-2 rtl:mr-2 text-sm font-medium text-slate-700">
-                {t('active')}
+              <label htmlFor="isClosed" className="ml-2 rtl:mr-2 text-sm font-medium text-slate-700">
+                {t('closed')}
               </label>
             </div>
           </>
@@ -430,7 +418,7 @@ export default function Settings() {
                   <SearchableSelect
                     value={profitShipmentId}
                     onChange={(val) => setProfitShipmentId(val)}
-                    options={state.shipments.map(s => ({ value: s.id, label: s.name + (s.isActive ? ' (نشطة)' : '') }))}
+                    options={state.shipments.map(s => ({ value: s.id, label: s.name + (s.isClosed ? ' (مغلقة)' : '') }))}
                     placeholder="الرسالة"
                   />
                 </div>
@@ -818,8 +806,8 @@ export default function Settings() {
                         <p className="font-medium text-slate-900 text-sm">{item.name}</p>
                         {activeTab === 'bankAccounts' && item.transferFee && <p className="text-xs text-slate-400">{t('transferFee')}: {item.transferFee}</p>}
                         {activeTab === 'shipments' && (
-                          <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                            {item.isActive ? t('active') : t('inactive')}
+                          <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${item.isClosed ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {item.isClosed ? t('closed') : t('open')}
                           </span>
                         )}
                         {activeTab === 'partners' && (
@@ -856,8 +844,8 @@ export default function Settings() {
                           {activeTab === 'bankAccounts' && <td className="px-4 py-3">{item.transferFee}</td>}
                           {activeTab === 'shipments' && (
                             <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                                {item.isActive ? t('active') : t('inactive')}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isClosed ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                {item.isClosed ? t('closed') : t('open')}
                               </span>
                             </td>
                           )}

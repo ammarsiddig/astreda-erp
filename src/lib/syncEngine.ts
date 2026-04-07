@@ -51,7 +51,23 @@ export const TABLE_MAPPINGS: TableMapping[] = [
   { table: 'cities', stateKey: 'cities', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'cars', stateKey: 'cars', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'bank_accounts', stateKey: 'bankAccounts', toRow: objectToSnake, fromRow: objectToCamel },
-  { table: 'shipments', stateKey: 'shipments', toRow: objectToSnake, fromRow: objectToCamel },
+  {
+    table: 'shipments', stateKey: 'shipments',
+    toRow: (item: Record<string, any>) => {
+      const row = objectToSnake(item)
+      delete row.is_active          // legacy column — no longer used
+      return row
+    },
+    fromRow: (row: Record<string, any>) => {
+      const obj = objectToCamel(row)
+      // Migrate legacy is_active → isClosed if DB hasn't been updated yet
+      if ('isActive' in obj && !('isClosed' in obj)) {
+        obj.isClosed = !obj.isActive
+      }
+      delete obj.isActive
+      return obj
+    },
+  },
   { table: 'employees', stateKey: 'employees', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'partners', stateKey: 'partners', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'expense_categories', stateKey: 'expenseCategories', toRow: objectToSnake, fromRow: objectToCamel },

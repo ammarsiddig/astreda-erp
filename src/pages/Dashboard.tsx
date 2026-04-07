@@ -165,8 +165,8 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-800 text-sm">{shipment.name}</span>
-                    {shipment.isActive && (
-                      <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">{t('active')}</span>
+                    {shipment.isClosed && (
+                      <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded">{t('closed')}</span>
                     )}
                   </div>
                   <span className={`font-bold text-sm ${total >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>

@@ -61,7 +61,7 @@ export interface BankAccount {
 export interface Shipment {
   id: string;
   name: string;
-  isActive: boolean;
+  isClosed?: boolean;                // true = finalized, no edits allowed (synced to cloud)
   shareholdersPercent?: number;      // % of gross profit going to shareholders (e.g. 40)
   managementFeePercent?: number;     // % of partners' share going as management fee (e.g. 20)
   managementFeeRecipientId?: string; // operating partner who receives the management fee

@@ -153,10 +153,10 @@ const initialState: AppState = {
     { id: '6', name: 'خصومات', transferFee: 0 },
   ],
   shipments: [
-    { id: '1', name: 'الرسالة12', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
-    { id: '2', name: 'الرسالة13', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
-    { id: '3', name: 'الرسالة14', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
-    { id: '4', name: 'الرسالة15', isActive: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+    { id: '1', name: 'الرسالة12', isClosed: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+    { id: '2', name: 'الرسالة13', isClosed: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+    { id: '3', name: 'الرسالة14', isClosed: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+    { id: '4', name: 'الرسالة15', isClosed: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
   ],
   employees: [
     { id: '1', name: 'أحمد ماهر' },
@@ -228,6 +228,7 @@ interface AppContextType {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   updateState: (updates: Partial<AppState>) => void;
   activeShipmentId: string | undefined;
+  setActiveShipmentId: (id: string) => void;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   manualSync: () => Promise<void>;
@@ -279,14 +280,22 @@ function loadFromLocalStorage(): AppState {
     if (merged.managementFeePercent === undefined) merged.managementFeePercent = initialState.managementFeePercent;
     if (!merged.managementFeeRecipientId) merged.managementFeeRecipientId = initialState.managementFeeRecipientId;
 
-    // Deep-patch shipments
+    // Deep-patch shipments + migrate legacy isActive → isClosed
     if (Array.isArray(parsed.shipments)) {
-      merged.shipments = parsed.shipments.map((savedShipment: any) => ({
-        shareholdersPercent: 40,
-        managementFeePercent: initialState.managementFeePercent,
-        managementFeeRecipientId: initialState.managementFeeRecipientId,
-        ...savedShipment,
-      }));
+      merged.shipments = parsed.shipments.map((savedShipment: any) => {
+        const s = {
+          shareholdersPercent: 40,
+          managementFeePercent: initialState.managementFeePercent,
+          managementFeeRecipientId: initialState.managementFeeRecipientId,
+          ...savedShipment,
+        };
+        // Migration: old data had isActive (true=active), new model uses isClosed (true=closed)
+        if ('isActive' in s && !('isClosed' in s)) {
+          s.isClosed = !s.isActive;
+        }
+        delete s.isActive;
+        return s;
+      });
     }
 
     // One-time migration: clean up corrupted capital_contribution records
@@ -416,7 +425,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Capture prev state BEFORE updating for diff computation
     const prev = stateRef.current;
 
-    setState((s) => ({ ...s, ...updates }));
+    // Never allow updateState to wipe currentUser — only login/logout may change it.
+    setState((s) => {
+      const next = { ...s, ...updates };
+      if (!('currentUser' in updates)) {
+        next.currentUser = s.currentUser;
+      }
+      return next;
+    });
 
     // Push scalar settings to cloud if any changed
     const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
@@ -476,7 +492,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const activeShipmentId = state.shipments.find((s) => s.isActive)?.id;
+  // ── Per-device active shipment (NOT synced to cloud) ─────────────
+  // Each device independently selects which shipment to work on.
+  // Stored in localStorage so it survives page reloads but never leaves the device.
+  const ACTIVE_SHIPMENT_KEY = 'astreda_active_shipment';
+  const [activeShipmentId, _setActiveShipmentId] = useState<string | undefined>(() => {
+    const saved = localStorage.getItem(ACTIVE_SHIPMENT_KEY);
+    if (saved && state.shipments.some(s => s.id === saved)) return saved;
+    // Fallback: pick the first open shipment, or just the first shipment
+    return state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
+  });
+
+  const setActiveShipmentId = useCallback((id: string) => {
+    _setActiveShipmentId(id);
+    localStorage.setItem(ACTIVE_SHIPMENT_KEY, id);
+  }, []);
+
+  // If shipments list changes (e.g. cloud pull adds/removes), ensure selection is still valid
+  useEffect(() => {
+    if (state.shipments.length === 0) return;
+    if (activeShipmentId && state.shipments.some(s => s.id === activeShipmentId)) return;
+    // Current selection is gone — pick a new one
+    const fallback = state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
+    if (fallback) setActiveShipmentId(fallback);
+  }, [state.shipments, activeShipmentId, setActiveShipmentId]);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Cloud-First: fetch fresh users from Supabase before authenticating.
@@ -552,7 +591,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Memoize context value so consumers don't re-render when the provider's
   // own parent re-renders (or when unrelated sibling state changes occur).
   const contextValue = useMemo(
-    () => ({ state, setState, updateState, activeShipmentId, login, logout, manualSync, fullPush, resetAndFullSync, isCloudLoading }),
+    () => ({ state, setState, updateState, activeShipmentId, setActiveShipmentId, login, logout, manualSync, fullPush, resetAndFullSync, isCloudLoading }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, activeShipmentId, isCloudLoading]
   );

@@ -225,10 +225,10 @@ export function generateSeedData(): AppState {
       { id: '5', name: 'حسن(بنكك)', transferFee: 0 },
     ],
     shipments: [
-      { id: '1', name: 'الرسالة12', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
-      { id: '2', name: 'الرسالة13', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
-      { id: '3', name: 'الرسالة14', isActive: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
-      { id: '4', name: 'الرسالة15', isActive: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+      { id: '1', name: 'الرسالة12', isClosed: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+      { id: '2', name: 'الرسالة13', isClosed: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+      { id: '3', name: 'الرسالة14', isClosed: true, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
+      { id: '4', name: 'الرسالة15', isClosed: false, shareholdersPercent: 40, managementFeePercent: 20, managementFeeRecipientId: '1' },
     ],
     employees: [
       { id: '1', name: 'أحمد ماهر' }, { id: '2', name: 'حسن' },

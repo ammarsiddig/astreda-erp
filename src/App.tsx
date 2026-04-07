@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppStore } from './store';
 import Layout from './components/Layout';
@@ -58,8 +58,20 @@ function RoleLandingPage() {
 
 function AppRoutes() {
   const { state } = useAppStore();
+  // Track whether the user has ever been authenticated in this session.
+  // This prevents the Layout from unmounting (and losing sidebar state)
+  // when currentUser briefly flickers to null during cloud sync / realtime.
+  const wasAuthenticated = useRef(false);
+  if (state.currentUser) wasAuthenticated.current = true;
 
-  if (!state.currentUser) {
+  // Show Login only when the user has genuinely never logged in or explicitly logged out.
+  // A brief null during sync won't pass this guard because wasAuthenticated stays true
+  // and localStorage still has the session marker.
+  const hasSessionMarker = typeof window !== 'undefined' && !!localStorage.getItem('astreda_current_user');
+  if (!state.currentUser && !wasAuthenticated.current && !hasSessionMarker) {
+    return <Login />;
+  }
+  if (!state.currentUser && !hasSessionMarker) {
     return <Login />;
   }
 
