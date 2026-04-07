@@ -442,15 +442,17 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
   }
 
   try {
+    if (mapping.table === 'shipments') console.log('[sync] shipment row:', JSON.stringify(row), 'dbCol:', _shipmentDbColumn)
     const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
     if (error) throw error
     markWritten(mapping.table, pk)
     addToast('success', '✅ تم الحفظ')
     return true
   } catch (e: any) {
-    console.error(`[sync] UPSERT ${mapping.table}/${pk} failed:`, e?.message || e)
+    const msg = e?.message || e?.details || JSON.stringify(e)
+    console.error(`[sync] UPSERT ${mapping.table}/${pk} failed:`, msg)
     enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
-    addToast('error', '❌ فشل الحفظ — سيُحاول مرة أخرى تلقائياً')
+    addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
     return false
   }
 }
@@ -476,18 +478,20 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
   }
 
   try {
+    if (mapping.table === 'shipments') console.log('[sync] shipment rows:', JSON.stringify(rows), 'dbCol:', _shipmentDbColumn)
     const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
     if (error) throw error
     rows.forEach(row => markWritten(mapping.table, String(row[pkField])))
     addToast('success', '✅ تم الحفظ')
     return true
   } catch (e: any) {
-    console.error(`[sync] batch UPSERT ${mapping.table} failed:`, e?.message || e)
+    const msg = e?.message || e?.details || JSON.stringify(e)
+    console.error(`[sync] batch UPSERT ${mapping.table} failed:`, msg)
     rows.forEach(row => {
       const pk = String(row[pkField])
       enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
     })
-    addToast('error', '❌ فشل الحفظ — سيُحاول مرة أخرى تلقائياً')
+    addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
     return false
   }
 }
