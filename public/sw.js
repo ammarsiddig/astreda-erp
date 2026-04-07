@@ -1,6 +1,6 @@
-const CACHE_NAME = 'astrida-v5';
+const CACHE_NAME = 'astrida-v6';
 
-// App shell files to precache — these are served instantly from cache
+// App shell files to precache
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
+  // Delete ALL old caches on activate so stale JS chunks are purged
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
@@ -30,25 +31,42 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (url.hostname.includes('supabase')) return;
 
-  // For navigation and app shell: cache-first (instant), update in background
-  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+  // Navigation: network-first so we always get the latest index.html
+  // (which references the correct JS chunk hashes after a deploy)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match(event.request).then(cached => {
-        const networkFetch = fetch(event.request).then(response => {
+      fetch(event.request)
+        .then(response => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
           return response;
-        });
-        return cached || networkFetch;
-      })
+        })
+        .catch(() => caches.match(event.request) || caches.match('/index.html'))
     );
     return;
   }
 
-  // Static assets (JS, CSS, images): cache-first with network fallback
-  if (url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?)$/)) {
+  // JS/CSS in /assets/: network-first — Vite hashes filenames, so after
+  // a deploy the old URLs 404. We must fetch from network first.
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Static images, fonts, manifest: cache-first (they rarely change)
+  if (url.pathname.match(/\.(png|jpg|jpeg|svg|ico|woff2?|webmanifest|json)$/)) {
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;
