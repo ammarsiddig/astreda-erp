@@ -239,6 +239,45 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// ── Centralized orphan ledger cleanup ─────────────────────────────
+// Maps each ledger sourceModule to the state array that "owns" those entries.
+// If a ledger entry's linkedId no longer exists in its owner array, it's orphaned.
+const SOURCE_MODULE_TO_STATE_KEY: Record<string, keyof AppState> = {
+  payment: 'payments',
+  expense: 'expenses',
+  salary: 'salaries',
+  general_transfer: 'generalTransfers',
+  account_transfer: 'accountTransfers',
+  sale_cash: 'invoices',
+  shipment_transfer: 'shipmentTransfers',
+};
+
+function cleanOrphanedLedger(st: AppState): AppState {
+  if (!Array.isArray(st.ledger) || st.ledger.length === 0) return st;
+
+  // Build lookup sets lazily per source module
+  const idSets = new Map<string, Set<string>>();
+  const getIdSet = (mod: string): Set<string> | null => {
+    if (idSets.has(mod)) return idSets.get(mod)!;
+    const key = SOURCE_MODULE_TO_STATE_KEY[mod];
+    if (!key) return null;
+    const arr = (st as any)[key];
+    if (!Array.isArray(arr)) return null;
+    const s = new Set<string>(arr.map((item: any) => item.id));
+    idSets.set(mod, s);
+    return s;
+  };
+
+  const cleaned = st.ledger.filter(entry => {
+    const ids = getIdSet(entry.sourceModule);
+    if (!ids) return true; // unknown module — keep
+    return ids.has(entry.linkedId);
+  });
+
+  if (cleaned.length === st.ledger.length) return st; // nothing removed
+  return { ...st, ledger: cleaned };
+}
+
 // Helper: read and patch localStorage cache (used as fallback when cloud is unavailable)
 function loadFromLocalStorage(): AppState {
   const saved = localStorage.getItem('astreda_erp_state') || localStorage.getItem('americana_erp_state');
@@ -328,7 +367,7 @@ function loadFromLocalStorage(): AppState {
       merged.currentUser = null;
     }
 
-    return merged;
+    return cleanOrphanedLedger(merged);
   } catch (e) {
     console.error('Failed to parse state from localStorage', e);
     return { ...initialState };
@@ -379,7 +418,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
       merged.currentUser = prev.currentUser;
-      return ensureDefaults(merged) as AppState;
+      return cleanOrphanedLedger(ensureDefaults(merged) as AppState);
     });
   }, []);
 
@@ -425,14 +464,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Capture prev state BEFORE updating for diff computation
     const prev = stateRef.current;
 
-    // Never allow updateState to wipe currentUser — only login/logout may change it.
-    setState((s) => {
-      const next = { ...s, ...updates };
-      if (!('currentUser' in updates)) {
-        next.currentUser = s.currentUser;
-      }
-      return next;
-    });
+    // Compute final state: apply updates, protect currentUser, clean orphaned ledger
+    const tentative = { ...prev, ...updates } as AppState;
+    if (!('currentUser' in updates)) {
+      tentative.currentUser = prev.currentUser;
+    }
+    const final_ = cleanOrphanedLedger(tentative);
+
+    // If orphan cleanup removed extra ledger entries, include that in updates for diff
+    if (final_.ledger !== tentative.ledger || (final_.ledger.length !== (updates as any).ledger?.length && 'ledger' in updates)) {
+      updates = { ...updates, ledger: final_.ledger };
+    } else if (final_.ledger.length < prev.ledger.length && !('ledger' in updates)) {
+      // Orphans removed but caller didn't touch ledger — still need to diff
+      updates = { ...updates, ledger: final_.ledger };
+    }
+
+    setState(() => final_);
 
     // Push scalar settings to cloud if any changed
     const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
@@ -443,7 +490,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Auto-sync array and object changes to Supabase (fire-and-forget)
     for (const key of Object.keys(updates) as (keyof AppState)[]) {
       if (scalarKeys.includes(key) || key === 'currentUser') continue;
-      const newVal = updates[key];
+      const newVal = (final_ as any)[key];
       const oldVal = prev[key];
 
       // settlementResults is Record<shipmentId, result> — sync each changed entry
