@@ -355,7 +355,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Cloud updates are applied directly — no diff tracking needed
+  // Cloud updates are applied directly — no diff tracking needed.
+  // ensureDefaults is applied inline so DEFAULT_ROLES/USERS survive every cloud
+  // pull (initial load, visibilitychange, realtime), not just the first one.
   const cloudApply = useCallback((updates: Partial<AppState>) => {
     setState(prev => {
       const merged: any = { ...prev };
@@ -368,7 +370,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
       merged.currentUser = prev.currentUser;
-      return merged as AppState;
+      return ensureDefaults(merged) as AppState;
     });
   }, []);
 
@@ -382,7 +384,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const pulled = await pullFromCloud(cloudApply);
         if (pulled) {
           console.log('[cloud-first] ✅ data loaded from Supabase');
-          setState(prev => ensureDefaults(prev));
+          // ensureDefaults is now applied inside cloudApply on every pull,
+          // so no separate setState call needed here.
         }
         await flushQueue();
       } catch (e) {
@@ -476,15 +479,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const activeShipmentId = state.shipments.find((s) => s.isActive)?.id;
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Cloud-First: fetch fresh users from Supabase before authenticating
+    // Cloud-First: fetch fresh users from Supabase before authenticating.
+    // Resolve all async work (cloud fetch + hashing) before any setState call so
+    // we can merge users + currentUser in a single update — no intermediate render
+    // where currentUser is null and the sidebar flashes away.
     let users = state.users || [];
+    let cloudUsers: User[] | null = null;
     try {
-      const cloudUsers = await fetchUsersFromCloud();
-      if (cloudUsers && cloudUsers.length > 0) {
-        users = cloudUsers;
-        // Update local state with fresh users
-        setState(prev => ({ ...prev, users: cloudUsers }));
-      }
+      cloudUsers = await fetchUsersFromCloud();
+      if (cloudUsers && cloudUsers.length > 0) users = cloudUsers;
     } catch {
       // Fallback to local users if Supabase is unreachable
     }
@@ -494,24 +497,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Find user: compare against hashed password first, then fall back to
     // plaintext for legacy accounts that haven't been migrated yet.
     let user = users.find(u => u.username === username && u.password === hashedInput);
+    let upgradedUsers: User[] | null = null;
     if (!user) {
       const legacyUser = users.find(
         u => u.username === username && !isPasswordHashed(u.password) && u.password === password
       );
       if (legacyUser) {
         // Upgrade the stored password to its hashed form transparently
-        const upgradedUsers = users.map(u =>
+        upgradedUsers = users.map(u =>
           u.id === legacyUser.id ? { ...u, password: hashedInput } : u
         );
-        setState(prev => ({ ...prev, users: upgradedUsers }));
         user = { ...legacyUser, password: hashedInput };
       }
     }
 
     if (!user) return { success: false, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     if (!user.isActive) return { success: false, error: 'هذا الحساب غير نشط — تواصل مع المدير' };
-    setState(prev => ({ ...prev, currentUser: user! }));
-    localStorage.setItem('astreda_current_user', JSON.stringify(user));
+
+    // Single setState: merge fresh users (if any) and currentUser together so
+    // there is never a render where users changed but currentUser is still null.
+    const finalUser = user;
+    setState(prev => ({
+      ...prev,
+      ...(cloudUsers && cloudUsers.length > 0 ? { users: cloudUsers } : {}),
+      ...(upgradedUsers ? { users: upgradedUsers } : {}),
+      currentUser: finalUser,
+    }));
+    localStorage.setItem('astreda_current_user', JSON.stringify(finalUser));
     return { success: true };
   };
 

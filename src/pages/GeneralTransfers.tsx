@@ -19,6 +19,8 @@ export default function GeneralTransfers() {
   const [showEditModal, setShowEditModal] = useState<GeneralTransfer | null>(null);
   const [showViewModal, setShowViewModal] = useState<GeneralTransfer | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<GeneralTransfer | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
@@ -154,6 +156,25 @@ export default function GeneralTransfers() {
     setShowEditModal(transfer);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const allSelected = filteredTransfers.length > 0 && filteredTransfers.every(t => selectedIds.has(t.id));
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredTransfers.map(t => t.id)));
+  };
+
+  const handleBulkDelete = () => {
+    const ids = selectedIds;
+    updateState({
+      generalTransfers: state.generalTransfers.filter(t => !ids.has(t.id)),
+      ledger: state.ledger.filter(l => !ids.has(l.linkedId!)),
+    });
+    setSelectedIds(new Set());
+    setShowBulkDeleteConfirm(false);
+  };
+
   const handleDeleteTransfer = () => {
     if (!showDeleteConfirm) return;
     const transfer = showDeleteConfirm;
@@ -163,6 +184,7 @@ export default function GeneralTransfers() {
       ledger: state.ledger.filter(l => l.linkedId !== transfer.id),
     });
 
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(transfer.id); return n; });
     setShowDeleteConfirm(null);
   };
 
@@ -220,6 +242,16 @@ export default function GeneralTransfers() {
         </div>
       </div>
 
+      {/* Bulk-selection toolbar */}
+      {hasWriteAccess && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+          <span className="text-sm font-medium text-red-700">{selectedIds.size} {t('selected')}</span>
+          <button onClick={() => setShowBulkDeleteConfirm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors">
+            <Trash2 className="w-4 h-4" />{t('deleteSelected')}
+          </button>
+        </div>
+      )}
+
       {/* Transfers Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
@@ -229,7 +261,8 @@ export default function GeneralTransfers() {
               ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
               : state.partners.find(p => p.id === transfer.partnerId)?.name;
             return (
-              <div key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <div key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(transfer.id)} onChange={() => toggleSelect(transfer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm">{displayPartner || transfer.id}</p>
@@ -258,6 +291,7 @@ export default function GeneralTransfers() {
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
+                {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3">{t('receiptNumber')}</th>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('capitalType')}</th>
@@ -274,7 +308,8 @@ export default function GeneralTransfers() {
                   ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
                   : state.partners.find(p => p.id === transfer.partnerId)?.name;
                 return (
-                  <tr key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <tr key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                    {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(transfer.id)} onChange={() => toggleSelect(transfer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                     <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
                     <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
                     <td className="px-4 py-3">{getTypeBadge(transfer.transferType)}</td>
@@ -312,7 +347,7 @@ export default function GeneralTransfers() {
                 );
               }) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                  <td colSpan={hasWriteAccess ? 9 : 8} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                 </tr>
               )}
             </tbody>
@@ -565,22 +600,23 @@ export default function GeneralTransfers() {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} title={t('confirmDelete')} size="lg">
+      <Modal isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} title={t('confirmDelete')} size="md">
         <div className="space-y-4">
           <p className="text-slate-600">{t('areYouSure')}</p>
           <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setShowDeleteConfirm(null)}
-              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
-            >
-              {t('no')}
-            </button>
-            <button
-              onClick={handleDeleteTransfer}
-              className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors"
-            >
-              {t('yes')}
-            </button>
+            <button onClick={() => setShowDeleteConfirm(null)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleDeleteTransfer} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Confirm */}
+      <Modal isOpen={showBulkDeleteConfirm} onClose={() => setShowBulkDeleteConfirm(false)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')} ({selectedIds.size} {t('selected')})</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowBulkDeleteConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDelete} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
           </div>
         </div>
       </Modal>

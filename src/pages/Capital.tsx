@@ -54,6 +54,7 @@ export default function Capital() {
   const [mgmtFeePctOverride, setMgmtFeePctOverride] = useState<number | ''>('');
 
   const [showDrawModal, setShowDrawModal] = useState(false);
+  const [showDeleteDrawingId, setShowDeleteDrawingId] = useState<string | null>(null);
   const [editingDrawId, setEditingDrawId] = useState<string | null>(null);
   const [drawPartnerId, setDrawPartnerId] = useState('');
   const [drawDate, setDrawDate] = useState(new Date().toISOString().split('T')[0]);
@@ -299,22 +300,13 @@ export default function Capital() {
     resetDrawForm();
   };
 
-  const handleDeleteDrawing = (drawId: string) => {
-    if (!hasWriteAccess) return;
-    if (!window.confirm(t('deleteConfirmMessage'))) return;
-    const transfer = state.generalTransfers.find(t => t.id === drawId);
-    if (!transfer) return;
-    let newBankAccounts = [...state.bankAccounts];
-    transfer.splits.forEach(split => {
-      newBankAccounts = newBankAccounts.map(b =>
-        b.id === split.bankAccountId ? { ...b, balance: b.balance + split.amount } : b
-      );
-    });
+  const handleDeleteDrawing = () => {
+    if (!hasWriteAccess || !showDeleteDrawingId) return;
     updateState({
-      generalTransfers: state.generalTransfers.filter(t => t.id !== transfer.id),
-      ledger: state.ledger.filter(l => l.linkedId !== transfer.id),
-      bankAccounts: newBankAccounts,
+      generalTransfers: state.generalTransfers.filter(t => t.id !== showDeleteDrawingId),
+      ledger: state.ledger.filter(l => l.linkedId !== showDeleteDrawingId),
     });
+    setShowDeleteDrawingId(null);
   };
 
   const printInvestorTable = () => {
@@ -671,7 +663,7 @@ export default function Capital() {
                       {hasWriteAccess && (
                         <div className="flex gap-1 pt-1">
                           <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => handleDeleteDrawing(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -701,7 +693,7 @@ export default function Capital() {
                           <td className="px-3 py-2 text-center">
                             <div className="flex justify-center gap-1">
                               {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
-                              {hasWriteAccess && <button onClick={() => handleDeleteDrawing(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
+                              {hasWriteAccess && <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
                             </div>
                           </td>
                         </tr>
@@ -1057,6 +1049,17 @@ export default function Capital() {
             <button type="submit" className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm">{editingDrawId ? 'تحديث' : 'حفظ'}</button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Drawing Confirm */}
+      <Modal isOpen={!!showDeleteDrawingId} onClose={() => setShowDeleteDrawingId(null)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')}</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowDeleteDrawingId(null)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleDeleteDrawing} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
       </Modal>
     </motion.div>
   );

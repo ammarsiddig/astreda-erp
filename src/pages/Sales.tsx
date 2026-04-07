@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Plus, Printer, Eye, Search, Edit } from 'lucide-react';
+import { ShoppingCart, Plus, Printer, Eye, Search, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatCurrency } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
@@ -10,16 +10,21 @@ import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { Invoice } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
+import { useToast } from '../components/Toast';
 
 export default function Sales() {
   const { t, lang } = useTranslation();
-  const { state, activeShipmentId } = useAppStore();
+  const { state, updateState, activeShipmentId } = useAppStore();
+  const { showToast } = useToast();
   const currentUser = state.currentUser;
   const isSpRole = isSalesperson(currentUser, state.roles);
   const hasWriteAccess = canWrite(currentUser, state.roles, 'sales');
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
   const [showViewModal, setShowViewModal] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Invoice | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // O(1) lookup maps — avoids .find() inside render loops
@@ -51,6 +56,51 @@ export default function Sales() {
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.invoices, activeShipmentId, filterFromDate, filterToDate, filterCity, filterSalesperson, filterPaymentType, isSpRole, currentUser]);
+
+  const deleteInvoiceById = (invoice: Invoice) => {
+    const txIds = new Set(
+      state.inventoryTransactions.filter(t => t.referenceId === invoice.id || t.invoiceId === invoice.id).map(t => t.id)
+    );
+    updateState({
+      invoices: state.invoices.filter(i => i.id !== invoice.id),
+      inventoryTransactions: state.inventoryTransactions.filter(t => !txIds.has(t.id)),
+      ledger: state.ledger.filter(e => e.linkedId !== invoice.id && e.referenceId !== invoice.id && (e as any).invoiceId !== invoice.id),
+    });
+  };
+
+  const handleDeleteInvoice = () => {
+    if (!showDeleteConfirm) return;
+    deleteInvoiceById(showDeleteConfirm);
+    showToast(t('deletedSuccessfully'));
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(showDeleteConfirm.id); return n; });
+    setShowDeleteConfirm(null);
+  };
+
+  const handleBulkDelete = () => {
+    const toDelete = filteredInvoices.filter(i => selectedIds.has(i.id));
+    const txIds = new Set(
+      state.inventoryTransactions.filter(t => toDelete.some(inv => t.referenceId === inv.id || t.invoiceId === inv.id)).map(t => t.id)
+    );
+    const deletedIds = new Set(toDelete.map(i => i.id));
+    updateState({
+      invoices: state.invoices.filter(i => !deletedIds.has(i.id)),
+      inventoryTransactions: state.inventoryTransactions.filter(t => !txIds.has(t.id)),
+      ledger: state.ledger.filter(e => !deletedIds.has(e.linkedId!) && !deletedIds.has((e as any).referenceId) && !deletedIds.has((e as any).invoiceId)),
+    });
+    showToast(t('deletedSuccessfully'));
+    setSelectedIds(new Set());
+    setShowBulkDeleteConfirm(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const allSelected = filteredInvoices.length > 0 && filteredInvoices.every(i => selectedIds.has(i.id));
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredInvoices.map(i => i.id)));
+  };
 
   const handleOpenNewInvoice = () => {
     setInvoiceToEdit(null);
@@ -225,13 +275,27 @@ export default function Sales() {
         </div>
       </div>
 
+      {/* Bulk-selection toolbar */}
+      {hasWriteAccess && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+          <span className="text-sm font-medium text-red-700">{selectedIds.size} {t('selected')}</span>
+          <button onClick={() => setShowBulkDeleteConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />{t('deleteSelected')}
+          </button>
+        </div>
+      )}
+
       {/* Invoices Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-            <div key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
-              <div className="flex justify-between items-start gap-2">
+            <div key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <div className="flex items-start gap-2">
+                {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(invoice.id)} onChange={() => toggleSelect(invoice.id)} className="mt-1 w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6] flex-shrink-0" /></span>}
+                <div className="flex-1 flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
                   <p className="text-xs text-slate-500">{customerMap.get(invoice.customerId)?.name}</p>
@@ -257,7 +321,13 @@ export default function Sales() {
                   >
                     <Printer className="w-4 h-4"/>
                   </button>
+                  {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(invoice); }}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4"/>
+                  </button>}
                 </div>
+              </div>
               </div>
             </div>
           )) : (
@@ -269,6 +339,7 @@ export default function Sales() {
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
+                {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3">{t('invoiceNumber')}</th>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('customer')}</th>
@@ -280,7 +351,8 @@ export default function Sales() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                <tr key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(invoice.id)} onChange={() => toggleSelect(invoice.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{customerMap.get(invoice.customerId)?.name}</td>
@@ -306,11 +378,17 @@ export default function Sales() {
                     >
                       <Printer className="w-4 h-4"/>
                     </button>
+                    {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(invoice); }}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title={t('delete')}
+                    >
+                      <Trash2 className="w-4 h-4"/>
+                    </button>}
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                  <td colSpan={hasWriteAccess ? 8 : 7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                 </tr>
               )}
             </tbody>
@@ -403,6 +481,29 @@ export default function Sales() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Single Delete Confirm */}
+      <Modal isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')}</p>
+          {showDeleteConfirm && <p className="font-semibold text-slate-800">#{showDeleteConfirm.id}</p>}
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowDeleteConfirm(null)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleDeleteInvoice} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Confirm */}
+      <Modal isOpen={showBulkDeleteConfirm} onClose={() => setShowBulkDeleteConfirm(false)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')} ({selectedIds.size} {t('selected')})</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowBulkDeleteConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDelete} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
       </Modal>
     </motion.div>
   );

@@ -21,6 +21,8 @@ export default function Expenses() {
   const [showEditModal, setShowEditModal] = useState<Expense | null>(null);
   const [showViewModal, setShowViewModal] = useState<Expense | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Expense | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Filters
@@ -116,6 +118,27 @@ export default function Expenses() {
     setShowEditModal(expense);
   };
 
+  const handleBulkDelete = () => {
+    const ids = selectedIds;
+    updateState({
+      expenses: state.expenses.filter(e => !ids.has(e.id)),
+      ledger: state.ledger.filter(l => !ids.has(l.linkedId!)),
+    });
+    showToast(t('deletedSuccessfully'));
+    setSelectedIds(new Set());
+    setShowBulkDeleteConfirm(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const allSelected = filteredExpenses.length > 0 && filteredExpenses.every(e => selectedIds.has(e.id));
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredExpenses.map(e => e.id)));
+  };
+
   const handleDeleteExpense = () => {
     if (!showDeleteConfirm) return;
     const expense = showDeleteConfirm;
@@ -126,6 +149,7 @@ export default function Expenses() {
     });
 
     showToast(t('deletedSuccessfully'));
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(showDeleteConfirm.id); return n; });
     setShowDeleteConfirm(null);
   };
 
@@ -169,12 +193,23 @@ export default function Expenses() {
         </div>
       </div>
 
+      {/* Bulk-selection toolbar */}
+      {hasWriteAccess && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+          <span className="text-sm font-medium text-red-700">{selectedIds.size} {t('selected')}</span>
+          <button onClick={() => setShowBulkDeleteConfirm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors">
+            <Trash2 className="w-4 h-4" />{t('deleteSelected')}
+          </button>
+        </div>
+      )}
+
       {/* Expenses Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-            <div key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+            <div key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{expense.id}</p>
@@ -214,6 +249,7 @@ export default function Expenses() {
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
+                {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3">{t('receiptNumber')}</th>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('category')}</th>
@@ -225,7 +261,8 @@ export default function Expenses() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-                <tr key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`transition-colors cursor-pointer ${selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                <tr key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`transition-colors cursor-pointer ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{expense.id}</td>
                   <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3">{state.expenseCategories.find(c => c.id === expense.categoryId)?.name}</td>
@@ -259,7 +296,7 @@ export default function Expenses() {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                  <td colSpan={hasWriteAccess ? 8 : 7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                 </tr>
               )}
             </tbody>
@@ -382,18 +419,19 @@ export default function Expenses() {
         <div className="space-y-4">
           <p className="text-slate-600">{t('areYouSure')}</p>
           <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setShowDeleteConfirm(null)}
-              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
-            >
-              {t('no')}
-            </button>
-            <button
-              onClick={handleDeleteExpense}
-              className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors"
-            >
-              {t('yes')}
-            </button>
+            <button onClick={() => setShowDeleteConfirm(null)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleDeleteExpense} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Confirm */}
+      <Modal isOpen={showBulkDeleteConfirm} onClose={() => setShowBulkDeleteConfirm(false)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')} ({selectedIds.size} {t('selected')})</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowBulkDeleteConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDelete} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
           </div>
         </div>
       </Modal>

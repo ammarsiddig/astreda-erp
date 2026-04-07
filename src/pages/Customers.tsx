@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { Users, Plus, Edit2, Eye, Search } from 'lucide-react';
+import { Users, Plus, Edit2, Eye, Search, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { generateId } from '../lib/utils';
@@ -24,6 +24,9 @@ export default function Customers() {
   const hasWriteAccess = canWrite(currentUser, state.roles, 'customers');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<Customer | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Customer | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,6 +81,31 @@ export default function Customers() {
     setSalespersonId('');
     setCarId('');
     setNotes('');
+  };
+
+  const handleDeleteCustomer = () => {
+    if (!showDeleteConfirm) return;
+    updateState({ customers: state.customers.filter(c => c.id !== showDeleteConfirm.id) });
+    showToast(t('deletedSuccessfully'));
+    setShowDeleteConfirm(null);
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(showDeleteConfirm.id); return n; });
+  };
+
+  const handleBulkDelete = () => {
+    updateState({ customers: state.customers.filter(c => !selectedIds.has(c.id)) });
+    showToast(t('deletedSuccessfully'));
+    setSelectedIds(new Set());
+    setShowBulkDeleteConfirm(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const allSelected = filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id));
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredCustomers.map(c => c.id)));
   };
 
   const openEditModal = (customer: Customer) => {
@@ -139,6 +167,18 @@ export default function Customers() {
         </div>
       </div>
 
+      {/* Bulk-selection toolbar */}
+      {hasWriteAccess && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+          <span className="text-sm font-medium text-red-700">{selectedIds.size} {t('selected')}</span>
+          <button onClick={() => setShowBulkDeleteConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />{t('deleteSelected')}
+          </button>
+        </div>
+      )}
+
       {/* Customers Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
@@ -147,9 +187,10 @@ export default function Customers() {
             const debt = getCustomerDebt(customer.id);
             const totalSales = getCustomerTotalSales(customer.id);
             return (
-              <div key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <div key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(customer.id) ? 'bg-red-50' : selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
-                  <div className="min-w-0">
+                  {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} className="mt-1 w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6] flex-shrink-0" /></span>}
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
                     <p className="text-xs text-slate-500" dir="ltr">{customer.phone}</p>
                     <p className="text-xs text-slate-400">{state.cities.find(c => c.id === customer.cityId)?.name}</p>
@@ -177,6 +218,11 @@ export default function Customers() {
                     >
                       <Edit2 className="w-4 h-4"/>
                     </button>}
+                    {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(customer); }}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4"/>
+                    </button>}
                   </div>
                 </div>
               </div>
@@ -190,6 +236,7 @@ export default function Customers() {
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
+                {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3">{t('name')}</th>
                 <th className="px-4 py-3">{t('phone')}</th>
                 <th className="px-4 py-3">{t('city')}</th>
@@ -205,7 +252,8 @@ export default function Customers() {
                 const debt = getCustomerDebt(customer.id);
                 const totalSales = getCustomerTotalSales(customer.id);
                 return (
-                  <tr key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`transition-colors cursor-pointer ${selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <tr key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`transition-colors cursor-pointer ${selectedIds.has(customer.id) ? 'bg-red-50' : selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                    {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
                     <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>
@@ -233,13 +281,19 @@ export default function Customers() {
                         >
                           <Edit2 className="w-4 h-4"/>
                         </button>}
+                        {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(customer); }}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title={t('delete')}
+                        >
+                          <Trash2 className="w-4 h-4"/>
+                        </button>}
                       </div>
                     </td>
                   </tr>
                 );
               }) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                  <td colSpan={hasWriteAccess ? 9 : 8} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                 </tr>
               )}
             </tbody>
@@ -323,6 +377,29 @@ export default function Customers() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Single Delete Confirm */}
+      <Modal isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')}</p>
+          {showDeleteConfirm && <p className="font-semibold text-slate-800">{showDeleteConfirm.name}</p>}
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowDeleteConfirm(null)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleDeleteCustomer} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Confirm */}
+      <Modal isOpen={showBulkDeleteConfirm} onClose={() => setShowBulkDeleteConfirm(false)} title={t('confirmDelete')} size="md">
+        <div className="space-y-4">
+          <p className="text-slate-600">{t('areYouSure')} ({selectedIds.size} {t('selected')})</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowBulkDeleteConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDelete} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
       </Modal>
     </motion.div>
   );
