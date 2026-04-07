@@ -276,7 +276,10 @@ interface QueueItem {
   op: 'UPSERT' | 'DELETE'
   data: Record<string, any>
   ts: string
+  retries?: number
 }
+
+const MAX_RETRIES = 3
 
 function getQueue(): QueueItem[] {
   try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]') } catch { return [] }
@@ -297,8 +300,21 @@ function enqueue(item: Omit<QueueItem, 'id' | 'ts'>) {
 
 export async function flushQueue(): Promise<void> {
   if (!isSupabaseConfigured() || !navigator.onLine) return
-  const queue = getQueue()
+  let queue = getQueue()
   if (queue.length === 0) return
+
+  // Drop items that have exceeded max retries (stuck / schema mismatch)
+  const expired = queue.filter(i => (i.retries ?? 0) >= MAX_RETRIES)
+  if (expired.length > 0) {
+    console.warn(`[sync] dropping ${expired.length} queue items after ${MAX_RETRIES} failures:`,
+      expired.map(i => `${i.table}/${i.pk}`))
+    queue = queue.filter(i => (i.retries ?? 0) < MAX_RETRIES)
+    saveQueue(queue)
+    if (queue.length === 0) {
+      updateStatus({ isSyncing: false, pendingChanges: 0 })
+      return
+    }
+  }
 
   updateStatus({ isSyncing: true })
   const done: string[] = []
@@ -308,13 +324,14 @@ export async function flushQueue(): Promise<void> {
       const mapping = TABLE_MAPPINGS.find(m => m.table === item.table)
       const pkCol = mapping?.pkField ?? 'id'
       if (item.op === 'UPSERT') {
-        // Re-run toRow to fix stale column names (e.g. is_closed → is_active migration)
-        let row = item.data
-        if (mapping) {
-          try {
-            const camelObj = objectToCamel(item.data)
-            row = mapping.toRow(camelObj)
-          } catch { /* use original data if conversion fails */ }
+        // Sanitize row: remove columns that don't belong (e.g. stale is_closed)
+        const row = { ...item.data }
+        if (item.table === 'shipments') {
+          // Ensure correct column: is_active (not is_closed)
+          if ('is_closed' in row) {
+            row.is_active = !row.is_closed
+            delete row.is_closed
+          }
         }
         const { error } = await supabase!.from(item.table).upsert(row, { onConflict: pkCol })
         if (error) throw error
@@ -325,6 +342,8 @@ export async function flushQueue(): Promise<void> {
       done.push(item.id)
     } catch (e) {
       console.warn(`[sync] flush failed ${item.table}/${item.pk}:`, e)
+      // Increment retry counter
+      item.retries = (item.retries ?? 0) + 1
     }
   }
 
