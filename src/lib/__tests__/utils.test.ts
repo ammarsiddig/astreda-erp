@@ -53,13 +53,13 @@ describe('formatDate', () => {
 
 describe('generateId', () => {
   it('generates zero-padded ID with prefix', () => {
-    expect(generateId('INV', 0)).toBe('INV00001');
-    expect(generateId('PM', 9)).toBe('PM00010');
-    expect(generateId('EX', 99)).toBe('EX00100');
+    expect(generateId('INV', [], 0)).toBe('INV00001');
+    expect(generateId('PM', [], 9)).toBe('PM00010');
+    expect(generateId('EX', [], 99)).toBe('EX00100');
   });
 
   it('handles large counts', () => {
-    expect(generateId('INV', 99999)).toBe('INV100000');
+    expect(generateId('INV', [], 99999)).toBe('INV100000');
   });
 });
 

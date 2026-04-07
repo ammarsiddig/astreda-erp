@@ -10,6 +10,8 @@ import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function AccountTransfers() {
   const { t } = useTranslation();
@@ -43,6 +45,8 @@ export default function AccountTransfers() {
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.accountTransfers, filterDate, filterType]);
+
+  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'date', direction: 'desc' });
 
   const handleSaveTransfer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,10 +231,27 @@ export default function AccountTransfers() {
 
       {/* Transfers Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortTransfers(e.target.value as any)}
+            value={(transferSortConfig?.key as string) || 'date'}
+          >
+            <option value="id">{t('receiptNumber')}</option>
+            <option value="date">{t('date')}</option>
+            <option value="type">{t('type')}</option>
+            <option value="amount">{t('amount')}</option>
+          </select>
+        </div>
+      </div>
+
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
-            <div key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+          {sortedTransfers.length > 0 ? sortedTransfers.map((transfer, idx) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(transfer.id)} onChange={() => toggleSelect(transfer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
@@ -252,7 +273,7 @@ export default function AccountTransfers() {
                 {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); openEditModal(transfer); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4"/></button>}
                 {hasWriteAccess && <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(transfer); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>}
               </div>
-            </div>
+            </motion.div>
           )) : (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
           )}
@@ -263,19 +284,19 @@ export default function AccountTransfers() {
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
-                <th className="px-4 py-3">{t('receiptNumber')}</th>
-                <th className="px-4 py-3">{t('date')}</th>
-                <th className="px-4 py-3">{t('type')}</th>
-                <th className="px-4 py-3">{t('fromAccount')}</th>
-                <th className="px-4 py-3">{t('toAccount')}</th>
-                 <th className="px-4 py-3 text-right rtl:text-left">{t('amount')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'id'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'date'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('type')}><div className="flex items-center gap-1">{t('type')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'type'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('fromBankAccountId')}><div className="flex items-center gap-1">{t('fromAccount')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'fromBankAccountId'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('toBankAccountId')}><div className="flex items-center gap-1">{t('toAccount')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'toBankAccountId'}/></div></th>
+                 <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('amount')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('amount')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'amount'}/></div></th>
                 <th className="px-4 py-3 text-right rtl:text-left">{t('transferFee')}</th>
                 <th className="px-4 py-3 text-center">{t('action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredTransfers.length > 0 ? filteredTransfers.map((transfer) => (
-                <tr key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {sortedTransfers.length > 0 ? sortedTransfers.map((transfer, idx) => (
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(transfer.id)} onChange={() => toggleSelect(transfer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
                   <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
@@ -314,7 +335,7 @@ export default function AccountTransfers() {
                       </button>}
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               )) : (
                 <tr>
                   <td colSpan={hasWriteAccess ? 9 : 8} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>

@@ -12,6 +12,9 @@ import { isSalesperson, isWarehouse } from '../lib/permissions';
 
 const COLORS = ['#1B4F8A', '#F59E0B', '#16A34A', '#DC2626', '#8B5CF6', '#EC4899', '#0D9488', '#F97316', '#3B82F6', '#84CC16', '#EF4444', '#A855F7'];
 
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
+
 export default function Reports() {
   const { t } = useTranslation();
   const { state, activeShipmentId } = useAppStore();
@@ -77,6 +80,8 @@ export default function Reports() {
     }).filter(c => c.debt > 0).sort((a, b) => b.debt - a.debt);
   }, [state.customers, state.invoices, state.payments, state.cities, state.salespeople, debtCityFilter, debtShipmentFilter, debtSalespersonFilter]);
 
+  const { items: sortedDebtData, requestSort: sortDebt, sortConfig: debtSortConfig } = useSortableData(debtData, { key: 'debt', direction: 'desc' });
+
   // 2. P&L Data
   // 3. Salesperson Performance Data
   const salespersonData = useMemo(() => {
@@ -102,6 +107,8 @@ export default function Reports() {
       .sort((a, b) => b.sales - a.sales);
   }, [state.salespeople, state.invoices, state.payments, state.customers, state.cities, activeShipmentId, salespersonCityFilter]);
 
+  const { items: sortedSalespersonData, requestSort: sortSalesperson, sortConfig: salespersonSortConfig } = useSortableData(salespersonData, { key: 'sales', direction: 'desc' });
+
   // 4. Daily Debt Report Data
   const dailyDebtData = useMemo(() => {
     if (!dailyDebtCity) return [];
@@ -115,6 +122,8 @@ export default function Reports() {
       return { id: customer.id, name: customer.name, totalSales, totalPaid, debt: totalCreditSales - totalPaid };
     }).filter(c => c.debt > 0).sort((a, b) => b.debt - a.debt);
   }, [state.customers, state.invoices, state.payments, dailyDebtCity, dailyDebtShipment]);
+
+  const { items: sortedDailyDebtData, requestSort: sortDailyDebt, sortConfig: dailyDebtSortConfig } = useSortableData(dailyDebtData, { key: 'debt', direction: 'desc' });
 
   // 5. Inventory Data
   const inventoryData = useMemo(() => {
@@ -559,10 +568,27 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
               />
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Reporting Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortDebt(e.target.value as any)}
+            value={(debtSortConfig?.key as string) || 'debt'}
+          >
+            <option value="name">العميل</option>
+            <option value="city">المدينة</option>
+            <option value="salesperson">المندوب</option>
+            <option value="debt">المديونية</option>
+          </select>
+        </div>
+      </div>
+
               {/* Mobile card list */}
               <div className="md:hidden divide-y divide-slate-100">
-                {debtData.length > 0 ? debtData.map(row => (
-                  <div key={row.id} className="p-4 space-y-1">
+                {sortedDebtData.length > 0 ? sortedDebtData.map((row, idx) => (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={row.id} className="p-4 space-y-1">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900 text-sm">{row.name}</p>
@@ -570,34 +596,34 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                       </div>
                       <span className="font-bold text-red-600 text-sm flex-shrink-0">{formatCurrency(row.debt)}</span>
                     </div>
-                  </div>
+                  </motion.div>
                 )) : <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>}
-                {debtData.length > 0 && (
+                {sortedDebtData.length > 0 && (
                   <div className="px-4 py-3 bg-slate-50 flex justify-between items-center font-bold text-slate-900 text-sm">
                     <span>{t('totalDebt')}</span>
-                    <span className="text-red-600">{formatCurrency(debtData.reduce((sum, row) => sum + row.debt, 0))}</span>
+                    <span className="text-red-600">{formatCurrency(sortedDebtData.reduce((sum, row) => sum + row.debt, 0))}</span>
                   </div>
                 )}
               </div>
               {/* Desktop table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                  <thead className="text-xs text-white uppercase bg-[#1E293B]">
+                  <thead className="text-xs text-white uppercase bg-[#134e4a]">
                     <tr>
-                      <th className="px-4 py-3">{t('customer')}</th>
-                      <th className="px-4 py-3">{t('city')}</th>
-                      <th className="px-4 py-3">{t('salesperson')}</th>
-                      <th className="px-4 py-3 text-right rtl:text-left">{t('debt')}</th>
+                      <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDebt('name')}><div className="flex items-center gap-1">{t('customer')} <SortIcon direction={debtSortConfig?.direction!} active={debtSortConfig?.key === 'name'}/></div></th>
+                      <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDebt('city')}><div className="flex items-center gap-1">{t('city')} <SortIcon direction={debtSortConfig?.direction!} active={debtSortConfig?.key === 'city'}/></div></th>
+                      <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDebt('salesperson')}><div className="flex items-center gap-1">{t('salesperson')} <SortIcon direction={debtSortConfig?.direction!} active={debtSortConfig?.key === 'salesperson'}/></div></th>
+                      <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDebt('debt')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('debt')} <SortIcon direction={debtSortConfig?.direction!} active={debtSortConfig?.key === 'debt'}/></div></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {debtData.length > 0 ? debtData.map(row => (
-                      <tr key={row.id} className="hover:bg-[#f0fdfa] transition-colors">
+                    {sortedDebtData.length > 0 ? sortedDebtData.map((row, idx) => (
+                      <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.03, 0.3) }} key={row.id} className="hover:bg-[#f0fdfa] transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                         <td className="px-4 py-3">{row.city}</td>
                         <td className="px-4 py-3">{row.salesperson}</td>
                         <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">{formatCurrency(row.debt)}</td>
-                      </tr>
+                      </motion.tr>
                     )) : <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td></tr>}
                   </tbody>
                   <tfoot className="bg-slate-100 font-semibold border-t-2 border-slate-300 text-slate-900">
@@ -715,19 +741,19 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 </button>
               </div>
             </div>
-            {salespersonData.length === 0 ? (
+            {sortedSalespersonData.length === 0 ? (
               <div className="flex items-center justify-center py-12 text-slate-400 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
                 <p>{t('noData')}</p>
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {salespersonData.map(sp => {
+                  {sortedSalespersonData.map((sp, idx) => {
                     const initials = sp.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('');
                     const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
                     const barColor = sp.collectionRate >= 80 ? 'bg-emerald-500' : sp.collectionRate >= 50 ? 'bg-amber-400' : 'bg-red-500';
                     return (
-                      <div key={sp.id} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col gap-3 min-w-[280px]">
+                      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={sp.id} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col gap-3 min-w-[280px]">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-[#134e4a] text-white flex items-center justify-center font-bold text-lg shrink-0">{initials}</div>
@@ -747,7 +773,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                         <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1">
                           <div className={`h-1.5 rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(sp.collectionRate, 100)}%` }} />
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -786,12 +812,30 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 <div>
                   <h4 className="text-sm font-semibold text-slate-600 mb-3">جدول تفصيلي</h4>
                   <div className="rounded-xl border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Reporting Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortSalesperson(e.target.value as any)}
+            value={(salespersonSortConfig?.key as string) || 'sales'}
+          >
+            <option value="name">المندوب</option>
+            <option value="sales">المبيعات</option>
+            <option value="collections">التحصيلات</option>
+            <option value="debt">المديونية</option>
+            <option value="collectionRate">نسبة التحصيل</option>
+          </select>
+        </div>
+      </div>
+
                     {/* Mobile card list */}
                     <div className="md:hidden divide-y divide-slate-100">
-                      {salespersonData.map(sp => {
+                      {sortedSalespersonData.map((sp, idx) => {
                         const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
                         return (
-                          <div key={sp.id} className="p-4 space-y-2">
+                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={sp.id} className="p-4 space-y-2">
                             <div className="flex justify-between items-start gap-2">
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 text-sm">{sp.name}</p>
@@ -813,7 +857,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                                 <p className="font-bold text-red-600">{formatCurrency(sp.debt)}</p>
                               </div>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
@@ -822,19 +866,20 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                       <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                         <thead className="text-xs text-white bg-[#134e4a]">
                           <tr>
-                            <th className="px-4 py-3">المندوب</th><th className="px-4 py-3">المدن</th>
-                            <th className="px-4 py-3 text-center">عدد الفواتير</th>
-                            <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
-                            <th className="px-4 py-3 text-right rtl:text-left">التحصيلات</th>
-                            <th className="px-4 py-3 text-right rtl:text-left">المديونية</th>
-                            <th className="px-4 py-3 text-center">نسبة التحصيل</th>
+                            <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('name')}><div className="flex items-center gap-1">المندوب <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'name'}/></div></th>
+                            <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('cities')}><div className="flex items-center gap-1">المدن <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'cities'}/></div></th>
+                            <th className="px-4 py-3 text-center cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('invoiceCount')}><div className="flex items-center justify-center gap-1">عدد الفواتير <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'invoiceCount'}/></div></th>
+                            <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('sales')}><div className="flex items-center justify-end rtl:justify-start gap-1">إجمالي المبيعات <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'sales'}/></div></th>
+                            <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('collections')}><div className="flex items-center justify-end rtl:justify-start gap-1">التحصيلات <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'collections'}/></div></th>
+                            <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('debt')}><div className="flex items-center justify-end rtl:justify-start gap-1">المديونية <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'debt'}/></div></th>
+                            <th className="px-4 py-3 text-center cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalesperson('collectionRate')}><div className="flex items-center justify-center gap-1">نسبة التحصيل <SortIcon direction={salespersonSortConfig?.direction!} active={salespersonSortConfig?.key === 'collectionRate'}/></div></th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {salespersonData.map(sp => {
+                          {sortedSalespersonData.map((sp, idx) => {
                             const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
                             return (
-                              <tr key={sp.id} className="hover:bg-slate-50 transition-colors">
+                              <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.03, 0.3) }} key={sp.id} className="hover:bg-[#f0fdfa] transition-colors">
                                 <td className="px-4 py-3 font-semibold text-slate-900">{sp.name}</td>
                                 <td className="px-4 py-3 text-slate-500 text-xs">{sp.cities.join('، ')}</td>
                                 <td className="px-4 py-3 text-center">{sp.invoiceCount}</td>
@@ -844,7 +889,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                                 <td className="px-4 py-3 text-center">
                                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${rateColor}`}>{sp.collectionRate}%</span>
                                 </td>
-                              </tr>
+                              </motion.tr>
                             );
                           })}
                         </tbody>

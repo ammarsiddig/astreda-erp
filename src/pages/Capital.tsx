@@ -14,6 +14,8 @@ import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId, computeBankBalance } from '../lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import type { CapitalContribution, GeneralTransfer, SettlementResult } from '../types';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 import { canWrite } from '../lib/permissions';
 
 type Tab = 'investors' | 'settlement' | 'verification';
@@ -121,6 +123,9 @@ export default function Capital() {
       return { partner, capital, returned, remainingCapital, profitEntitled, profitEntitledRounded, profitPaid, profitRemaining, totalDue, status, transactions };
     });
   }, [activeShipmentId, contributions, capitalReturns, profitPayments, liveProfitCalc, state.partners]);
+
+  const { items: sortedInvestorData, requestSort: sortInvestors, sortConfig: invSortConfig } = useSortableData(investorData, { key: 'partner.name' as any, direction: 'asc' });
+  const { items: sortedDrawingTransfers, requestSort: sortDrawings, sortConfig: drawSortConfig } = useSortableData(drawingTransfers, { key: 'date', direction: 'desc' });
 
   const totalContributed = investorData.reduce((s, d) => s + d.capital, 0);
   const totalReturned = investorData.reduce((s, d) => s + d.returned, 0);
@@ -476,11 +481,11 @@ export default function Capital() {
           ) : capitalView === 'cards' ? (
             /* ── Cards View ── */
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {investorData.map(d => {
+              {sortedInvestorData.map((d, idx) => {
                 const initials = d.partner.name.split(' ').map(w => w[0]).slice(0, 2).join('');
                 const isExpanded = expandedPartnerIds.has(d.partner.id);
                 return (
-                  <div key={d.partner.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={d.partner.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     {/* Card header */}
                     <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
                       <div className="flex items-center gap-3">
@@ -538,7 +543,7 @@ export default function Capital() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -547,8 +552,8 @@ export default function Capital() {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               {/* Mobile cards */}
               <div className="md:hidden divide-y divide-slate-100">
-                {investorData.length > 0 ? investorData.map(d => (
-                  <div key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                {sortedInvestorData.length > 0 ? sortedInvestorData.map((d, idx) => (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <p className="font-bold text-slate-900 text-sm">{d.partner.name}</p>
@@ -563,26 +568,49 @@ export default function Capital() {
                       <span className="text-slate-500">أرباح مدفوعة</span><span className="font-mono text-right">{fmtSAR(d.profitPaid)}</span>
                       <span className="text-slate-500">الإجمالي المستحق</span><span className="font-mono font-bold text-right">{fmtSAR(d.totalDue)}</span>
                     </div>
-                  </div>
+                  </motion.div>
                 )) : (
                   <p className="px-4 py-8 text-center text-slate-400 text-sm">لا توجد بيانات</p>
                 )}
               </div>
+      {/* Search & Sort Toolbar for Mobile */}
+      {capitalView === 'table' && (
+      <div className="md:hidden bg-white p-4 rounded-xl shadow-modern glass border-slate-200 mb-4">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-slate-50 border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortInvestors(e.target.value as any)}
+            value={(invSortConfig?.key as string) || 'partner.name'}
+          >
+            <option value="partner.name">المساهم</option>
+            <option value="capital">رأس المال</option>
+            <option value="remainingCapital">متبقي رأس مال</option>
+            <option value="totalDue">الإجمالي المستحق</option>
+          </select>
+        </div>
+      </div>
+      )}
+
               {/* Desktop table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-right text-slate-600">
                   <thead className="text-xs text-white bg-[#134e4a]">
                     <tr>
-                      <th className="px-4 py-3">المساهم</th><th className="px-4 py-3 text-left">رأس المال (SAR)</th>
-                      <th className="px-4 py-3 text-left">المُرجَع (SAR)</th><th className="px-4 py-3 text-left">متبقي رأس مال</th>
-                      <th className="px-4 py-3 text-left">أرباح مستحقة</th><th className="px-4 py-3 text-left">أرباح مدفوعة</th>
-                      <th className="px-4 py-3 text-left">أرباح متبقية</th><th className="px-4 py-3 text-left">الإجمالي المستحق</th>
+                      <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('partner.name' as any)}><div className="flex items-center gap-1">المساهم <SortIcon direction={invSortConfig?.direction!} active={(invSortConfig?.key as string) === 'partner.name'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('capital')}><div className="flex items-center justify-end rtl:justify-start gap-1">رأس المال (SAR) <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'capital'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('returned')}><div className="flex items-center justify-end rtl:justify-start gap-1">المُرجَع (SAR) <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'returned'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('remainingCapital')}><div className="flex items-center justify-end rtl:justify-start gap-1">متبقي رأس مال <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'remainingCapital'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('profitEntitled')}><div className="flex items-center justify-end rtl:justify-start gap-1">أرباح مستحقة <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'profitEntitled'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('profitPaid')}><div className="flex items-center justify-end rtl:justify-start gap-1">أرباح مدفوعة <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'profitPaid'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('profitRemaining')}><div className="flex items-center justify-end rtl:justify-start gap-1">أرباح متبقية <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'profitRemaining'}/></div></th>
+                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('totalDue')}><div className="flex items-center justify-end rtl:justify-start gap-1">الإجمالي المستحق <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'totalDue'}/></div></th>
                       <th className="px-4 py-3 text-center">الحالة</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {investorData.map(d => (
-                      <tr key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`transition-colors cursor-pointer ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                    {sortedInvestorData.map((d, idx) => (
+                      <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`transition-colors cursor-pointer ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                         <td className="px-4 py-3 font-semibold text-slate-900">{d.partner.name}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.capital)}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.returned)}</td>
@@ -592,7 +620,7 @@ export default function Capital() {
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.profitRemaining)}</td>
                         <td className="px-4 py-3 text-left font-mono font-bold">{fmtSAR(d.totalDue)}</td>
                         <td className="px-4 py-3 text-center">{statusBadge(d.status)}</td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900">
@@ -645,10 +673,26 @@ export default function Capital() {
             </div>
             {drawingTransfers.length > 0 ? (
               <div className="rounded-lg border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Drawings Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortDrawings(e.target.value as any)}
+            value={(drawSortConfig?.key as string) || 'date'}
+          >
+            <option value="date">التاريخ</option>
+            <option value="amountSDG">المبلغ SDG</option>
+            <option value="amountSAR">المبلغ SAR</option>
+          </select>
+        </div>
+      </div>
+
                 {/* Mobile cards */}
                 <div className="md:hidden divide-y divide-slate-100">
-                  {drawingTransfers.map(dt => (
-                    <div key={dt.id} className="p-3 space-y-1">
+                  {sortedDrawingTransfers.map((dt, idx) => (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={dt.id} className="p-3 space-y-1">
                       <div className="flex justify-between items-start gap-2">
                         <div>
                           <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
@@ -666,7 +710,7 @@ export default function Capital() {
                           <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 {/* Desktop table */}
@@ -674,17 +718,17 @@ export default function Capital() {
                   <table className="w-full text-sm">
                     <thead className="text-xs text-white bg-[#134e4a]">
                       <tr>
-                        <th className="px-3 py-2 text-right">التاريخ</th>
+                        <th className="px-3 py-2 text-right cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDrawings('date')}><div className="flex items-center justify-end rtl:justify-start gap-1">التاريخ <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'date'}/></div></th>
                         <th className="px-3 py-2 text-right">الشريك</th>
-                        <th className="px-3 py-2 text-left">المبلغ (SDG)</th>
-                        <th className="px-3 py-2 text-left">المبلغ (SAR)</th>
+                        <th className="px-3 py-2 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDrawings('amountSDG')}><div className="flex items-center justify-end gap-1">المبلغ (SDG) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSDG'}/></div></th>
+                        <th className="px-3 py-2 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDrawings('amountSAR')}><div className="flex items-center justify-end gap-1">المبلغ (SAR) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSAR'}/></div></th>
                         <th className="px-3 py-2 text-right">الوصف</th>
                         <th className="px-3 py-2 text-center">إجراء</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {drawingTransfers.map((dt, i) => (
-                        <tr key={dt.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
+                      {sortedDrawingTransfers.map((dt, idx) => (
+                        <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={dt.id} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
                           <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy')}</td>
                           <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
                           <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
@@ -696,7 +740,7 @@ export default function Capital() {
                               {hasWriteAccess && <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
                             </div>
                           </td>
-                        </tr>
+                        </motion.tr>
                       ))}
                     </tbody>
                     <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">

@@ -6,6 +6,8 @@ import { format } from 'date-fns';
 import { formatCurrency } from '../lib/utils';
 import SearchableSelect from '../components/SearchableSelect';
 import { Printer, FileText } from 'lucide-react';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Ledger() {
   const { t } = useTranslation();
@@ -57,6 +59,8 @@ export default function Ledger() {
       return { ...entry, balance: runningBalance };
     }).reverse();
   }, [state.ledger, filterStartDate, filterEndDate, filterAccount, filterModule, showAllShipments, activeShipmentId]);
+
+  const { items: sortedLedgerData, requestSort, sortConfig } = useSortableData(ledgerData, { key: 'date', direction: 'desc' });
 
   const printAccountStatement = () => {
     if (!stmtFromDate || !stmtToDate) return;
@@ -351,7 +355,7 @@ export default function Ledger() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-modern glass border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('startDate')}</label>
           <input
@@ -397,12 +401,29 @@ export default function Ledger() {
         </div>
       </div>
 
+      {/* Search & Sort Toolbar for Mobile */}
+      <div className="md:hidden bg-white p-4 rounded-xl shadow-modern glass border-slate-200 mb-4">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-slate-50 border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => requestSort(e.target.value as any)}
+            value={(sortConfig?.key as string) || 'date'}
+          >
+            <option value="date">التاريخ</option>
+            <option value="amountIn">الوارد</option>
+            <option value="amountOut">المنصرف</option>
+            <option value="balance">الرصيد</option>
+          </select>
+        </div>
+      </div>
+
       {/* Ledger Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {ledgerData.length > 0 ? ledgerData.map((entry) => (
-            <div key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`p-4 space-y-1 cursor-pointer transition-colors ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+          {sortedLedgerData.length > 0 ? sortedLedgerData.map((entry, idx) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`p-4 space-y-1 cursor-pointer transition-colors ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-slate-900 leading-snug line-clamp-2">{entry.description}</p>
@@ -424,7 +445,7 @@ export default function Ledger() {
                 </div>
                 {filterAccount && <span className="text-xs font-bold text-slate-700">{formatCurrency(entry.balance)}</span>}
               </div>
-            </div>
+            </motion.div>
           )) : (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
           )}
@@ -432,19 +453,19 @@ export default function Ledger() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#134e4a]">
               <tr>
-                <th className="px-4 py-3">{t('date')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'date'}/></div></th>
                 <th className="px-4 py-3">{t('description')}</th>
                 <th className="px-4 py-3">{t('source')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('in')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('out')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('balance')}</th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('amountIn')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('in')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'amountIn'}/></div></th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('amountOut')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('out')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'amountOut'}/></div></th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('balance')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('balance')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'balance'}/></div></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ledgerData.length > 0 ? ledgerData.map((entry) => (
-                <tr key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`transition-colors cursor-pointer ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {sortedLedgerData.length > 0 ? sortedLedgerData.map((entry, idx) => (
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.03, 0.3) }} key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`transition-colors cursor-pointer ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
                   <td className="px-4 py-3 text-slate-900 font-medium">{entry.description}</td>
                   <td className="px-4 py-3">
@@ -466,7 +487,7 @@ export default function Ledger() {
                   <td className="px-4 py-3 font-bold text-slate-900 text-right rtl:text-left">
                     {filterAccount ? formatCurrency(entry.balance) : '-'}
                   </td>
-                </tr>
+                </motion.tr>
               )) : (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>

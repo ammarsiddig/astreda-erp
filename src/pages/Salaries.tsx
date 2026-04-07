@@ -10,6 +10,8 @@ import SearchableSelect from '../components/SearchableSelect';
 import { formatCurrency, generateId } from '../lib/utils';
 import { Salary, Expense } from '../types';
 import { canWrite } from '../lib/permissions';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Salaries() {
   const { t } = useTranslation();
@@ -69,6 +71,8 @@ export default function Salaries() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.salaries, activeShipmentId, filterDate, filterEmployee]);
 
+  const { items: sortedSalaries, requestSort: sortSalaries, sortConfig: salSortConfig } = useSortableData(filteredSalaries, { key: 'date', direction: 'desc' });
+
   const allAdvances = useMemo(() =>
     state.expenses.filter(e => e.categoryId === advancesCategoryId),
     [state.expenses, advancesCategoryId]
@@ -86,6 +90,8 @@ export default function Salaries() {
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [allAdvances, advFilterShipment, advFilterEmployee, advFilterStatus, state.employees]);
+
+  const { items: sortedAdvances, requestSort: sortAdvances, sortConfig: advSortConfig } = useSortableData(filteredAdvances, { key: 'date', direction: 'desc' });
 
   // Per-employee open advances summary for current shipment filter
   const employeeOpenSummary = useMemo(() => {
@@ -382,10 +388,27 @@ export default function Salaries() {
 
           {/* Salaries Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* Search & Sort Toolbar for Mobile */}
+          <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+            <div className="flex items-center gap-2 justify-between">
+              <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+              <select 
+                className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+                onChange={(e) => sortSalaries(e.target.value as any)}
+                value={(salSortConfig?.key as string) || 'date'}
+              >
+                <option value="id">{t('receiptNumber')}</option>
+                <option value="date">{t('date')}</option>
+                <option value="employeeId">{t('employee')}</option>
+                <option value="amount">{t('amount')}</option>
+              </select>
+            </div>
+          </div>
+
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
-              {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                <div key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {sortedSalaries.length > 0 ? sortedSalaries.map((salary, idx) => (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{state.employees.find(e => e.id === salary.employeeId)?.name}</p>
@@ -403,7 +426,7 @@ export default function Salaries() {
                       <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(salary); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )) : (
                 <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
               )}
@@ -413,20 +436,20 @@ export default function Salaries() {
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B]">
                   <tr>
-                    <th className="px-4 py-3">{t('receiptNumber')}</th>
-                    <th className="px-4 py-3">{t('date')}</th>
-                    <th className="px-4 py-3">{t('employee')}</th>
-                    <th className="px-4 py-3">{t('type')}</th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'id'}/></div></th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'date'}/></div></th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('employeeId')}><div className="flex items-center gap-1">{t('employee')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'employeeId'}/></div></th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('type')}><div className="flex items-center gap-1">{t('type')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'type'}/></div></th>
                     <th className="px-4 py-3">{t('month')}</th>
                     <th className="px-4 py-3">{t('bankAccount')}</th>
                     <th className="px-4 py-3">{t('notes')}</th>
-                    <th className="px-4 py-3 text-right rtl:text-left">{t('amount')}</th>
+                    <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('amount')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('amount')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'amount'}/></div></th>
                     <th className="px-4 py-3 text-center">{t('action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredSalaries.length > 0 ? filteredSalaries.map((salary) => (
-                    <tr key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  {sortedSalaries.length > 0 ? sortedSalaries.map((salary, idx) => (
+                    <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
                       <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>
@@ -462,7 +485,7 @@ export default function Salaries() {
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   )) : (
                     <tr>
                       <td colSpan={9} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
@@ -532,16 +555,33 @@ export default function Salaries() {
 
           {/* Advances Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* Search & Sort Toolbar for Mobile */}
+          <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+            <div className="flex items-center gap-2 justify-between">
+              <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+              <select 
+                className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+                onChange={(e) => sortAdvances(e.target.value as any)}
+                value={(advSortConfig?.key as string) || 'date'}
+              >
+                <option value="date">التاريخ</option>
+                <option value="description">الموظف</option>
+                <option value="amount">المبلغ</option>
+                <option value="settled">الحالة</option>
+              </select>
+            </div>
+          </div>
+
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
-              {filteredAdvances.length > 0 ? filteredAdvances.map((adv) => {
+              {sortedAdvances.length > 0 ? sortedAdvances.map((adv, idx) => {
                 const advCardClass = selectedAdvanceRowId === adv.id
                   ? 'bg-teal-50'
                   : adv.settled
                     ? 'bg-green-50 hover:bg-green-100'
                     : 'hover:bg-amber-50';
                 return (
-                <div key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${advCardClass}`}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${advCardClass}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{adv.description}</p>
@@ -568,7 +608,7 @@ export default function Salaries() {
                       </button>
                     )}
                   </div>
-                </div>
+                </motion.div>
                 );
               }) : (
                 <p className="px-4 py-8 text-center text-slate-400 text-sm">لا توجد بيانات</p>
@@ -579,25 +619,25 @@ export default function Salaries() {
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B]">
                   <tr>
-                    <th className="px-4 py-3">التاريخ</th>
-                    <th className="px-4 py-3">الموظف</th>
-                    <th className="px-4 py-3 text-right rtl:text-left">المبلغ</th>
-                    <th className="px-4 py-3">الحساب</th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('date')}><div className="flex items-center gap-1">التاريخ <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'date'}/></div></th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('description')}><div className="flex items-center gap-1">الموظف <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'description'}/></div></th>
+                    <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('amount')}><div className="flex items-center justify-end rtl:justify-start gap-1">المبلغ <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'amount'}/></div></th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('bankAccountId')}><div className="flex items-center gap-1">الحساب <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'bankAccountId'}/></div></th>
                     <th className="px-4 py-3">الرسالة</th>
-                    <th className="px-4 py-3">الحالة</th>
+                    <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('settled')}><div className="flex items-center gap-1">الحالة <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'settled'}/></div></th>
                     <th className="px-4 py-3">ملاحظات</th>
                     <th className="px-4 py-3 text-center">إجراء</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredAdvances.length > 0 ? filteredAdvances.map((adv) => {
+                  {sortedAdvances.length > 0 ? sortedAdvances.map((adv, idx) => {
                     const advRowClass = selectedAdvanceRowId === adv.id
                       ? 'bg-teal-50'
                       : adv.settled
                         ? 'bg-green-50 hover:bg-green-100'
                         : 'hover:bg-amber-50';
                     return (
-                    <tr key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`transition-colors cursor-pointer ${advRowClass}`}>
+                    <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`transition-colors cursor-pointer ${advRowClass}`}>
                       <td className="px-4 py-3">{format(new Date(adv.date), 'dd/MM/yyyy')}</td>
                       <td className="px-4 py-3 font-medium text-slate-900">{adv.description}</td>
                       <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">
@@ -627,7 +667,7 @@ export default function Salaries() {
                           </button>
                         )}
                       </td>
-                    </tr>
+                    </motion.tr>
                     );
                   }) : (
                     <tr>

@@ -11,6 +11,8 @@ import { useToast } from '../components/Toast';
 import { formatCurrency, generateId } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Expenses() {
   const { t } = useTranslation();
@@ -46,6 +48,8 @@ export default function Expenses() {
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.expenses, activeShipmentId, filterFromDate, filterToDate, filterCategory]);
+
+  const { items: sortedExpenses, requestSort: sortExpenses, sortConfig: expSortConfig } = useSortableData(filteredExpenses, { key: 'date', direction: 'desc' });
 
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,10 +209,28 @@ export default function Expenses() {
 
       {/* Expenses Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortExpenses(e.target.value as any)}
+            value={(expSortConfig?.key as string) || 'date'}
+          >
+            <option value="id">{t('receiptNumber')}</option>
+            <option value="date">{t('date')}</option>
+            <option value="categoryId">{t('category')}</option>
+            <option value="bankAccountId">{t('bankAccount')}</option>
+            <option value="amount">{t('amount')}</option>
+          </select>
+        </div>
+      </div>
+
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-            <div key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+          {sortedExpenses.length > 0 ? sortedExpenses.map((expense, idx) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
@@ -239,7 +261,7 @@ export default function Expenses() {
                   </button>}
                 </div>
               </div>
-            </div>
+            </motion.div>
           )) : (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
           )}
@@ -250,18 +272,18 @@ export default function Expenses() {
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
-                <th className="px-4 py-3">{t('receiptNumber')}</th>
-                <th className="px-4 py-3">{t('date')}</th>
-                <th className="px-4 py-3">{t('category')}</th>
-                <th className="px-4 py-3">{t('bankAccount')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortExpenses('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={expSortConfig?.direction!} active={expSortConfig?.key === 'id'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortExpenses('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={expSortConfig?.direction!} active={expSortConfig?.key === 'date'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortExpenses('categoryId')}><div className="flex items-center gap-1">{t('category')} <SortIcon direction={expSortConfig?.direction!} active={expSortConfig?.key === 'categoryId'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortExpenses('bankAccountId')}><div className="flex items-center gap-1">{t('bankAccount')} <SortIcon direction={expSortConfig?.direction!} active={expSortConfig?.key === 'bankAccountId'}/></div></th>
                 <th className="px-4 py-3">{t('notes')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('amount')}</th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortExpenses('amount')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('amount')} <SortIcon direction={expSortConfig?.direction!} active={expSortConfig?.key === 'amount'}/></div></th>
                 <th className="px-4 py-3 text-center">{t('action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-                <tr key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`transition-colors cursor-pointer ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {sortedExpenses.length > 0 ? sortedExpenses.map((expense, idx) => (
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`transition-colors cursor-pointer ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{expense.id}</td>
                   <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy')}</td>
@@ -293,7 +315,7 @@ export default function Expenses() {
                       </button>}
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               )) : (
                 <tr>
                   <td colSpan={hasWriteAccess ? 8 : 7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>

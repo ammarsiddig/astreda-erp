@@ -122,32 +122,32 @@ export default function Dashboard() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       {/* Page Header */}
-      <div className="bg-white rounded-xl border border-slate-200 px-6 py-4 shadow-sm">
-        <h1 className="text-xl font-bold text-slate-800">{t('dashboard')}</h1>
+      <div className="bg-white rounded-xl border border-slate-200 px-6 py-4 shadow-modern glass">
+        <h1 className="text-xl font-bold gap-2 flex items-center text-slate-800"><PieChartIcon className="text-[#134e4a]"/> {t('dashboard')}</h1>
       </div>
 
       {/* Top Row - KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-        <KPICard title={t('totalCash')} value={totalCash} icon={Wallet} color="bg-emerald-500" border="border-t-emerald-500" />
-        <KPICard title={t('totalDebt')} value={totalDebt} icon={Users} color="bg-red-500" border="border-t-red-500" />
-        <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-[#14b8a6]" border="border-t-[#14b8a6]" />
-        <KPICard title={t('totalExpenses')} value={activeShipmentExpenses} icon={Receipt} color="bg-amber-500" border="border-t-amber-500" />
+        <KPICard title={t('totalCash')} value={totalCash} icon={Wallet} color="bg-emerald-500" border="border-t-emerald-500" delay={0.1} />
+        <KPICard title={t('totalDebt')} value={totalDebt} icon={Users} color="bg-red-500" border="border-t-red-500" delay={0.2} />
+        <KPICard title={t('totalSales')} value={activeShipmentSales} icon={ShoppingCart} color="bg-[#14b8a6]" border="border-t-[#14b8a6]" delay={0.3} />
+        <KPICard title={t('totalExpenses')} value={activeShipmentExpenses} icon={Receipt} color="bg-amber-500" border="border-t-amber-500" delay={0.4} />
       </div>
 
       {/* Bank Balances — Total */}
-      <div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
         <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">{t('bankBalances')} — {t('allShipmentBalance')}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {bankBalances.map(bank => (
-            <div key={bank.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-t-4 border-t-slate-300 flex flex-col items-center justify-center text-center">
+          {bankBalances.map((bank, i) => (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 + Math.min(i * 0.05, 0.4) }} key={bank.id} className="bg-white p-4 rounded-xl shadow-modern glass border border-slate-100 border-t-4 border-t-[#134e4a] flex flex-col items-center justify-center text-center hover:bg-[#f0fdfa] transition-colors">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{bank.name}</span>
               <span className={`text-lg font-bold ${bank.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 {formatCurrency(bank.balance)}
               </span>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Per-Shipment Balances (collapsible) */}
       <div>
@@ -161,8 +161,8 @@ export default function Dashboard() {
         {showAllShipmentBalances && (
           <div className="space-y-4">
             {shipmentBalances.map(({ shipment, accounts, total }) => (
-              <div key={shipment.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+              <div key={shipment.id} className="bg-white rounded-xl shadow-modern glass border border-slate-100 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-50/50 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-800 text-sm">{shipment.name}</span>
                     {shipment.isClosed && (
@@ -193,8 +193,8 @@ export default function Dashboard() {
       {(salesByDay.length > 0 || expensesByCategory.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {salesByDay.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="bg-white rounded-xl shadow-modern glass border border-slate-100 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-[#14b8a6]" />
                 <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{t('salesTrend')}</h2>
               </div>
@@ -208,12 +208,12 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {expensesByCategory.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="bg-white rounded-xl shadow-modern glass border border-slate-100 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <PieChartIcon className="w-4 h-4 text-amber-500" />
                 <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{t('expenseBreakdown')}</h2>
               </div>
@@ -229,7 +229,7 @@ export default function Dashboard() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       )}
@@ -237,9 +237,9 @@ export default function Dashboard() {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Debtors */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100">
-            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{t('topDebtors')}</h2>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="bg-white rounded-xl shadow-modern glass border border-slate-100 overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700 uppercase tracking-wide"><Users className="w-4 h-4 text-slate-400" />{t('topDebtors')}</h2>
           </div>
           <div className="md:hidden divide-y divide-slate-100">
             {debtors.length > 0 ? debtors.map((debtor) => (
@@ -279,12 +279,12 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
 
         {/* Active Shipment Stats */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100">
-            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">{t('shipmentStats')}</h2>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="bg-white rounded-xl shadow-modern glass border border-slate-100 overflow-hidden flex flex-col justify-center">
+          <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700 uppercase tracking-wide"><TrendingUp className="w-4 h-4 text-slate-400" />{t('shipmentStats')}</h2>
           </div>
           <div className="p-6 grid grid-cols-2 gap-6">
             <div className="flex flex-col">
@@ -306,24 +306,24 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
 }
 
-function KPICard({ title, value, icon: Icon, color, border }: { title: string; value: number; icon: any; color: string; border: string }) {
+function KPICard({ title, value, icon: Icon, color, border, delay }: { title: string; value: number; icon: any; color: string; border: string, delay: number }) {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-slate-100 border-t-4 ${border} p-4 sm:p-5`}>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className={`bg-white rounded-xl shadow-modern glass border border-slate-100 border-t-4 ${border} p-4 sm:p-5 hover:bg-[#f0fdfa] transition-colors group cursor-default`}>
       <div className="flex items-start justify-between">
         <div className="min-w-0">
           <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{title}</p>
           <p className="text-lg sm:text-2xl font-bold text-slate-800 truncate">{formatCurrency(value)}</p>
         </div>
-        <div className={`p-2 sm:p-2.5 rounded-lg ${color} text-white flex-shrink-0`}>
+        <div className={`p-2 sm:p-2.5 rounded-lg ${color} text-white flex-shrink-0 group-hover:scale-110 transition-transform`}>
           <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

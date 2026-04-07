@@ -11,6 +11,8 @@ import { useToast } from '../components/Toast';
 import { formatCurrency, generateId } from '../lib/utils';
 import { Payment } from '../types';
 import { canWrite } from '../lib/permissions';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Payments() {
   const { t } = useTranslation();
@@ -50,6 +52,8 @@ export default function Payments() {
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.payments, activeShipmentId, filterFromDate, filterToDate, filterCustomer]);
+
+  const { items: sortedPayments, requestSort: sortPayments, sortConfig: paySortConfig } = useSortableData(filteredPayments, { key: 'date', direction: 'desc' });
 
   const handleSavePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,10 +211,28 @@ export default function Payments() {
 
       {/* Payments Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortPayments(e.target.value as any)}
+            value={(paySortConfig?.key as string) || 'date'}
+          >
+            <option value="id">{t('receiptNumber')}</option>
+            <option value="date">{t('date')}</option>
+            <option value="customerId">{t('customer')}</option>
+            <option value="bankAccountId">{t('bankAccount')}</option>
+            <option value="amount">{t('amount')}</option>
+          </select>
+        </div>
+      </div>
+
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {filteredPayments.length > 0 ? filteredPayments.map((payment) => (
-            <div key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+          {sortedPayments.length > 0 ? sortedPayments.map((payment, idx) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(payment.id)} onChange={() => toggleSelect(payment.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
@@ -241,7 +263,7 @@ export default function Payments() {
                   </button>}
                 </div>
               </div>
-            </div>
+            </motion.div>
           )) : (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
           )}
@@ -252,18 +274,18 @@ export default function Payments() {
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
-                <th className="px-4 py-3">{t('receiptNumber')}</th>
-                <th className="px-4 py-3">{t('date')}</th>
-                <th className="px-4 py-3">{t('customer')}</th>
-                <th className="px-4 py-3">{t('bankAccount')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortPayments('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={paySortConfig?.direction!} active={paySortConfig?.key === 'id'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortPayments('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={paySortConfig?.direction!} active={paySortConfig?.key === 'date'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortPayments('customerId')}><div className="flex items-center gap-1">{t('customer')} <SortIcon direction={paySortConfig?.direction!} active={paySortConfig?.key === 'customerId'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortPayments('bankAccountId')}><div className="flex items-center gap-1">{t('bankAccount')} <SortIcon direction={paySortConfig?.direction!} active={paySortConfig?.key === 'bankAccountId'}/></div></th>
                 <th className="px-4 py-3">{t('notes')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('amount')}</th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortPayments('amount')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('amount')} <SortIcon direction={paySortConfig?.direction!} active={paySortConfig?.key === 'amount'}/></div></th>
                 <th className="px-4 py-3 text-center">{t('action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredPayments.length > 0 ? filteredPayments.map((payment) => (
-                <tr key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {sortedPayments.length > 0 ? sortedPayments.map((payment, idx) => (
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(payment.id)} onChange={() => toggleSelect(payment.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{payment.id}</td>
                   <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
@@ -295,7 +317,7 @@ export default function Payments() {
                       </button>}
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               )) : (
                 <tr>
                   <td colSpan={hasWriteAccess ? 8 : 7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>

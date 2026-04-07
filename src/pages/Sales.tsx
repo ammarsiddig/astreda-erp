@@ -11,6 +11,8 @@ import SearchableSelect from '../components/SearchableSelect';
 import { Invoice } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
 import { useToast } from '../components/Toast';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Sales() {
   const { t, lang } = useTranslation();
@@ -56,6 +58,8 @@ export default function Sales() {
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.invoices, activeShipmentId, filterFromDate, filterToDate, filterCity, filterSalesperson, filterPaymentType, isSpRole, currentUser]);
+
+  const { items: sortedInvoices, requestSort: sortInvoices, sortConfig: invSortConfig } = useSortableData(filteredInvoices, { key: 'date', direction: 'desc' });
 
   const deleteInvoiceById = (invoice: Invoice) => {
     const txIds = new Set(
@@ -289,10 +293,27 @@ export default function Sales() {
 
       {/* Invoices Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Search & Sort Toolbar for Mobile */}
+      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
+          <select 
+            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => sortInvoices(e.target.value as any)}
+            value={(invSortConfig?.key as string) || 'date'}
+          >
+            <option value="id">{t('invoiceNumber')}</option>
+            <option value="date">{t('date')}</option>
+            <option value="customerId">{t('customer')}</option>
+            <option value="total">{t('total')}</option>
+          </select>
+        </div>
+      </div>
+
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-            <div key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+          {sortedInvoices.length > 0 ? sortedInvoices.map((invoice, idx) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex items-start gap-2">
                 {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(invoice.id)} onChange={() => toggleSelect(invoice.id)} className="mt-1 w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6] flex-shrink-0" /></span>}
                 <div className="flex-1 flex justify-between items-start gap-2">
@@ -329,7 +350,7 @@ export default function Sales() {
                 </div>
               </div>
               </div>
-            </div>
+            </motion.div>
           )) : (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
           )}
@@ -340,18 +361,18 @@ export default function Sales() {
             <thead className="text-xs text-white uppercase bg-[#1E293B]">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
-                <th className="px-4 py-3">{t('invoiceNumber')}</th>
-                <th className="px-4 py-3">{t('date')}</th>
-                <th className="px-4 py-3">{t('customer')}</th>
-                <th className="px-4 py-3">{t('salesperson')}</th>
-                <th className="px-4 py-3">{t('paymentType')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('total')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('id')}><div className="flex items-center gap-1">{t('invoiceNumber')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'id'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'date'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('customerId')}><div className="flex items-center gap-1">{t('customer')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'customerId'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('salespersonId')}><div className="flex items-center gap-1">{t('salesperson')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'salespersonId'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('paymentType')}><div className="flex items-center gap-1">{t('paymentType')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'paymentType'}/></div></th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('total')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('total')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'total'}/></div></th>
                 <th className="px-4 py-3 text-center">{t('action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              {sortedInvoices.length > 0 ? sortedInvoices.map((invoice, idx) => (
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(invoice.id)} onChange={() => toggleSelect(invoice.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
                   <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
@@ -385,7 +406,7 @@ export default function Sales() {
                       <Trash2 className="w-4 h-4"/>
                     </button>}
                   </td>
-                </tr>
+                </motion.tr>
               )) : (
                 <tr>
                   <td colSpan={hasWriteAccess ? 8 : 7} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>

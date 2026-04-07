@@ -10,6 +10,8 @@ import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction, ShipmentTransfer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
 import { formatCurrency, generateId } from '../lib/utils';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Inventory() {
   const { t, lang } = useTranslation();
@@ -142,12 +144,15 @@ export default function Inventory() {
 
     return {
       product,
+      productName: product.name,
       received,
       warehouseRemaining: adjustedWarehouseRemaining,
       cars: loadedToCars,
       hasNegative
     };
   }), [state.products, state.inventoryTransactions, state.cars, activeShipmentId]);
+
+  const { items: sortedInventory, requestSort, sortConfig } = useSortableData(inventoryData, { key: 'productName', direction: 'asc' });
 
   const handleReceiveStock = (e: React.FormEvent) => {
     e.preventDefault();
@@ -470,12 +475,27 @@ export default function Inventory() {
         </div>}
       </div>
 
+      {/* Search & Sort Toolbar for Mobile */}
+      <div className="md:hidden bg-white p-4 rounded-xl shadow-modern glass border-slate-200 mb-4">
+        <div className="flex items-center gap-2 justify-between">
+          <span className="text-sm font-semibold text-slate-700">ترتيب المخزون:</span>
+          <select 
+            className="bg-slate-50 border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => requestSort(e.target.value as any)}
+            value={(sortConfig?.key as string) || 'productName'}
+          >
+            <option value="productName">الصنف</option>
+            <option value="warehouseRemaining">مخزون المخزن</option>
+          </select>
+        </div>
+      </div>
+
       {/* Main Inventory Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {inventoryData.map((row) => (
-            <div key={row.product.id} className={`p-4 space-y-3 ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+          {sortedInventory.map((row, idx) => (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={row.product.id} className={`p-4 space-y-3 ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
               <div className="flex items-center gap-2">
                 {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0"/>}
                 <span className="font-semibold text-slate-900 text-sm">{row.product.name}</span>
@@ -508,16 +528,20 @@ export default function Inventory() {
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
           ))}
         </div>
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#134e4a]">
               <tr>
-                <th rowSpan={2} className="px-4 py-4 font-semibold align-bottom">{t('product')}</th>
-                <th rowSpan={2} className="px-4 py-4 font-semibold text-center bg-slate-100/50 align-bottom">{t('warehouse')}</th>
+                <th rowSpan={2} className="px-4 py-4 font-semibold align-bottom cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('productName')}>
+                  <div className="flex items-center gap-1">{t('product')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'productName'}/></div>
+                </th>
+                <th rowSpan={2} className="px-4 py-4 font-semibold text-center bg-slate-100/10 align-bottom cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('warehouseRemaining')}>
+                  <div className="flex items-center justify-center gap-1">{t('warehouse')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'warehouseRemaining'}/></div>
+                </th>
                 {visibleCars.map(car => (
                   <th key={car.id} colSpan={3} className="px-4 py-2 font-semibold text-center border-l border-slate-200 rtl:border-r rtl:border-l-0 border-b">
                     {car.name}
@@ -535,14 +559,14 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {inventoryData.map((row) => {
+              {sortedInventory.map((row, idx) => {
                 const stockRowClass = selectedStockRowId === row.product.id
                   ? 'bg-teal-50'
                   : row.hasNegative
                     ? 'hover:bg-[#f0fdfa] bg-red-50/50'
                     : 'hover:bg-[#f0fdfa]';
                 return (
-                <tr key={row.product.id} onClick={() => setSelectedStockRowId(row.product.id)} className={`transition-colors cursor-pointer ${stockRowClass}`}>
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.03, 0.3) }} key={row.product.id} onClick={() => setSelectedStockRowId(row.product.id)} className={`transition-colors cursor-pointer ${stockRowClass}`}>
                   <td className="px-4 py-3 font-medium text-slate-900 flex items-center">
                     {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 mr-2 rtl:ml-2 rtl:mr-0"/>}
                     {row.product.name}
@@ -563,7 +587,7 @@ export default function Inventory() {
                       </td>
                     </React.Fragment>
                   ))}
-                </tr>
+                </motion.tr>
                 );
               })}
             </tbody>
@@ -572,7 +596,7 @@ export default function Inventory() {
       </div>
 
       {/* Transfer Log */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-8">
+      <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-hidden mt-8">
         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
           <h2 className="text-lg font-semibold text-slate-800">سجل التحويلات / Transfer Log</h2>
         </div>
@@ -627,7 +651,7 @@ export default function Inventory() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#134e4a]">
               <tr>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('transferId')}</th>

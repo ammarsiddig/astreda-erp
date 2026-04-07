@@ -13,6 +13,8 @@ import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
 import { Customer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from '../components/SortIcon';
 
 export default function Customers() {
   const { t, lang } = useTranslation();
@@ -39,16 +41,36 @@ export default function Customers() {
   const [carId, setCarId] = useState('');
   const [notes, setNotes] = useState('');
 
-  const filteredCustomers = useMemo(() => {
+  const customersWithStats = useMemo(() => {
     let list = state.customers;
     if (isSpRole && currentUser?.salespersonId) {
       list = list.filter(c => c.salespersonId === currentUser.salespersonId);
     }
-    return list.filter(c =>
+    return list.map(c => {
+      const invoices = state.invoices.filter(i => i.customerId === c.id && i.paymentType === 'credit' && i.shipmentId === activeShipmentId);
+      const payments = state.payments.filter(p => p.customerId === c.id && p.shipmentId === activeShipmentId);
+      const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0);
+      const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
+      const debt = totalInvoiced - totalPayments;
+      const totalSales = state.invoices.filter(i => i.customerId === c.id && i.shipmentId === activeShipmentId).reduce((sum, inv) => sum + inv.total, 0);
+      const cityName = state.cities.find(city => city.id === c.cityId)?.name || '';
+      const salespersonName = state.salespeople.find(s => s.id === c.salespersonId)?.name || '';
+      
+      return {
+        ...c,
+        debt,
+        totalSales,
+        totalPayments,
+        cityName,
+        salespersonName
+      };
+    }).filter(c =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.phone.includes(searchQuery)
     );
-  }, [state.customers, searchQuery, isSpRole, currentUser]);
+  }, [state.customers, searchQuery, isSpRole, currentUser, state.invoices, state.payments, state.cities, state.salespeople, activeShipmentId]);
+
+  const { items: sortedCustomers, requestSort, sortConfig } = useSortableData(customersWithStats, { key: 'name', direction: 'asc' });
 
   const handleSaveCustomer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,10 +124,10 @@ export default function Customers() {
     setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  const allSelected = filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id));
+  const allSelected = sortedCustomers.length > 0 && sortedCustomers.every(c => selectedIds.has(c.id));
   const toggleSelectAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filteredCustomers.map(c => c.id)));
+    else setSelectedIds(new Set(sortedCustomers.map(c => c.id)));
   };
 
   const openEditModal = (customer: Customer) => {
@@ -118,19 +140,7 @@ export default function Customers() {
     setShowEditModal(customer);
   };
 
-  const getCustomerDebt = (customerId: string) => {
-    const invoices = state.invoices.filter(i => i.customerId === customerId && i.paymentType === 'credit' && i.shipmentId === activeShipmentId);
-    const payments = state.payments.filter(p => p.customerId === customerId && p.shipmentId === activeShipmentId);
-    const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0);
-    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-    return totalInvoiced - totalPaid;
-  };
 
-  const getCustomerTotalSales = (customerId: string) => {
-    return state.invoices
-      .filter(i => i.customerId === customerId && i.shipmentId === activeShipmentId)
-      .reduce((sum, inv) => sum + inv.total, 0);
-  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -157,13 +167,26 @@ export default function Customers() {
         </button>}
       </div>
 
-      {/* Search */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <div className="relative max-w-md">
+      {/* Search & Sort Toolbar */}
+      <div className="bg-white p-4 rounded-xl shadow-modern glass border-slate-200 flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="relative max-w-md flex-1">
           <Search className="absolute top-1/2 -translate-y-1/2 left-3 rtl:right-3 rtl:left-auto w-5 h-5 text-slate-400"/>
           <input type="text" placeholder={t('search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 rtl:pr-10 rtl:pl-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none"
           />
+        </div>
+        <div className="flex items-center gap-2 md:hidden">
+          <span className="text-sm text-slate-500 whitespace-nowrap">الترتيب:</span>
+          <select 
+            className="bg-slate-50 border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
+            onChange={(e) => requestSort(e.target.value as any)}
+            value={(sortConfig?.key as string) || 'name'}
+          >
+            <option value="name">الاسم</option>
+            <option value="debt">المديونية</option>
+            <option value="totalSales">إجمالي المبيعات</option>
+            <option value="cityName">المدينة</option>
+          </select>
         </div>
       </div>
 
@@ -183,18 +206,18 @@ export default function Customers() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {filteredCustomers.length > 0 ? filteredCustomers.map((customer) => {
-            const debt = getCustomerDebt(customer.id);
-            const totalSales = getCustomerTotalSales(customer.id);
+          {sortedCustomers.length > 0 ? sortedCustomers.map((customer, i) => {
+            const debt = customer.debt;
+            const totalSales = customer.totalSales;
             return (
-              <div key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(customer.id) ? 'bg-red-50' : selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.05, 0.5) }} key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(customer.id) ? 'bg-red-50' : selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 <div className="flex justify-between items-start gap-2">
                   {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} className="mt-1 w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6] flex-shrink-0" /></span>}
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-slate-900 text-sm truncate">{customer.name}</p>
                     <p className="text-xs text-slate-500" dir="ltr">{customer.phone}</p>
-                    <p className="text-xs text-slate-400">{state.cities.find(c => c.id === customer.cityId)?.name}</p>
-                    <p className="text-xs text-slate-400">{t('salesperson')}: {state.salespeople.find(s => s.id === customer.salespersonId)?.name || '-'}</p>
+                    <p className="text-xs text-slate-400">{customer.cityName}</p>
+                    <p className="text-xs text-slate-400">{t('salesperson')}: {customer.salespersonName || '-'}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className={`text-sm font-bold ${debt > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
@@ -205,7 +228,7 @@ export default function Customers() {
                 </div>
                 <div className="flex justify-between items-center pt-1">
                   <div className="flex gap-3 text-xs text-slate-600">
-                    <span className="font-medium">{t('totalPayments')}: <span className="text-emerald-600 font-bold">{formatCurrency(state.payments.filter(p => p.customerId === customer.id && p.shipmentId === activeShipmentId).reduce((sum, p) => sum + p.amount, 0))}</span></span>
+                    <span className="font-medium">{t('totalPayments')}: <span className="text-emerald-600 font-bold">{formatCurrency(customer.totalPayments)}</span></span>
                   </div>
                   <div className="flex gap-1">
                     <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${customer.id}`); }}
@@ -225,7 +248,7 @@ export default function Customers() {
                     </button>}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           }) : (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
@@ -234,35 +257,35 @@ export default function Customers() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#134e4a]">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
-                <th className="px-4 py-3">{t('name')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('name')}><div className="flex items-center gap-1">{t('name')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'name'}/></div></th>
                 <th className="px-4 py-3">{t('phone')}</th>
-                <th className="px-4 py-3">{t('city')}</th>
-                <th className="px-4 py-3">{t('salesperson')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">إجمالي المبيعات</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('totalPayments')}</th>
-                <th className="px-4 py-3 text-right rtl:text-left">{t('debt')}</th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('cityName')}><div className="flex items-center gap-1">{t('city')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'cityName'}/></div></th>
+                <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('salespersonName')}><div className="flex items-center gap-1">{t('salesperson')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'salespersonName'}/></div></th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('totalSales')}><div className="flex items-center justify-end rtl:justify-start gap-1">إجمالي المبيعات <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'totalSales'}/></div></th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('totalPayments')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('totalPayments')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'totalPayments'}/></div></th>
+                <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('debt')}><div className="flex items-center justify-end rtl:justify-start gap-1">{t('debt')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'debt'}/></div></th>
                 <th className="px-4 py-3 text-center">{t('action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredCustomers.length > 0 ? filteredCustomers.map((customer) => {
-                const debt = getCustomerDebt(customer.id);
-                const totalSales = getCustomerTotalSales(customer.id);
+              {sortedCustomers.length > 0 ? sortedCustomers.map((customer, i) => {
+                const debt = customer.debt;
+                const totalSales = customer.totalSales;
                 return (
-                  <tr key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`transition-colors cursor-pointer ${selectedIds.has(customer.id) ? 'bg-red-50' : selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }} key={customer.id} onClick={() => { setSelectedRowId(customer.id); navigate(`/customers/${customer.id}`); }} className={`transition-colors cursor-pointer ${selectedIds.has(customer.id) ? 'bg-red-50' : selectedRowId === customer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                     <td className="px-4 py-3 font-medium text-slate-900">{customer.name}</td>
                     <td className="px-4 py-3" dir="ltr">{customer.phone}</td>
-                    <td className="px-4 py-3">{state.cities.find(c => c.id === customer.cityId)?.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{state.salespeople.find(s => s.id === customer.salespersonId)?.name || '-'}</td>
+                    <td className="px-4 py-3">{customer.cityName}</td>
+                    <td className="px-4 py-3 text-slate-600">{customer.salespersonName || '-'}</td>
                     <td className="px-4 py-3 font-semibold text-slate-700 text-right rtl:text-left">
                       {formatCurrency(totalSales)}
                     </td>
                     <td className="px-4 py-3 font-bold text-emerald-600 text-right rtl:text-left">
-                      {formatCurrency(state.payments.filter(p => p.customerId === customer.id && p.shipmentId === activeShipmentId).reduce((sum, p) => sum + p.amount, 0))}
+                      {formatCurrency(customer.totalPayments)}
                     </td>
                     <td className={`px-4 py-3 font-bold text-right rtl:text-left ${debt > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                       {formatCurrency(debt)}
@@ -289,7 +312,7 @@ export default function Customers() {
                         </button>}
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               }) : (
                 <tr>
