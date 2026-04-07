@@ -13,23 +13,46 @@ import Login from './pages/Login';
 import { canView, getUserRole } from './lib/permissions';
 import { PageKey } from './types';
 
+// Helper: retry a dynamic import once with a cache-bust, then hard-reload.
+// Fixes "Failed to fetch dynamically imported module" after Vercel deploys.
+function lazyRetry(factory: () => Promise<{ default: React.ComponentType<any> }>) {
+  return lazy(() =>
+    factory().catch(() => {
+      // First retry — append a timestamp to bust the browser cache
+      return factory().catch(() => {
+        // If still failing, the whole app bundle is stale — hard reload once
+        const reloaded = sessionStorage.getItem('chunk_reload');
+        if (!reloaded) {
+          sessionStorage.setItem('chunk_reload', '1');
+          window.location.reload();
+        }
+        // If we already reloaded and it still fails, let ErrorBoundary handle it
+        return factory();
+      });
+    })
+  );
+}
+
 // Lazy-loaded page components — each produces a separate JS chunk, reducing
 // the initial bundle that users must download before seeing the app.
-const Dashboard        = lazy(() => import('./pages/Dashboard'));
-const Inventory        = lazy(() => import('./pages/Inventory'));
-const CarLoading       = lazy(() => import('./pages/CarLoading'));
-const Sales            = lazy(() => import('./pages/Sales'));
-const Customers        = lazy(() => import('./pages/Customers'));
-const CustomerDetail   = lazy(() => import('./pages/CustomerDetail'));
-const Payments         = lazy(() => import('./pages/Payments'));
-const Expenses         = lazy(() => import('./pages/Expenses'));
-const Salaries         = lazy(() => import('./pages/Salaries'));
-const GeneralTransfers = lazy(() => import('./pages/GeneralTransfers'));
-const Capital          = lazy(() => import('./pages/Capital'));
-const AccountTransfers = lazy(() => import('./pages/AccountTransfers'));
-const Ledger           = lazy(() => import('./pages/Ledger'));
-const Reports          = lazy(() => import('./pages/Reports'));
-const Settings         = lazy(() => import('./pages/Settings'));
+const Dashboard        = lazyRetry(() => import('./pages/Dashboard'));
+const Inventory        = lazyRetry(() => import('./pages/Inventory'));
+const CarLoading       = lazyRetry(() => import('./pages/CarLoading'));
+const Sales            = lazyRetry(() => import('./pages/Sales'));
+const Customers        = lazyRetry(() => import('./pages/Customers'));
+const CustomerDetail   = lazyRetry(() => import('./pages/CustomerDetail'));
+const Payments         = lazyRetry(() => import('./pages/Payments'));
+const Expenses         = lazyRetry(() => import('./pages/Expenses'));
+const Salaries         = lazyRetry(() => import('./pages/Salaries'));
+const GeneralTransfers = lazyRetry(() => import('./pages/GeneralTransfers'));
+const Capital          = lazyRetry(() => import('./pages/Capital'));
+const AccountTransfers = lazyRetry(() => import('./pages/AccountTransfers'));
+const Ledger           = lazyRetry(() => import('./pages/Ledger'));
+const Reports          = lazyRetry(() => import('./pages/Reports'));
+const Settings         = lazyRetry(() => import('./pages/Settings'));
+
+// Clear stale reload flag on successful app boot
+if (typeof window !== 'undefined') sessionStorage.removeItem('chunk_reload');
 
 // Simple fallback shown while a lazy chunk is loading
 function PageLoader() {
