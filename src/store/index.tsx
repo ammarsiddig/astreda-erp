@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { hashPassword, isPasswordHashed } from '../lib/utils';
-import { onStateChange, setupRealtimeSync, initNetworkMonitoring, pullFromCloud, pushToCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, markCloudReady, requestImmediatePush, clearSyncState } from '../lib/syncEngine';
+import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -355,37 +355,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Flag: when true the state change came from cloud, so onStateChange should not push it back
-  const isApplyingCloudRef = useRef(false);
-
-  // Sync-safe updateState that merges arrays by ID instead of replacing them.
-  // This prevents local changes from being overwritten by cloud pulls.
-  const syncApply = useCallback((updates: Partial<AppState>) => {
-    isApplyingCloudRef.current = true;
+  // Cloud updates are applied directly — no diff tracking needed
+  const cloudApply = useCallback((updates: Partial<AppState>) => {
     setState(prev => {
       const merged: any = { ...prev };
       for (const [key, value] of Object.entries(updates)) {
-        if (key === 'currentUser') continue; // Never overwrite local auth
+        if (key === 'currentUser') continue;
         if (key === 'settlementResults') {
-          // Record<string, T> — merge by key
           merged[key] = { ...(prev as any)[key], ...(value as Record<string, unknown>) };
-        } else if (Array.isArray(value) && Array.isArray((prev as any)[key])) {
-          // Merge arrays by ID: cloud items replace matching local ones, new items are added
-          const prevArr: any[] = (prev as any)[key];
-          const cloudArr: any[] = value;
-          const cloudMap = new Map<string, any>();
-          for (const item of cloudArr) {
-            const pk = item.shipmentId ?? item.id;
-            if (pk) cloudMap.set(pk, item);
-          }
-          // Start with cloud items, then add any local items not in cloud.
-          // Shallow-clone local-only items so the diff engine detects them
-          // (by reference inequality) and pushes them to Supabase.
-          const localOnly = prevArr.filter(item => {
-            const pk = item.shipmentId ?? item.id;
-            return pk && !cloudMap.has(pk);
-          }).map(item => ({ ...item }));
-          merged[key] = [...cloudArr, ...localOnly];
         } else {
           merged[key] = value;
         }
@@ -398,12 +375,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ── Cloud-First initialization ──────────────────────────────────
   useEffect(() => {
     initNetworkMonitoring();
-    const cleanup = setupRealtimeSync(syncApply, () => stateRef.current);
+    const cleanup = setupRealtimeSync(cloudApply, () => stateRef.current);
 
-    // Pull from Supabase in the background — app renders from localStorage cache instantly
     (async () => {
       try {
-        const pulled = await pullFromCloud(syncApply);
+        const pulled = await pullFromCloud(cloudApply);
         if (pulled) {
           console.log('[cloud-first] ✅ data loaded from Supabase');
           setState(prev => ensureDefaults(prev));
@@ -412,47 +388,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (e) {
         console.warn('[cloud-first] ⚠️ pull failed — using localStorage cache', e);
       } finally {
-        markCloudReady();
         setIsCloudLoading(false);
-
-        // Reconciliation: push all local data to Supabase to ensure nothing
-        // is stranded in localStorage (e.g. migration data that was never synced).
-        // Deferred so React has time to flush the merged state first.
-        setTimeout(() => {
-          fullPushToCloud(stateRef.current).catch(e =>
-            console.warn('[cloud-first] reconciliation push failed:', e)
-          );
-        }, 1000);
       }
     })();
 
     return cleanup;
-  }, [syncApply]);
+  }, [cloudApply]);
 
-  // Persist to localStorage (cache) AND notify sync engine on every state change
-  // Debounce localStorage writes to avoid blocking the main thread
+  // Save to localStorage as read-only cache (for next app load)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    // Debounce localStorage save — heavy JSON.stringify on large state
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       localStorage.setItem('astreda_erp_state', JSON.stringify(state));
-    }, 300);
+    }, 500);
 
     document.documentElement.dir = state.language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = state.language;
-    // Skip pushing back to Supabase when the update itself came from the cloud
-    if (isApplyingCloudRef.current) {
-      isApplyingCloudRef.current = false;
-      console.log('[store] cloud update applied — skipping onStateChange push');
-      return;
-    }
-    onStateChange(state);
   }, [state]);
 
+  // updateState: for local-only state changes (scalar settings, etc.)
+  // Components should use upsertRecord/deleteRecord for data writes
   const updateState = (updates: Partial<AppState>) => {
-    requestImmediatePush();
-    setState((prev) => ({ ...prev, ...updates }));
+    setState((prev) => {
+      const next = { ...prev, ...updates };
+      // Push scalar settings to cloud if any changed
+      const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
+      if (scalarKeys.some(k => k in updates)) {
+        pushScalarSettings(next as AppState);
+      }
+      return next;
+    });
   };
 
   const activeShipmentId = state.shipments.find((s) => s.isActive)?.id;
@@ -504,8 +470,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const manualSync = useCallback(async () => {
     await flushQueue();
-    await pullFromCloud(syncApply);
-  }, [syncApply]);
+    await pullFromCloud(cloudApply);
+  }, [cloudApply]);
 
   const fullPush = useCallback(async () => {
     await fullPushToCloud(stateRef.current);
@@ -516,8 +482,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // clearCache is false: we preserve the current local state so the UI stays
     // populated while the full pull runs in the background, avoiding a blank screen.
     clearSyncState({ clearQueue: true, clearCache: false });
-    await pullFromCloud(syncApply);
-  }, [syncApply]);
+    await pullFromCloud(cloudApply);
+  }, [cloudApply]);
 
   // Memoize context value so consumers don't re-render when the provider's
   // own parent re-renders (or when unrelated sibling state changes occur).

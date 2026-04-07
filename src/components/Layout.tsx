@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { canView, getUserRole } from '../lib/permissions';
 import { PageKey } from '../types';
 import { SyncStatusIndicator } from './SyncStatusIndicator';
+import ToastContainer from './ToastContainer';
+import ConnectionBanner from './ConnectionBanner';
 import Modal from './Modal';
 
 const navItems: { path: string; icon: any; labelKey: string; pageKey: PageKey }[] = [
@@ -256,6 +258,8 @@ export default function Layout() {
           </div>
         </header>
 
+        <ConnectionBanner />
+
         {/* Page content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#f0fdfa]">
           <div className="p-4 sm:p-6 max-w-full">
@@ -281,6 +285,8 @@ export default function Layout() {
           </div>
         </div>
       </Modal>
+
+      <ToastContainer />
     </div>
   );
 }
