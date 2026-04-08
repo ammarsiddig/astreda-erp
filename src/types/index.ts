@@ -224,6 +224,7 @@ export interface CapitalContribution {
   amountSAR: number;
   date: string;
   notes?: string;
+  profitRate?: number; // optional per-investor profit rate (e.g. 3 = 3%). Pool is split by capital × profitRate weight.
 }
 
 export interface SettlementResult {

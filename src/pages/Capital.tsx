@@ -45,6 +45,7 @@ export default function Capital() {
   const [contribAmountSAR, setContribAmountSAR] = useState<number | ''>('');
   const [contribDate, setContribDate] = useState(new Date().toISOString().split('T')[0]);
   const [contribNotes, setContribNotes] = useState('');
+  const [contribProfitRate, setContribProfitRate] = useState<number | ''>('');
   const [capitalView, setCapitalView] = useState<'cards' | 'table'>('cards');
   const [expandedPartnerIds, setExpandedPartnerIds] = useState<Set<string>>(new Set());
   const toggleExpanded = (id: string) => {
@@ -101,13 +102,29 @@ export default function Capital() {
   const investorData = useMemo(() => {
     if (!activeShipmentId) return [];
     const partnersWithContribs = new Set(contributions.map(c => c.partnerId));
-    return state.partners.filter(p => partnersWithContribs.has(p.id)).map(partner => {
+    // Build per-partner data first to compute weighted pool denominator
+    const partnerList = state.partners.filter(p => partnersWithContribs.has(p.id)).map(partner => {
       const capital = contributions.filter(c => c.partnerId === partner.id).reduce((s, c) => s + c.amountSAR, 0);
+      // Use the most-recent profitRate for this partner across their contributions
+      const rateEntry = contributions.filter(c => c.partnerId === partner.id && c.profitRate != null).slice(-1)[0];
+      const profitRate = rateEntry?.profitRate ?? null;
+      return { partner, capital, profitRate };
+    });
+    // Determine if any investor has a custom rate set
+    const anyHasRate = partnerList.some(p => p.profitRate != null);
+    // Total weighted denominator: capital × rate (fallback: pure capital sum)
+    const totalWeighted = anyHasRate
+      ? partnerList.reduce((s, p) => s + p.capital * (p.profitRate ?? 0), 0)
+      : partnerList.reduce((s, p) => s + p.capital, 0);
+
+    return partnerList.map(({ partner, capital, profitRate }) => {
       const returned = capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
       const remainingCapital = Math.max(0, capital - returned);
-      const profitEntitled = liveProfitCalc && liveProfitCalc.totalCapitalSAR > 0
-        ? liveProfitCalc.investorShareSAR * (capital / liveProfitCalc.totalCapitalSAR)
-        : 0;
+      let profitEntitled = 0;
+      if (liveProfitCalc && totalWeighted > 0) {
+        const weight = anyHasRate ? capital * (profitRate ?? 0) : capital;
+        profitEntitled = liveProfitCalc.investorShareSAR * (weight / totalWeighted);
+      }
       const profitEntitledRounded = roundDownToNearest10(profitEntitled);
       const profitPaid = profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
       const profitRemaining = Math.max(0, profitEntitled - profitPaid);
@@ -120,7 +137,7 @@ export default function Capital() {
         ...capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ date: t.date, type: 'إرجاع' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-' })),
         ...profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ date: t.date, type: 'أرباح' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-' })),
       ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      return { partner, capital, returned, remainingCapital, profitEntitled, profitEntitledRounded, profitPaid, profitRemaining, totalDue, status, transactions };
+      return { partner, capital, profitRate, returned, remainingCapital, profitEntitled, profitEntitledRounded, profitPaid, profitRemaining, totalDue, status, transactions };
     });
   }, [activeShipmentId, contributions, capitalReturns, profitPayments, liveProfitCalc, state.partners]);
 
@@ -152,19 +169,31 @@ export default function Capital() {
     const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
     const investorShares = state.partners.filter(p => contributions.some(c => c.partnerId === p.id)).map(partner => {
       const cap = contributions.filter(c => c.partnerId === partner.id).reduce((s, c) => s + c.amountSAR, 0);
-      const pct = totalCapitalSAR > 0 ? (cap / totalCapitalSAR) * 100 : 0;
+      const rateEntry = contributions.filter(c => c.partnerId === partner.id && c.profitRate != null).slice(-1)[0];
+      const profitRate = rateEntry?.profitRate ?? null;
+      return { partner, capital: cap, profitRate };
+    });
+    const anyHasRate = investorShares.some(r => r.profitRate != null);
+    const totalWeighted = anyHasRate
+      ? investorShares.reduce((s, r) => s + r.capital * (r.profitRate ?? 0), 0)
+      : investorShares.reduce((s, r) => s + r.capital, 0);
+    const investorSharesWithProfit = investorShares.map(r => {
+      const weight = anyHasRate ? r.capital * (r.profitRate ?? 0) : r.capital;
+      const pct = totalWeighted > 0 ? (weight / totalWeighted) * 100 : 0;
       const rawProfit = investorsShareSAR * pct / 100;
       const profit = roundDownToNearest10(rawProfit);
-      return { partner, capital: cap, pct, profit };
+      return { ...r, pct, profit };
     });
-    const totalRoundedInvestorProfits = investorShares.reduce((s, r) => s + r.profit, 0);
+    // Rename for rest of function
+    const investorSharesFinal = investorSharesWithProfit;
+    const totalRoundedInvestorProfits = investorSharesFinal.reduce((s, r) => s + r.profit, 0);
     const investorRoundingRemainder = investorsShareSAR - totalRoundedInvestorProfits;
     const partnersShareSAR = grossProfitSAR * partnersPct / 100;
     const managementFeeSAR = partnersShareSAR * mgmtFeePct / 100;
     const remainingForPartners = (partnersShareSAR - managementFeeSAR) + investorRoundingRemainder;
     const perPartnerSAR = operatingPartners.length > 0 ? remainingForPartners / operatingPartners.length : 0;
     const partnerSummaries = operatingPartners.map(partner => {
-      const investorEntry = investorShares.find(r => r.partner.id === partner.id);
+      const investorEntry = investorSharesFinal.find(r => r.partner.id === partner.id);
       const investorProfit = investorEntry?.profit || 0;
       const capitalAmount = investorEntry?.capital || 0;
       const drawings = drawingTransfers.filter(t => t.partnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
@@ -172,11 +201,11 @@ export default function Capital() {
       const total = perPartnerSAR + fee + investorProfit + capitalAmount - drawings;
       return { partner, partnerShare: perPartnerSAR, fee, investorProfit, capital: capitalAmount, drawings, total };
     });
-    const regularInvestors = investorShares.filter(r => !r.partner.isOperatingPartner);
+    const regularInvestors = investorSharesFinal.filter(r => !r.partner.isOperatingPartner);
     return {
       exchangeRate, noExRate, investorsPct, partnersPct, mgmtFeePct, mgmtFeeRecipientId,
       cashBalanceSDG, drawingsSDG, receivablesSDG, grossProfitSDG, grossProfitSAR,
-      investorsShareSAR, totalRoundedInvestorProfits, investorRoundingRemainder, totalCapitalSAR, investorShares,
+      investorsShareSAR, totalRoundedInvestorProfits, investorRoundingRemainder, totalCapitalSAR, investorShares: investorSharesFinal,
       partnersShareSAR, managementFeeSAR, remainingForPartners, perPartnerSAR,
       partnerSummaries, regularInvestors,
     };
@@ -202,7 +231,13 @@ export default function Capital() {
   }, [activeShipmentId, state]);
 
   // === HANDLERS ===
-  const resetContribForm = () => { setContribPartnerId(''); setContribAmountSAR(''); setContribDate(new Date().toISOString().split('T')[0]); setContribNotes(''); };
+  const resetContribForm = () => {
+    setContribPartnerId('');
+    setContribAmountSAR('');
+    setContribDate(new Date().toISOString().split('T')[0]);
+    setContribNotes('');
+    setContribProfitRate('');
+  };
   const handleSaveContribution = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasWriteAccess) return;
@@ -211,6 +246,7 @@ export default function Capital() {
       id: generateId('CC', state.capitalContributions || []),
       partnerId: contribPartnerId, shipmentId: activeShipmentId,
       amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined,
+      profitRate: contribProfitRate !== '' ? Number(contribProfitRate) : undefined,
     };
     updateState({ capitalContributions: [...(state.capitalContributions || []), newContrib] });
     setShowContribModal(false); resetContribForm();
@@ -498,6 +534,7 @@ export default function Capital() {
                     <div className="px-4 py-3 space-y-3 text-sm">
                       <div className="space-y-1.5 border-b border-slate-100 pb-3">
                         <div className="flex justify-between"><span className="text-slate-500">رأس المال</span><span className="font-semibold">{fmtSAR(d.capital)}</span></div>
+                        {d.profitRate != null && <div className="flex justify-between"><span className="text-slate-500">معدل الربح</span><span className="font-semibold text-blue-600">{d.profitRate}%</span></div>}
                         <div className="flex justify-between"><span className="text-slate-500">المُرجَع</span><span className="font-semibold">{fmtSAR(d.returned)}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">متبقي رأس المال</span>
                           <span className={`font-bold ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{fmtSAR(d.remainingCapital)}</span></div>
@@ -803,20 +840,21 @@ export default function Capital() {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="text-xs text-white bg-[#134e4a]">
-                    <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال</th><th className="px-3 py-2 text-left">النسبة%</th><th className="px-3 py-2 text-left">الربح (SAR)</th></tr>
+                    <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال</th><th className="px-3 py-2 text-left">معدل الربح</th><th className="px-3 py-2 text-left">النسبة%</th><th className="px-3 py-2 text-left">الربح (SAR)</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {settlementCalc.investorShares.map((r, i) => (
                       <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
                         <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
                         <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
+                        <td className="px-3 py-2 text-left font-mono text-blue-600">{r.profitRate != null ? `${r.profitRate}%` : '—'}</td>
                         <td className="px-3 py-2 text-left font-mono">{fmtPct(r.pct)}</td>
                         <td className="px-3 py-2 text-left font-mono font-bold text-[#134e4a]">{fmtSAR(r.profit)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <tr><td className="px-3 py-2">الإجمالي</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalCapitalSAR)}</td><td className="px-3 py-2 text-left">100%</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</td></tr>
+                    <tr><td className="px-3 py-2">الإجمالي</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalCapitalSAR)}</td><td className="px-3 py-2"></td><td className="px-3 py-2 text-left">100%</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</td></tr>
                   </tfoot>
                 </table>
               </div>
@@ -1021,6 +1059,21 @@ export default function Capital() {
             <label className="block text-sm font-medium text-slate-700 mb-1">ملاحظات</label>
             <input type="text" value={contribNotes} onChange={e => setContribNotes(e.target.value)}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none" placeholder="اختياري" />
+          </div>
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
+            <div className="flex items-center gap-2">
+              <label className="block text-sm font-semibold text-blue-800">نسبة الربح الخاصة (%)</label>
+              <span className="text-xs text-blue-600">اختياري — لتحديد معدل ربح مختلف عن نسبة رأس ماله</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="number" min="0" max="100" step="0.01" value={contribProfitRate}
+                onChange={e => setContribProfitRate(e.target.value ? Number(e.target.value) : '')}
+                className="w-28 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none text-sm"
+                placeholder="مثال: 3" />
+              <span className="text-sm text-blue-700">%</span>
+              {contribProfitRate !== '' && <span className="text-xs text-blue-600">→ الربح = رأس مال × {contribProfitRate}%</span>}
+            </div>
+            <p className="text-xs text-blue-500">إذا تركت فارغاً سيتم توزيع الأرباح حسب نسبة رأس المال (الطريقة الافتراضية)</p>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => { setShowContribModal(false); resetContribForm(); }}
