@@ -14,6 +14,16 @@ import { supabase, isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from './
 import { addToast } from './toast'
 import type { AppState } from '../types'
 
+// Debounced save-success toast — collapses rapid per-table calls into one notification
+let _saveSuccessTimer: ReturnType<typeof setTimeout> | null = null
+function showSaveSuccess() {
+  if (_saveSuccessTimer) clearTimeout(_saveSuccessTimer)
+  _saveSuccessTimer = setTimeout(() => {
+    addToast('success', '✅ تم الحفظ')
+    _saveSuccessTimer = null
+  }, 200)
+}
+
 // ─── Table ↔ AppState key mapping ─────────────────────────────────
 
 export interface TableMapping {
@@ -446,7 +456,7 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
     const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
     if (error) throw error
     markWritten(mapping.table, pk)
-    addToast('success', '✅ تم الحفظ')
+    showSaveSuccess()
     return true
   } catch (e: any) {
     const msg = e?.message || e?.details || JSON.stringify(e)
@@ -482,7 +492,7 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
     const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
     if (error) throw error
     rows.forEach(row => markWritten(mapping.table, String(row[pkField])))
-    addToast('success', '✅ تم الحفظ')
+    showSaveSuccess()
     return true
   } catch (e: any) {
     const msg = e?.message || e?.details || JSON.stringify(e)
