@@ -58,6 +58,7 @@ const objectToCamel = (obj: Record<string, any>): Record<string, any> => {
 // Auto-detect which column name the DB uses for shipment open/closed status.
 // Some DBs still have is_active, others migrated to is_closed.
 let _shipmentDbColumn: 'is_active' | 'is_closed' | null = null
+let _capitalContributionHasProfitRate: boolean | null = null
 let _probing = false
 
 async function probeShipmentColumn(): Promise<void> {
@@ -76,6 +77,29 @@ async function probeShipmentColumn(): Promise<void> {
     _shipmentDbColumn = 'is_active'
   }
   _probing = false
+}
+
+async function probeCapitalContributionProfitRateColumn(): Promise<void> {
+  if (_capitalContributionHasProfitRate != null || !isSupabaseConfigured()) return
+  try {
+    const { error } = await supabase!.from('capital_contributions').select('profit_rate').limit(1)
+    _capitalContributionHasProfitRate = !error
+  } catch {
+    _capitalContributionHasProfitRate = false
+  }
+}
+
+function sanitizeCapitalContributionRow(row: Record<string, any>): Record<string, any> {
+  if (_capitalContributionHasProfitRate === false) {
+    const { profit_rate, ...rest } = row
+    return rest
+  }
+  return row
+}
+
+function isMissingProfitRateColumnError(error: any): boolean {
+  const msg = String(error?.message || error?.details || error || '')
+  return msg.includes('profit_rate') && msg.includes('capital_contributions')
 }
 
 export const TABLE_MAPPINGS: TableMapping[] = [
@@ -188,7 +212,7 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     toRow: (c) => ({
       id: c.id, partner_id: c.partnerId, shipment_id: c.shipmentId,
       amount_sar: c.amountSAR, date: c.date, notes: c.notes,
-      profit_rate: c.profitRate ?? null,
+      ...(_capitalContributionHasProfitRate === false ? {} : { profit_rate: c.profitRate ?? null }),
     }),
     fromRow: (row) => ({
       id: row.id, partnerId: row.partner_id, shipmentId: row.shipment_id,
@@ -383,7 +407,12 @@ export async function flushQueue(): Promise<void> {
             }
           }
         }
-        const { error } = await supabase!.from(item.table).upsert(row, { onConflict: pkCol })
+        const finalRow = item.table === 'capital_contributions' ? sanitizeCapitalContributionRow(row) : row
+        let { error } = await supabase!.from(item.table).upsert(finalRow, { onConflict: pkCol })
+        if (error && item.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
+          _capitalContributionHasProfitRate = false
+          error = (await supabase!.from(item.table).upsert(sanitizeCapitalContributionRow(finalRow), { onConflict: pkCol })).error
+        }
         if (error) throw error
       } else {
         const { error } = await supabase!.from(item.table).delete().eq(pkCol, item.pk)
@@ -442,8 +471,13 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
 
   // Ensure we know which DB column to use for shipments before building the row
   if (mapping.table === 'shipments' && !_shipmentDbColumn) await probeShipmentColumn()
+  if (mapping.table === 'capital_contributions' && _capitalContributionHasProfitRate == null) {
+    await probeCapitalContributionProfitRateColumn()
+  }
 
-  const row = mapping.toRow(item)
+  const row = mapping.table === 'capital_contributions'
+    ? sanitizeCapitalContributionRow(mapping.toRow(item))
+    : mapping.toRow(item)
   const pkField = mapping.pkField ?? 'id'
   const pk = String(row[pkField])
 
@@ -455,7 +489,12 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
 
   try {
     if (mapping.table === 'shipments') console.log('[sync] shipment row:', JSON.stringify(row), 'dbCol:', _shipmentDbColumn)
-    const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
+    let { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
+    if (error && mapping.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
+      _capitalContributionHasProfitRate = false
+      const fallbackRow = sanitizeCapitalContributionRow(row)
+      error = (await supabase!.from(mapping.table).upsert(fallbackRow, { onConflict: pkField })).error
+    }
     if (error) throw error
     markWritten(mapping.table, pk)
     showSaveSuccess()
@@ -476,8 +515,14 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
 
   // Ensure we know which DB column to use for shipments before building rows
   if (mapping.table === 'shipments' && !_shipmentDbColumn) await probeShipmentColumn()
+  if (mapping.table === 'capital_contributions' && _capitalContributionHasProfitRate == null) {
+    await probeCapitalContributionProfitRateColumn()
+  }
 
-  const rows = items.map(mapping.toRow)
+  const rows = items.map(item => {
+    const row = mapping.toRow(item)
+    return mapping.table === 'capital_contributions' ? sanitizeCapitalContributionRow(row) : row
+  })
   const pkField = mapping.pkField ?? 'id'
 
   if (!syncStatus.isOnline || !isSupabaseConfigured()) {
@@ -491,7 +536,12 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
 
   try {
     if (mapping.table === 'shipments') console.log('[sync] shipment rows:', JSON.stringify(rows), 'dbCol:', _shipmentDbColumn)
-    const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
+    let { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
+    if (error && mapping.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
+      _capitalContributionHasProfitRate = false
+      const fallbackRows = rows.map(sanitizeCapitalContributionRow)
+      error = (await supabase!.from(mapping.table).upsert(fallbackRows, { onConflict: pkField })).error
+    }
     if (error) throw error
     rows.forEach(row => markWritten(mapping.table, String(row[pkField])))
     showSaveSuccess()
@@ -650,9 +700,19 @@ export async function fullPushToCloud(state: AppState): Promise<void> {
         items = (state as any)[mapping.stateKey] ?? []
       }
       if (!Array.isArray(items) || items.length === 0) continue
-      const rows = items.map(mapping.toRow)
+      if (mapping.table === 'capital_contributions' && _capitalContributionHasProfitRate == null) {
+        await probeCapitalContributionProfitRateColumn()
+      }
+      const rows = items.map(item => {
+        const row = mapping.toRow(item)
+        return mapping.table === 'capital_contributions' ? sanitizeCapitalContributionRow(row) : row
+      })
       const pkCol = mapping.pkField ?? 'id'
-      const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkCol })
+      let { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkCol })
+      if (error && mapping.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
+        _capitalContributionHasProfitRate = false
+        error = (await supabase!.from(mapping.table).upsert(rows.map(sanitizeCapitalContributionRow), { onConflict: pkCol })).error
+      }
       if (error) console.warn(`[sync] fullPush ${mapping.table}:`, error)
     } catch (e) {
       console.warn(`[sync] fullPush ${mapping.table} error:`, e)

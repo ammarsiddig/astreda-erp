@@ -86,6 +86,7 @@ const TABLE_MAPPINGS = [
     toRow: (c) => ({
       id: c.id, partner_id: c.partnerId, shipment_id: c.shipmentId,
       amount_sar: c.amountSAR, date: c.date, notes: c.notes,
+      profit_rate: c.profitRate ?? null,
     }),
   },
   {

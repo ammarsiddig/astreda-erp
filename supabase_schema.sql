@@ -233,6 +233,7 @@ CREATE TABLE capital_contributions (
   amount_sar DECIMAL(12,2) NOT NULL DEFAULT 0,
   date TEXT NOT NULL,
   notes TEXT,
+  profit_rate DECIMAL(8,2),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
