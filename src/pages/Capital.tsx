@@ -27,6 +27,19 @@ const fmtSDG = (v: number) =>
 const fmtPct = (v: number) =>
   new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v) + '%';
 const roundDownToNearest10 = (amount: number) => Math.floor(amount / 10) * 10;
+const normalizeProfitRate = (profitRate?: number | null) => profitRate ?? 1;
+
+function getPartnerContributionStats(contributions: CapitalContribution[], partnerId: string) {
+  const partnerContributions = contributions.filter(c => c.partnerId === partnerId);
+  const capital = partnerContributions.reduce((sum, c) => sum + c.amountSAR, 0);
+  const weightedCapital = partnerContributions.reduce(
+    (sum, c) => sum + (c.amountSAR * normalizeProfitRate(c.profitRate)),
+    0
+  );
+  const rateEntry = partnerContributions.filter(c => c.profitRate != null).slice(-1)[0];
+  const profitRate = rateEntry?.profitRate ?? null;
+  return { capital, weightedCapital, profitRate };
+}
 
 function getLastExchangeRate(transfers: { exchangeRate: number; date: string }[]): number | null {
   const sorted = [...transfers].filter(t => t.exchangeRate > 0)
@@ -104,28 +117,17 @@ export default function Capital() {
   const investorData = useMemo(() => {
     if (!activeShipmentId) return [];
     const partnersWithContribs = new Set(contributions.map(c => c.partnerId));
-    // Build per-partner data first to compute weighted pool denominator
-    const partnerList = state.partners.filter(p => partnersWithContribs.has(p.id)).map(partner => {
-      const capital = contributions.filter(c => c.partnerId === partner.id).reduce((s, c) => s + c.amountSAR, 0);
-      // Use the most-recent profitRate for this partner across their contributions
-      const rateEntry = contributions.filter(c => c.partnerId === partner.id && c.profitRate != null).slice(-1)[0];
-      const profitRate = rateEntry?.profitRate ?? null;
-      return { partner, capital, profitRate };
-    });
-    // Determine if any investor has a custom rate set
-    const anyHasRate = partnerList.some(p => p.profitRate != null);
-    // Total weighted denominator: capital × rate (fallback: pure capital sum)
-    const totalWeighted = anyHasRate
-      ? partnerList.reduce((s, p) => s + p.capital * (p.profitRate ?? 0), 0)
-      : partnerList.reduce((s, p) => s + p.capital, 0);
-
-    return partnerList.map(({ partner, capital, profitRate }) => {
+    const partnerList = state.partners.filter(p => partnersWithContribs.has(p.id)).map(partner => ({
+      partner,
+      ...getPartnerContributionStats(contributions, partner.id),
+    }));
+    const totalWeighted = partnerList.reduce((sum, p) => sum + p.weightedCapital, 0);
+    return partnerList.map(({ partner, capital, weightedCapital, profitRate }) => {
       const returned = capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
       const remainingCapital = Math.max(0, capital - returned);
       let profitEntitled = 0;
       if (liveProfitCalc && totalWeighted > 0) {
-        const weight = anyHasRate ? capital * (profitRate ?? 0) : capital;
-        profitEntitled = liveProfitCalc.investorShareSAR * (weight / totalWeighted);
+        profitEntitled = liveProfitCalc.investorShareSAR * (weightedCapital / totalWeighted);
       }
       const profitEntitledRounded = roundDownToNearest10(profitEntitled);
       const profitPaid = profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
@@ -169,19 +171,13 @@ export default function Capital() {
     const grossProfitSAR = exchangeRate > 0 ? grossProfitSDG / exchangeRate : 0;
     const investorsShareSAR = grossProfitSAR * investorsPct / 100;
     const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
-    const investorShares = state.partners.filter(p => contributions.some(c => c.partnerId === p.id)).map(partner => {
-      const cap = contributions.filter(c => c.partnerId === partner.id).reduce((s, c) => s + c.amountSAR, 0);
-      const rateEntry = contributions.filter(c => c.partnerId === partner.id && c.profitRate != null).slice(-1)[0];
-      const profitRate = rateEntry?.profitRate ?? null;
-      return { partner, capital: cap, profitRate };
-    });
-    const anyHasRate = investorShares.some(r => r.profitRate != null);
-    const totalWeighted = anyHasRate
-      ? investorShares.reduce((s, r) => s + r.capital * (r.profitRate ?? 0), 0)
-      : investorShares.reduce((s, r) => s + r.capital, 0);
+    const investorShares = state.partners.filter(p => contributions.some(c => c.partnerId === p.id)).map(partner => ({
+      partner,
+      ...getPartnerContributionStats(contributions, partner.id),
+    }));
+    const totalWeighted = investorShares.reduce((sum, r) => sum + r.weightedCapital, 0);
     const investorSharesWithProfit = investorShares.map(r => {
-      const weight = anyHasRate ? r.capital * (r.profitRate ?? 0) : r.capital;
-      const pct = totalWeighted > 0 ? (weight / totalWeighted) * 100 : 0;
+      const pct = totalWeighted > 0 ? (r.weightedCapital / totalWeighted) * 100 : 0;
       const rawProfit = investorsShareSAR * pct / 100;
       const profit = roundDownToNearest10(rawProfit);
       return { ...r, pct, profit };
