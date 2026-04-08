@@ -27,7 +27,7 @@ const fmtSDG = (v: number) =>
 const fmtPct = (v: number) =>
   new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v) + '%';
 const roundDownToNearest10 = (amount: number) => Math.floor(amount / 10) * 10;
-const normalizeProfitRate = (profitRate?: number | null) => profitRate ?? 1;
+const normalizeProfitRate = (profitRate?: number | null) => profitRate == null ? 1 : profitRate / 100;
 
 function getPartnerContributionStats(contributions: CapitalContribution[], partnerId: string) {
   const partnerContributions = contributions.filter(c => c.partnerId === partnerId);
