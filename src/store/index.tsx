@@ -85,6 +85,8 @@ const DEFAULT_USERS: User[] = [
   { id: 'user-hassan',     name: 'حسن',          username: 'hassan',     password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-salesperson', salespersonId: '2', isActive: true },
 ];
 
+const ACTIVE_SHIPMENT_STORAGE_KEY = 'astreda_active_shipment_id';
+
 const initialState: AppState = {
   language: 'ar',
   userRole: 'manager',
@@ -403,6 +405,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  const mergeCapitalContributionProfitRates = useCallback((prev: AppState, nextContributions: any[]) => {
+    const prevById = new Map(
+      (prev.capitalContributions || []).map((c: any) => [c.id, c.profitRate])
+    );
+
+    return nextContributions.map((c: any) => ({
+      ...c,
+      profitRate: c.profitRate ?? prevById.get(c.id) ?? undefined,
+    }));
+  }, []);
+
   // Cloud updates are applied directly — no diff tracking needed.
   // ensureDefaults is applied inline so DEFAULT_ROLES/USERS survive every cloud
   // pull (initial load, visibilitychange, realtime), not just the first one.
@@ -413,6 +426,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (key === 'currentUser') continue;
         if (key === 'settlementResults') {
           merged[key] = { ...(prev as any)[key], ...(value as Record<string, unknown>) };
+        } else if (key === 'capitalContributions' && Array.isArray(value)) {
+          merged[key] = mergeCapitalContributionProfitRates(prev, value);
         } else {
           merged[key] = value;
         }
@@ -420,7 +435,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       merged.currentUser = prev.currentUser;
       return cleanOrphanedLedger(ensureDefaults(merged) as AppState);
     });
-  }, []);
+  }, [mergeCapitalContributionProfitRates]);
 
   // ── Cloud-First initialization ──────────────────────────────────
   useEffect(() => {
@@ -543,7 +558,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Simple React state — just remembers which shipment the user is working
   // with so forms auto-fill the shipment field. Defaults to first open shipment.
   const [activeShipmentId, setActiveShipmentId] = useState<string | undefined>(
-    () => state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id
+    () => {
+      const savedShipmentId = localStorage.getItem(ACTIVE_SHIPMENT_STORAGE_KEY) || undefined;
+      if (savedShipmentId && state.shipments.some(s => s.id === savedShipmentId)) return savedShipmentId;
+      return state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
+    }
   );
 
   // If shipments list changes (e.g. cloud pull adds/removes), ensure selection is still valid
@@ -554,6 +573,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const fallback = state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
     if (fallback) setActiveShipmentId(fallback);
   }, [state.shipments, activeShipmentId]);
+
+  useEffect(() => {
+    if (!activeShipmentId) {
+      localStorage.removeItem(ACTIVE_SHIPMENT_STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(ACTIVE_SHIPMENT_STORAGE_KEY, activeShipmentId);
+  }, [activeShipmentId]);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Cloud-First: fetch fresh users from Supabase before authenticating.
