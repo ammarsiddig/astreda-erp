@@ -81,7 +81,7 @@ export default function GeneralTransfers() {
     e.preventDefault();
     if (!activeShipmentId || !exchangeRate || totalSplitsAmount <= 0) return;
     if (transferType === 'drawings' && !partnerId) return;
-    if ((transferType === 'capital_return' || transferType === 'capital') && !beneficiaryPartnerId) return;
+    if ((transferType === 'capital_return' || transferType === 'capital' || transferType === 'profit_payment') && !beneficiaryPartnerId) return;
 
     const validSplits = splits.filter(s => s.bankAccountId && s.amount > 0);
     if (validSplits.length === 0) return;
@@ -94,7 +94,7 @@ export default function GeneralTransfers() {
       date,
       partnerId: transferType === 'drawings' ? partnerId : (beneficiaryPartnerId || ''),
       transferType,
-      beneficiaryPartnerId: (transferType === 'capital_return' || transferType === 'capital') ? beneficiaryPartnerId : undefined,
+      beneficiaryPartnerId: (transferType === 'capital_return' || transferType === 'capital' || transferType === 'profit_payment') ? beneficiaryPartnerId : undefined,
       amountSDG: totalSplitsAmount,
       exchangeRate: Number(exchangeRate),
       amountSAR,
@@ -113,7 +113,7 @@ export default function GeneralTransfers() {
       ? state.partners.find(p => p.id === partnerId)?.name
       : state.partners.find(p => p.id === beneficiaryPartnerId)?.name;
 
-    const typeLabel = transferType === 'drawings' ? t('capitalTypeDrawings') : t('capitalReturn');
+    const typeLabel = transferType === 'drawings' ? t('capitalTypeDrawings') : transferType === 'profit_payment' ? 'توزيع أرباح' : t('capitalReturn');
 
     const newLedgerEntries = validSplits.map(split => ({
       id: uuidv4(),
@@ -193,6 +193,9 @@ export default function GeneralTransfers() {
   };
 
   const getTypeBadge = (type?: GeneralTransferType) => {
+    if (type === 'profit_payment') {
+      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">توزيع أرباح</span>;
+    }
     if (type === 'capital_return' || type === 'capital') {
       return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ccfbf1] text-[#134e4a]">{t('capitalReturn')}</span>;
     }
@@ -240,7 +243,8 @@ export default function GeneralTransfers() {
             className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
           >
             <option value="">{t('all')}</option>
-            <option value="capital_return">{t('capitalReturn')}</option>
+            <option value="capital_return">إرجاع رأس مال</option>
+            <option value="profit_payment">توزيع أرباح</option>
             <option value="drawings">{t('capitalTypeDrawings')}</option>
           </select>
         </div>
@@ -279,7 +283,7 @@ export default function GeneralTransfers() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {sortedTransfers.length > 0 ? sortedTransfers.map((transfer, idx) => {
-            const displayPartner = (transfer.transferType === 'capital_return' || transfer.transferType === 'capital')
+            const displayPartner = (transfer.transferType === 'capital_return' || transfer.transferType === 'capital' || transfer.transferType === 'profit_payment')
               ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
               : state.partners.find(p => p.id === transfer.partnerId)?.name;
             return (
@@ -326,7 +330,7 @@ export default function GeneralTransfers() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sortedTransfers.length > 0 ? sortedTransfers.map((transfer, idx) => {
-                const displayPartner = (transfer.transferType === 'capital_return' || transfer.transferType === 'capital')
+                const displayPartner = (transfer.transferType === 'capital_return' || transfer.transferType === 'capital' || transfer.transferType === 'profit_payment')
                   ? state.partners.find(p => p.id === (transfer.beneficiaryPartnerId || transfer.partnerId))?.name
                   : state.partners.find(p => p.id === transfer.partnerId)?.name;
                 return (
@@ -406,7 +410,18 @@ export default function GeneralTransfers() {
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                 }`}
               >
-                🏦 إرجاع رأس مال وأرباح
+                🏦 إرجاع رأس مال
+              </button>
+              <button
+                type="button"
+                onClick={() => setTransferType('profit_payment')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                  transferType === 'profit_payment'
+                    ? 'border-[#3b82f6] bg-[#eff6ff] text-[#1e3a8a]'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                💰 توزيع أرباح
               </button>
               <button
                 type="button"
@@ -437,7 +452,9 @@ export default function GeneralTransfers() {
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">{t('beneficiary')}</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {transferType === 'profit_payment' ? 'المستفيد (أرباح)' : 'المستفيد (إرجاع رأس مال)'}
+                </label>
                 <SearchableSelect
                   required
                   value={beneficiaryPartnerId}
@@ -573,10 +590,10 @@ export default function GeneralTransfers() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">
-                  {showViewModal.transferType === 'drawings' ? 'الشريك' : 'المستفيد (إرجاع رأس مال وأرباح)'}
+                  {showViewModal.transferType === 'drawings' ? 'الشريك' : showViewModal.transferType === 'profit_payment' ? 'المستفيد (أرباح)' : 'المستفيد (إرجاع رأس مال)'}
                 </label>
                 <p className="font-medium">
-                  {(showViewModal.transferType === 'capital_return' || showViewModal.transferType === 'capital')
+                  {(showViewModal.transferType === 'capital_return' || showViewModal.transferType === 'capital' || showViewModal.transferType === 'profit_payment')
                     ? state.partners.find(p => p.id === (showViewModal.beneficiaryPartnerId || showViewModal.partnerId))?.name
                     : state.partners.find(p => p.id === showViewModal.partnerId)?.name}
                 </p>
