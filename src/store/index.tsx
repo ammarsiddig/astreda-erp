@@ -86,6 +86,30 @@ const DEFAULT_USERS: User[] = [
 ];
 
 const ACTIVE_SHIPMENT_STORAGE_KEY = 'astreda_active_shipment_id';
+const CAPITAL_PROFIT_RATE_OVERRIDES_KEY = 'astreda_capital_profit_rate_overrides';
+
+function loadCapitalProfitRateOverrides(): Record<string, number> {
+  try {
+    return JSON.parse(localStorage.getItem(CAPITAL_PROFIT_RATE_OVERRIDES_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveCapitalProfitRateOverrides(contributions: Array<{ id: string; profitRate?: number }>) {
+  const existing = loadCapitalProfitRateOverrides();
+  const next = { ...existing };
+
+  for (const contribution of contributions) {
+    if (contribution.profitRate == null) {
+      delete next[contribution.id];
+    } else {
+      next[contribution.id] = contribution.profitRate;
+    }
+  }
+
+  localStorage.setItem(CAPITAL_PROFIT_RATE_OVERRIDES_KEY, JSON.stringify(next));
+}
 
 const initialState: AppState = {
   language: 'ar',
@@ -369,6 +393,14 @@ function loadFromLocalStorage(): AppState {
       merged.currentUser = null;
     }
 
+    if (Array.isArray(merged.capitalContributions)) {
+      const overrides = loadCapitalProfitRateOverrides();
+      merged.capitalContributions = merged.capitalContributions.map((c: any) => ({
+        ...c,
+        profitRate: c.profitRate ?? overrides[c.id] ?? undefined,
+      }));
+    }
+
     return cleanOrphanedLedger(merged);
   } catch (e) {
     console.error('Failed to parse state from localStorage', e);
@@ -406,13 +438,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   stateRef.current = state;
 
   const mergeCapitalContributionProfitRates = useCallback((prev: AppState, nextContributions: any[]) => {
+    const overrides = loadCapitalProfitRateOverrides();
     const prevById = new Map(
       (prev.capitalContributions || []).map((c: any) => [c.id, c.profitRate])
     );
 
     return nextContributions.map((c: any) => ({
       ...c,
-      profitRate: c.profitRate ?? prevById.get(c.id) ?? undefined,
+      profitRate: c.profitRate ?? prevById.get(c.id) ?? overrides[c.id] ?? undefined,
     }));
   }, []);
 
@@ -495,6 +528,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setState(() => final_);
+
+    if ('capitalContributions' in updates && Array.isArray(final_.capitalContributions)) {
+      saveCapitalProfitRateOverrides(final_.capitalContributions);
+    }
 
     // Push scalar settings to cloud if any changed
     const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
