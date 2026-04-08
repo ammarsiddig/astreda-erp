@@ -188,10 +188,12 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     toRow: (c) => ({
       id: c.id, partner_id: c.partnerId, shipment_id: c.shipmentId,
       amount_sar: c.amountSAR, date: c.date, notes: c.notes,
+      profit_rate: c.profitRate ?? null,
     }),
     fromRow: (row) => ({
       id: row.id, partnerId: row.partner_id, shipmentId: row.shipment_id,
       amountSAR: row.amount_sar, date: row.date, notes: row.notes,
+      profitRate: row.profit_rate ?? undefined,
     }),
   },
   {
