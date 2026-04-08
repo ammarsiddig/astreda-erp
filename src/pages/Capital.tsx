@@ -41,6 +41,8 @@ export default function Capital() {
   const [activeTab, setActiveTab] = useState<Tab>('investors');
   const [selectedInvestorRowId, setSelectedInvestorRowId] = useState<string | null>(null);
   const [showContribModal, setShowContribModal] = useState(false);
+  const [editingContribId, setEditingContribId] = useState<string | null>(null);
+  const [showDeleteContribId, setShowDeleteContribId] = useState<string | null>(null);
   const [contribPartnerId, setContribPartnerId] = useState('');
   const [contribAmountSAR, setContribAmountSAR] = useState<number | ''>('');
   const [contribDate, setContribDate] = useState(new Date().toISOString().split('T')[0]);
@@ -133,9 +135,9 @@ export default function Capital() {
       if (remainingCapital === 0 && profitRemaining === 0) status = 'complete';
       else if (remainingCapital === 0 && profitRemaining > 0) status = 'profit_pending';
       const transactions = [
-        ...contributions.filter(c => c.partnerId === partner.id).map(c => ({ date: c.date, type: 'مساهمة' as const, sar: c.amountSAR, sdg: 0, desc: c.notes || 'مساهمة رأس مال' })),
-        ...capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ date: t.date, type: 'إرجاع' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-' })),
-        ...profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ date: t.date, type: 'أرباح' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-' })),
+        ...contributions.filter(c => c.partnerId === partner.id).map(c => ({ id: c.id, date: c.date, type: 'مساهمة' as const, sar: c.amountSAR, sdg: 0, desc: c.notes || 'مساهمة رأس مال', original: c })),
+        ...capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ id: t.id, date: t.date, type: 'إرجاع' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-', original: undefined })),
+        ...profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ id: t.id, date: t.date, type: 'أرباح' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-', original: undefined })),
       ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       return { partner, capital, profitRate, returned, remainingCapital, profitEntitled, profitEntitledRounded, profitPaid, profitRemaining, totalDue, status, transactions };
     });
@@ -189,7 +191,7 @@ export default function Capital() {
     const totalRoundedInvestorProfits = investorSharesFinal.reduce((s, r) => s + r.profit, 0);
     const investorRoundingRemainder = investorsShareSAR - totalRoundedInvestorProfits;
     const partnersShareSAR = grossProfitSAR * partnersPct / 100;
-    const managementFeeSAR = partnersShareSAR * mgmtFeePct / 100;
+    const managementFeeSAR = grossProfitSAR * mgmtFeePct / 100;
     const remainingForPartners = (partnersShareSAR - managementFeeSAR) + investorRoundingRemainder;
     const perPartnerSAR = operatingPartners.length > 0 ? remainingForPartners / operatingPartners.length : 0;
     const partnerSummaries = operatingPartners.map(partner => {
@@ -237,19 +239,46 @@ export default function Capital() {
     setContribDate(new Date().toISOString().split('T')[0]);
     setContribNotes('');
     setContribProfitRate('');
+    setEditingContribId(null);
   };
   const handleSaveContribution = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasWriteAccess) return;
     if (!contribPartnerId || !contribAmountSAR || !activeShipmentId) return;
-    const newContrib: CapitalContribution = {
-      id: generateId('CC', state.capitalContributions || []),
-      partnerId: contribPartnerId, shipmentId: activeShipmentId,
-      amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined,
-      profitRate: contribProfitRate !== '' ? Number(contribProfitRate) : undefined,
-    };
-    updateState({ capitalContributions: [...(state.capitalContributions || []), newContrib] });
+    if (editingContribId) {
+      updateState({
+        capitalContributions: (state.capitalContributions || []).map(c => 
+          c.id === editingContribId
+            ? { ...c, partnerId: contribPartnerId, amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined, profitRate: contribProfitRate !== '' ? Number(contribProfitRate) : undefined }
+            : c
+        )
+      });
+    } else {
+      const newContrib: CapitalContribution = {
+        id: generateId('CC', state.capitalContributions || []),
+        partnerId: contribPartnerId, shipmentId: activeShipmentId,
+        amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined,
+        profitRate: contribProfitRate !== '' ? Number(contribProfitRate) : undefined,
+      };
+      updateState({ capitalContributions: [...(state.capitalContributions || []), newContrib] });
+    }
     setShowContribModal(false); resetContribForm();
+  };
+
+  const openEditContrib = (c: CapitalContribution) => {
+    setEditingContribId(c.id);
+    setContribPartnerId(c.partnerId);
+    setContribAmountSAR(c.amountSAR);
+    setContribDate(c.date);
+    setContribNotes(c.notes || '');
+    setContribProfitRate(c.profitRate ?? '');
+    setShowContribModal(true);
+  };
+
+  const handleDeleteContrib = () => {
+    if (!hasWriteAccess || !showDeleteContribId) return;
+    updateState({ capitalContributions: (state.capitalContributions || []).filter(c => c.id !== showDeleteContribId) });
+    setShowDeleteContribId(null);
   };
 
   const handleSaveSettlement = () => {
@@ -564,6 +593,7 @@ export default function Capital() {
                               <th className="py-1 text-right font-medium">التاريخ</th><th className="py-1 text-right font-medium">النوع</th>
                               <th className="py-1 text-left font-medium">SAR</th><th className="py-1 text-left font-medium">SDG</th>
                               <th className="py-1 text-right font-medium">الوصف</th>
+                              {hasWriteAccess && <th className="py-1 text-center font-medium">إجراء</th>}
                             </tr></thead>
                             <tbody>{d.transactions.map((tx, i) => (
                               <tr key={i} className="border-b border-slate-50">
@@ -573,7 +603,17 @@ export default function Capital() {
                                 <td className={`py-1 text-left font-mono ${tx.sar >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                                   {tx.sar >= 0 ? '+' : ''}{new Intl.NumberFormat('en-US', {minimumFractionDigits:0,maximumFractionDigits:0}).format(tx.sar)}</td>
                                 <td className="py-1 text-left font-mono text-slate-500">{tx.sdg > 0 ? new Intl.NumberFormat('en-US').format(tx.sdg) : '0'}</td>
-                                <td className="py-1 text-slate-500 truncate max-w-[80px]">{tx.desc}</td>
+                                <td className="py-1 text-slate-500 truncate max-w-[80px]" title={tx.desc}>{tx.desc}</td>
+                                {hasWriteAccess && (
+                                  <td className="py-1 text-center">
+                                    {tx.type === 'مساهمة' && tx.original ? (
+                                      <div className="flex justify-center gap-2">
+                                        <button onClick={() => openEditContrib(tx.original as CapitalContribution)} className="text-slate-400 hover:text-[#14b8a6] transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                        <button onClick={() => setShowDeleteContribId(tx.id)} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                      </div>
+                                    ) : null}
+                                  </td>
+                                )}
                               </tr>
                             ))}</tbody>
                           </table>
@@ -1081,6 +1121,16 @@ export default function Capital() {
             <button type="submit" className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm">حفظ المساهمة</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!showDeleteContribId} onClose={() => setShowDeleteContribId(null)} title="تأكيد الحذف">
+        <div className="space-y-4">
+          <p className="text-slate-600">هل أنت متأكد من حذف المساهمة؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          <div className="flex justify-end gap-3 pt-4">
+            <button onClick={() => setShowDeleteContribId(null)} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50">إلغاء</button>
+            <button onClick={handleDeleteContrib} className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700">تأكيد الحذف</button>
+          </div>
+        </div>
       </Modal>
 
       {/* Drawing Modal */}
