@@ -3,7 +3,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { generateId, formatCurrency } from '../lib/utils';
+import { generateId, formatCurrency, dateTimeFromDateString } from '../lib/utils';
 import Modal from './Modal';
 import SearchableSelect from './SearchableSelect';
 import { Invoice, InvoiceLine } from '../types';
@@ -34,7 +34,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
 
   useEffect(() => {
     if (invoiceToEdit) {
-      setInvoiceDate(invoiceToEdit.date);
+      setInvoiceDate(invoiceToEdit.date.slice(0, 10));
       setCustomerId(invoiceToEdit.customerId);
       setCityId(invoiceToEdit.cityId);
       setCarId(invoiceToEdit.carId);
@@ -106,7 +106,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
 
     const newInvoice: Invoice = {
       id: invoiceId,
-      date: invoiceDate,
+      date: dateTimeFromDateString(invoiceDate),
       customerId,
       salespersonId,
       cityId,
@@ -143,7 +143,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     // Create new inventory transactions
     const newInventoryTransactions = validLines.map((line, idx) => ({
       id: generateId('IT', state.inventoryTransactions, idx),
-      date: invoiceDate,
+      date: dateTimeFromDateString(invoiceDate),
       shipmentId: activeShipmentId,
       productId: line.productId,
       type: 'sell' as const,
@@ -159,7 +159,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     if (paymentType === 'cash' && bankAccountId) {
       updatedLedger.push({
         id: uuidv4(),
-        date: invoiceDate,
+        date: dateTimeFromDateString(invoiceDate),
         toAccount: bankAccountId,
         description: `فاتورة مبيعات نقدية #${invoiceId}`,
         amountIn: invoiceTotal,

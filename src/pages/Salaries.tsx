@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
 import { Salary, Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -142,7 +142,7 @@ export default function Salaries() {
 
     const newSalary: Salary = {
       id: salaryId,
-      date,
+      date: dateTimeFromDateString(date),
       employeeId,
       type,
       month,
@@ -161,7 +161,7 @@ export default function Salaries() {
 
     const newLedgerEntry = {
       id: uuidv4(),
-      date,
+      date: dateTimeFromDateString(date),
       toAccount: bankAccountId,
       description: `راتب / Salary - ${emp?.name} ${finalNotes ? `(${finalNotes})` : ''}`,
       amountIn: 0,
@@ -205,7 +205,7 @@ export default function Salaries() {
   };
 
   const openEditModal = (salary: Salary) => {
-    setDate(salary.date);
+    setDate(salary.date.slice(0, 10));
     setEmployeeId(salary.employeeId);
     setType(salary.type);
     setMonth(salary.month);
@@ -275,7 +275,7 @@ export default function Salaries() {
 
     const newExpense: Expense = {
       id: newExpenseId,
-      date: advDate,
+      date: dateTimeFromDateString(advDate),
       categoryId: advancesCategoryId,
       description: emp?.name || '',
       amount: advAmountNum,
@@ -287,7 +287,7 @@ export default function Salaries() {
 
     const newLedgerEntry = {
       id: uuidv4(),
-      date: advDate,
+      date: dateTimeFromDateString(advDate),
       toAccount: advBankAccountId,
       description: `سلفية - ${emp?.name || ''}${advNotes ? ` (${advNotes})` : ''}`,
       amountIn: 0,
@@ -434,7 +434,7 @@ export default function Salaries() {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                <thead className="text-xs text-white uppercase bg-[#1E293B]">
+                <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'id'}/></div></th>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'date'}/></div></th>
@@ -618,7 +618,7 @@ export default function Salaries() {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                <thead className="text-xs text-white uppercase bg-[#1E293B]">
+                <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('date')}><div className="flex items-center gap-1">التاريخ <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'date'}/></div></th>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('description')}><div className="flex items-center gap-1">الموظف <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'description'}/></div></th>

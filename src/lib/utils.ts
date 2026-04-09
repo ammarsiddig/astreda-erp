@@ -24,6 +24,15 @@ export function formatDate(dateString: string) {
   }).format(date);
 }
 
+/** Combines a YYYY-MM-DD date string with the current local time → "YYYY-MM-DDTHH:mm:ss" */
+export function dateTimeFromDateString(dateString: string): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return `${dateString}T${hh}:${mm}:${ss}`;
+}
+
 export function generateId(prefix: string, items: { id: string }[], offset = 0) {
   let maxNum = 0;
   for (const item of items) {

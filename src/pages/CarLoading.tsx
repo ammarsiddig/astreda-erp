@@ -212,7 +212,7 @@ export default function CarLoading() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-4 font-semibold">{t('product')}</th>
                 <th className="px-4 py-4 font-semibold text-center">{t('loadedQty')}</th>
@@ -273,7 +273,7 @@ export default function CarLoading() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left rtl:text-right">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('product')}</th>

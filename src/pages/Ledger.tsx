@@ -454,7 +454,7 @@ export default function Ledger() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#134e4a]">
+            <thead className="text-xs text-white uppercase bg-[#134e4a] sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => requestSort('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={sortConfig?.direction!} active={sortConfig?.key === 'date'}/></div></th>
                 <th className="px-4 py-3">{t('description')}</th>

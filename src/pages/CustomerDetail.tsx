@@ -283,7 +283,7 @@ export default function CustomerDetail() {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                <thead className="text-xs text-white uppercase bg-[#1E293B]">
+                <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3">{t('invoiceNumber')}</th>
                     <th className="px-4 py-3">{t('date')}</th>
@@ -376,7 +376,7 @@ export default function CustomerDetail() {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-                <thead className="text-xs text-white uppercase bg-[#1E293B]">
+                <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3">{t('date')}</th>
                     <th className="px-4 py-3">{t('bankAccount')}</th>

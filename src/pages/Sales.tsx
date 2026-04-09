@@ -358,7 +358,7 @@ export default function Sales() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvoices('id')}><div className="flex items-center gap-1">{t('invoiceNumber')} <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'id'}/></div></th>

@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -42,8 +42,8 @@ export default function Expenses() {
   const filteredExpenses = useMemo(() => {
     return state.expenses.filter(e => {
       if (e.shipmentId !== activeShipmentId) return false;
-      if (filterFromDate && e.date < filterFromDate) return false;
-      if (filterToDate && e.date > filterToDate) return false;
+      if (filterFromDate && e.date.slice(0, 10) < filterFromDate) return false;
+      if (filterToDate && e.date.slice(0, 10) > filterToDate) return false;
       if (filterCategory && e.categoryId !== filterCategory) return false;
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -61,7 +61,7 @@ export default function Expenses() {
 
     const newExpense: Expense = {
       id: expenseId,
-      date,
+      date: dateTimeFromDateString(date),
       categoryId,
       description: notes,
       amount: expenseAmount,
@@ -81,7 +81,7 @@ export default function Expenses() {
     // Apply new effects
     const newLedgerEntry = {
       id: uuidv4(),
-      date,
+      date: dateTimeFromDateString(date),
       toAccount: bankAccountId,
       description: `مصروفات / Expense - ${state.expenseCategories.find(c => c.id === categoryId)?.name} ${notes ? `(${notes})` : ''}`,
       amountIn: 0,
@@ -114,7 +114,7 @@ export default function Expenses() {
   };
 
   const openEditModal = (expense: Expense) => {
-    setDate(expense.date);
+    setDate(expense.date.slice(0, 10));
     setCategoryId(expense.categoryId);
     setAmount(expense.amount);
     setBankAccountId(expense.bankAccountId);
@@ -269,7 +269,7 @@ export default function Expenses() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortExpenses('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={expSortConfig?.direction!} active={expSortConfig?.key === 'id'}/></div></th>

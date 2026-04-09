@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
 import { GeneralTransfer, GeneralTransferType } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -91,7 +91,7 @@ export default function GeneralTransfers() {
 
     const newTransfer: GeneralTransfer = {
       id: transferId,
-      date,
+      date: dateTimeFromDateString(date),
       partnerId: transferType === 'drawings' ? partnerId : (beneficiaryPartnerId || ''),
       transferType,
       beneficiaryPartnerId: (transferType === 'capital_return' || transferType === 'capital' || transferType === 'profit_payment') ? beneficiaryPartnerId : undefined,
@@ -117,7 +117,7 @@ export default function GeneralTransfers() {
 
     const newLedgerEntries = validSplits.map(split => ({
       id: uuidv4(),
-      date,
+      date: dateTimeFromDateString(date),
       fromAccount: split.bankAccountId,
       description: `${typeLabel} - ${partnerLabel} ${description ? `(${description})` : ''}`,
       amountIn: 0,
@@ -150,7 +150,7 @@ export default function GeneralTransfers() {
   };
 
   const openEditModal = (transfer: GeneralTransfer) => {
-    setDate(transfer.date);
+    setDate(transfer.date.slice(0, 10));
     setPartnerId(transfer.transferType === 'drawings' ? transfer.partnerId : '');
     setBeneficiaryPartnerId(transfer.beneficiaryPartnerId || transfer.partnerId || '');
     setTransferType(transfer.transferType === 'capital' ? 'capital_return' : (transfer.transferType || 'capital_return'));
@@ -315,7 +315,7 @@ export default function GeneralTransfers() {
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
-            <thead className="text-xs text-white uppercase bg-[#1E293B]">
+            <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
                 {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortTransfers('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={transferSortConfig?.direction!} active={transferSortConfig?.key === 'id'}/></div></th>
