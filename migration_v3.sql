@@ -8,9 +8,24 @@ ALTER TABLE shipments ADD COLUMN IF NOT EXISTS is_closed BOOLEAN DEFAULT false;
 
 -- COALESCE fallback = false because the original schema had `is_active BOOLEAN DEFAULT false`,
 -- meaning NULL or false → not active → should be is_closed = true.
-UPDATE shipments
-SET is_closed = NOT COALESCE(is_active, false)
-WHERE is_closed IS NULL OR is_active IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'shipments' AND column_name = 'is_active'
+  ) THEN
+    EXECUTE $sql$
+      UPDATE shipments
+      SET is_closed = NOT COALESCE(is_active, false)
+      WHERE is_closed IS NULL OR is_active IS NOT NULL
+    $sql$;
+  ELSE
+    UPDATE shipments
+    SET is_closed = COALESCE(is_closed, false)
+    WHERE is_closed IS NULL;
+  END IF;
+END $$;
 
 ALTER TABLE shipments DROP COLUMN IF EXISTS is_active;
 
