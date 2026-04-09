@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
+    "check:sync-v3": "tsx scripts/checkSyncV3.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
