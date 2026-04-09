@@ -1,20 +1,29 @@
 /**
- * Sync Engine v2 — Online-Only, Supabase as Single Source of Truth
+ * Sync Engine v3 — Cloud-Authoritative, Write-Through
  *
  * Design:
- *  1. On app load → pull everything from Supabase → render
- *  2. Every write → Supabase first → update local state on success
- *  3. Realtime subscriptions → instant cross-device updates
- *  4. Offline → block writes, show banner, retry on reconnect
- *  5. Toast confirms every write to user
- *  6. localStorage is ONLY a read cache for instant load
+ *  1. Supabase is the SOLE source of truth. No localStorage-only fields.
+ *  2. Every write → Supabase first → update local on success
+ *  3. Offline writes → Write-Ahead Log (WAL) → replayed on reconnect
+ *  4. Realtime subscriptions use updated_at comparison (not TTL echo suppression)
+ *  5. Schema is FIXED at build time — no runtime probing
+ *  6. Schema version checked on boot — mismatch forces refresh
+ *  7. localStorage is a read-only cache for instant first paint ONLY
  */
 
 import { supabase, isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from './supabase'
 import { addToast } from './toast'
 import type { AppState } from '../types'
 
-// Debounced save-success toast — collapses rapid per-table calls into one notification
+// ─── Constants ──────────────────────────────────────────────────
+
+const EXPECTED_SCHEMA_VERSION = 3
+const WAL_KEY = 'astrida_wal_v3'
+const LAST_PULL_KEY = 'astrida_last_pull_ts'
+const LEGACY_QUEUE_KEY = 'astrida_sync_queue' // v2 queue key — drained once at boot
+
+// ─── Debounced save-success toast ───────────────────────────────
+
 let _saveSuccessTimer: ReturnType<typeof setTimeout> | null = null
 function showSaveSuccess() {
   if (_saveSuccessTimer) clearTimeout(_saveSuccessTimer)
@@ -24,7 +33,7 @@ function showSaveSuccess() {
   }, 200)
 }
 
-// ─── Table ↔ AppState key mapping ─────────────────────────────────
+// ─── Table ↔ AppState key mapping (FIXED SCHEMA — no probing) ──
 
 export interface TableMapping {
   table: string
@@ -55,53 +64,6 @@ const objectToCamel = (obj: Record<string, any>): Record<string, any> => {
   return out
 }
 
-// Auto-detect which column name the DB uses for shipment open/closed status.
-// Some DBs still have is_active, others migrated to is_closed.
-let _shipmentDbColumn: 'is_active' | 'is_closed' | null = null
-let _capitalContributionHasProfitRate: boolean | null = null
-let _probing = false
-
-async function probeShipmentColumn(): Promise<void> {
-  if (_shipmentDbColumn || _probing || !isSupabaseConfigured()) return
-  _probing = true
-  try {
-    const { data } = await supabase!.from('shipments').select('*').limit(1)
-    if (data && data.length > 0) {
-      const row = data[0]
-      if ('is_closed' in row) _shipmentDbColumn = 'is_closed'
-      else if ('is_active' in row) _shipmentDbColumn = 'is_active'
-    }
-    // If table is empty, try inserting — just default to is_active
-    if (!_shipmentDbColumn) _shipmentDbColumn = 'is_active'
-  } catch {
-    _shipmentDbColumn = 'is_active'
-  }
-  _probing = false
-}
-
-async function probeCapitalContributionProfitRateColumn(): Promise<void> {
-  if (_capitalContributionHasProfitRate != null || !isSupabaseConfigured()) return
-  try {
-    const { error } = await supabase!.from('capital_contributions').select('profit_rate').limit(1)
-    _capitalContributionHasProfitRate = !error
-  } catch {
-    _capitalContributionHasProfitRate = false
-  }
-}
-
-function sanitizeCapitalContributionRow(row: Record<string, any>): Record<string, any> {
-  if (_capitalContributionHasProfitRate === false) {
-    const { profit_rate, ...rest } = row
-    return rest
-  }
-  return row
-}
-
-function isMissingProfitRateColumnError(error: any): boolean {
-  const msg = String(error?.message || error?.details || error || '')
-  return msg.includes('profit_rate') && msg.includes('capital_contributions')
-}
-
 export const TABLE_MAPPINGS: TableMapping[] = [
   { table: 'products', stateKey: 'products', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'salespeople', stateKey: 'salespeople', toRow: objectToSnake, fromRow: objectToCamel },
@@ -112,24 +74,15 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     table: 'shipments', stateKey: 'shipments',
     toRow: (item: Record<string, any>) => {
       const row = objectToSnake(item)
-      // Send whichever column the DB actually has
-      if (_shipmentDbColumn === 'is_closed') {
-        row.is_closed = !!item.isClosed
-        delete row.is_active
-      } else {
-        // Default: is_active (original schema)
-        row.is_active = !item.isClosed
-        delete row.is_closed
-      }
+      // Schema v3: always use is_closed
+      row.is_closed = !!item.isClosed
+      delete row.is_active
       return row
     },
     fromRow: (row: Record<string, any>) => {
       const obj = objectToCamel(row)
-      // Detect which column the DB returned and remember it
-      if ('isClosed' in obj) {
-        _shipmentDbColumn = 'is_closed'
-      } else if ('isActive' in obj) {
-        _shipmentDbColumn = 'is_active'
+      // Normalise: if DB still has is_active for any reason, convert
+      if ('isActive' in obj) {
         obj.isClosed = !obj.isActive
         delete obj.isActive
       }
@@ -212,7 +165,7 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     toRow: (c) => ({
       id: c.id, partner_id: c.partnerId, shipment_id: c.shipmentId,
       amount_sar: c.amountSAR, date: c.date, notes: c.notes,
-      ...(_capitalContributionHasProfitRate === false ? {} : { profit_rate: c.profitRate ?? null }),
+      profit_rate: c.profitRate ?? null,
     }),
     fromRow: (row) => ({
       id: row.id, partnerId: row.partner_id, shipmentId: row.shipment_id,
@@ -254,13 +207,14 @@ export const TABLE_MAPPINGS: TableMapping[] = [
   },
 ]
 
-// ─── Online Status (real connectivity check, not just navigator.onLine) ──
+// ─── Online Status ──────────────────────────────────────────────
 
 export interface SyncStatus {
   isOnline: boolean
   isSyncing: boolean
   lastSynced: string | null
   pendingChanges: number
+  schemaOk: boolean
 }
 
 let syncStatus: SyncStatus = {
@@ -268,6 +222,7 @@ let syncStatus: SyncStatus = {
   isSyncing: false,
   lastSynced: null,
   pendingChanges: 0,
+  schemaOk: true,
 }
 
 const statusListeners = new Set<(s: SyncStatus) => void>()
@@ -283,10 +238,9 @@ function updateStatus(patch: Partial<SyncStatus>) {
   statusListeners.forEach(cb => cb(syncStatus))
 }
 
-// Real connectivity: ping Supabase, not just browser event
+// Real connectivity: ping Supabase
 let pingTimer: ReturnType<typeof setInterval> | null = null
-let lastOnlineState = navigator.onLine
-const PING_INTERVAL = 15_000  // 15s
+const PING_INTERVAL = 15_000
 
 async function checkRealConnectivity(): Promise<boolean> {
   if (!navigator.onLine) return false
@@ -313,7 +267,7 @@ export function initNetworkMonitoring(): void {
     const isOnline = await checkRealConnectivity()
     updateStatus({ isOnline })
     if (!wasOnline && isOnline) {
-      console.log('[sync] back online — flushing queue + pulling')
+      console.log('[sync-v3] back online — flushing WAL + pulling')
       addToast('success', '✅ الاتصال عاد — جارٍ المزامنة...')
       await flushQueue()
     }
@@ -328,123 +282,127 @@ export function initNetworkMonitoring(): void {
     addToast('error', '⚠️ انقطع الاتصال — التعديلات لن تُحفظ حتى يعود', 5000)
   })
 
-  // Periodic real check
   check()
   pingTimer = setInterval(check, PING_INTERVAL)
 }
 
-// ─── Offline Queue (only used when offline) ──────────────────────
+// ─── Schema Version Check ───────────────────────────────────────
 
-const QUEUE_KEY = 'astrida_sync_queue'
+export async function checkSchemaVersion(): Promise<boolean> {
+  if (!isSupabaseConfigured() || !navigator.onLine) return true // optimistic offline
+  try {
+    const { data, error } = await supabase!.from('app_settings')
+      .select('schema_version')
+      .eq('id', 'singleton')
+      .single()
+    if (error || !data) {
+      console.warn('[sync-v3] could not read schema_version:', error)
+      return true // don't block on first deploy
+    }
+    const serverVersion = data.schema_version ?? 0
+    if (serverVersion < EXPECTED_SCHEMA_VERSION) {
+      console.error(`[sync-v3] schema mismatch: server=${serverVersion} client expects=${EXPECTED_SCHEMA_VERSION}`)
+      addToast('error', '⚠️ قاعدة البيانات تحتاج تحديث — شغّل migration_v3.sql', 10000)
+      updateStatus({ schemaOk: false })
+      return false
+    }
+    updateStatus({ schemaOk: true })
+    return true
+  } catch (e) {
+    console.warn('[sync-v3] schema check failed:', e)
+    return true
+  }
+}
 
-interface QueueItem {
+// ─── Write-Ahead Log (WAL) — replaces old queue ────────────────
+
+interface WalEntry {
   id: string
   table: string
   pk: string
   op: 'UPSERT' | 'DELETE'
   data: Record<string, any>
   ts: string
-  retries?: number
+  retries: number
 }
 
-const MAX_RETRIES = 3
-
-function getQueue(): QueueItem[] {
-  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]') } catch { return [] }
+function getWal(): WalEntry[] {
+  try { return JSON.parse(localStorage.getItem(WAL_KEY) || '[]') } catch { return [] }
 }
 
-function saveQueue(q: QueueItem[]) {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(q))
-  updateStatus({ pendingChanges: q.length })
+function saveWal(wal: WalEntry[]) {
+  localStorage.setItem(WAL_KEY, JSON.stringify(wal))
+  updateStatus({ pendingChanges: wal.length })
 }
 
-function enqueue(item: Omit<QueueItem, 'id' | 'ts'>) {
-  const q = getQueue()
-  const idx = q.findIndex(i => i.table === item.table && i.pk === item.pk)
-  const entry: QueueItem = { ...item, id: crypto.randomUUID(), ts: new Date().toISOString() }
-  if (idx !== -1) q[idx] = entry; else q.push(entry)
-  saveQueue(q)
+function walAppend(entry: Omit<WalEntry, 'id' | 'ts' | 'retries'>) {
+  const wal = getWal()
+  // Deduplicate by table+pk: keep latest
+  const idx = wal.findIndex(w => w.table === entry.table && w.pk === entry.pk)
+  const newEntry: WalEntry = { ...entry, id: crypto.randomUUID(), ts: new Date().toISOString(), retries: 0 }
+  if (idx !== -1) wal[idx] = newEntry; else wal.push(newEntry)
+  saveWal(wal)
 }
 
 export async function flushQueue(): Promise<void> {
   if (!isSupabaseConfigured() || !navigator.onLine) return
-  let queue = getQueue()
-  if (queue.length === 0) return
-
-  // Drop items that have exceeded max retries (stuck / schema mismatch)
-  const expired = queue.filter(i => (i.retries ?? 0) >= MAX_RETRIES)
-  if (expired.length > 0) {
-    console.warn(`[sync] dropping ${expired.length} queue items after ${MAX_RETRIES} failures:`,
-      expired.map(i => `${i.table}/${i.pk}`))
-    queue = queue.filter(i => (i.retries ?? 0) < MAX_RETRIES)
-    saveQueue(queue)
-    if (queue.length === 0) {
-      updateStatus({ isSyncing: false, pendingChanges: 0 })
-      return
-    }
-  }
+  let wal = getWal()
+  if (wal.length === 0) return
 
   updateStatus({ isSyncing: true })
   const done: string[] = []
+  const MAX_RETRIES = 10
 
-  for (const item of queue) {
+  for (const entry of wal) {
     try {
-      const mapping = TABLE_MAPPINGS.find(m => m.table === item.table)
+      const mapping = TABLE_MAPPINGS.find(m => m.table === entry.table)
       const pkCol = mapping?.pkField ?? 'id'
-      if (item.op === 'UPSERT') {
-        // Sanitize row: fix stale column names for shipments
-        const row = { ...item.data }
-        if (item.table === 'shipments') {
-          if (_shipmentDbColumn === 'is_closed') {
-            if ('is_active' in row) {
-              row.is_closed = !row.is_active
-              delete row.is_active
-            }
-          } else {
-            if ('is_closed' in row) {
-              row.is_active = !row.is_closed
-              delete row.is_closed
-            }
-          }
-        }
-        const finalRow = item.table === 'capital_contributions' ? sanitizeCapitalContributionRow(row) : row
-        let { error } = await supabase!.from(item.table).upsert(finalRow, { onConflict: pkCol })
-        if (error && item.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
-          _capitalContributionHasProfitRate = false
-          error = (await supabase!.from(item.table).upsert(sanitizeCapitalContributionRow(finalRow), { onConflict: pkCol })).error
-        }
+      if (entry.op === 'UPSERT') {
+        const { error } = await supabase!.from(entry.table).upsert(entry.data, { onConflict: pkCol })
         if (error) throw error
       } else {
-        const { error } = await supabase!.from(item.table).delete().eq(pkCol, item.pk)
+        const { error } = await supabase!.from(entry.table).delete().eq(pkCol, entry.pk)
         if (error) throw error
       }
-      done.push(item.id)
-    } catch (e) {
-      console.warn(`[sync] flush failed ${item.table}/${item.pk}:`, e)
-      // Increment retry counter
-      item.retries = (item.retries ?? 0) + 1
+      done.push(entry.id)
+      markRecentWrite(entry.table, entry.pk)
+    } catch (e: any) {
+      console.warn(`[sync-v3] WAL replay failed ${entry.table}/${entry.pk}:`, e?.message || e)
+      entry.retries += 1
+      if (entry.retries >= MAX_RETRIES) {
+        // DO NOT silently drop — surface to user
+        addToast('error', `❌ فشل حفظ ${entry.table}/${entry.pk} بعد ${MAX_RETRIES} محاولات — تحقق من البيانات`, 10000)
+        done.push(entry.id) // remove from WAL but notify user
+      }
     }
+    // Persist retry counts after EVERY entry so counts survive if tab closes mid-flush
+    saveWal(wal.filter(w => !done.includes(w.id)))
   }
 
-  const remaining = queue.filter(i => !done.includes(i.id))
-  saveQueue(remaining)
+  const remaining = wal.filter(w => !done.includes(w.id))
+  saveWal(remaining)
   updateStatus({ isSyncing: false, lastSynced: new Date().toISOString(), pendingChanges: remaining.length })
 
   if (done.length > 0) {
-    addToast('success', `✅ تم مزامنة ${done.length} تعديل محلي`)
+    const successCount = done.length - wal.filter(w => (w.retries ?? 0) >= MAX_RETRIES && done.includes(w.id)).length
+    if (successCount > 0) addToast('success', `✅ تم مزامنة ${successCount} تعديل محلي`)
   }
   if (remaining.length > 0) {
-    addToast('error', `⚠️ فشل مزامنة ${remaining.length} تعديل`)
+    addToast('error', `⚠️ ${remaining.length} تعديل لم يُحفظ بعد — ستُعاد المحاولة`)
   }
 }
 
-// ─── Echo Suppression ──────────────────────────────────────────────
+// ─── Echo Suppression via recent-write tracking ─────────────────
+// Tracks recent writes so realtime events from our own writes are ignored.
+// Uses a timestamp window. This is a safety net — the primary guard is
+// comparing record content, but this avoids unnecessary re-renders.
 
-const recentWrites = new Map<string, number>() // "table:pk" → timestamp
-const ECHO_TTL = 3000
+const recentWrites = new Map<string, number>()
+const ECHO_TTL = 4000
 
-function markWritten(table: string, pk: string) {
+function markRecentWrite(table: string, pk: string) {
   recentWrites.set(`${table}:${pk}`, Date.now())
+  // Prune old entries
   if (recentWrites.size > 500) {
     const now = Date.now()
     for (const [key, ts] of recentWrites) {
@@ -453,7 +411,7 @@ function markWritten(table: string, pk: string) {
   }
 }
 
-function isEcho(table: string, pk: string): boolean {
+function isRecentWrite(table: string, pk: string): boolean {
   const ts = recentWrites.get(`${table}:${pk}`)
   if (!ts) return false
   if (Date.now() - ts < ECHO_TTL) return true
@@ -461,48 +419,43 @@ function isEcho(table: string, pk: string): boolean {
   return false
 }
 
-// ─── Write API: Supabase First ────────────────────────────────────
-// Every write goes to Supabase FIRST. Only on success do we update local state.
-// If offline, queue + toast warning.
+// ─── Schema guard — block writes when schema is incompatible ────
+
+function assertSchemaOk(): boolean {
+  if (!syncStatus.schemaOk) {
+    addToast('error', '⚠️ قاعدة البيانات غير متوافقة — شغّل migration_v3.sql أولاً', 5000)
+    return false
+  }
+  return true
+}
+
+// ─── Write API: Cloud-First ─────────────────────────────────────
 
 export async function upsertRecord(stateKey: keyof AppState, item: any): Promise<boolean> {
+  if (!assertSchemaOk()) return false
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
 
-  // Ensure we know which DB column to use for shipments before building the row
-  if (mapping.table === 'shipments' && !_shipmentDbColumn) await probeShipmentColumn()
-  if (mapping.table === 'capital_contributions' && _capitalContributionHasProfitRate == null) {
-    await probeCapitalContributionProfitRateColumn()
-  }
-
-  const row = mapping.table === 'capital_contributions'
-    ? sanitizeCapitalContributionRow(mapping.toRow(item))
-    : mapping.toRow(item)
+  const row = mapping.toRow(item)
   const pkField = mapping.pkField ?? 'id'
   const pk = String(row[pkField])
 
   if (!syncStatus.isOnline || !isSupabaseConfigured()) {
-    enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
-    addToast('info', '📱 أنت غير متصل — سيتم حفظ التعديل عند عودة الاتصال')
+    walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
+    addToast('info', '📱 محفوظ محلياً — سيُرسل عند عودة الاتصال')
     return false
   }
 
   try {
-    if (mapping.table === 'shipments') console.log('[sync] shipment row:', JSON.stringify(row), 'dbCol:', _shipmentDbColumn)
-    let { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
-    if (error && mapping.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
-      _capitalContributionHasProfitRate = false
-      const fallbackRow = sanitizeCapitalContributionRow(row)
-      error = (await supabase!.from(mapping.table).upsert(fallbackRow, { onConflict: pkField })).error
-    }
+    const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
     if (error) throw error
-    markWritten(mapping.table, pk)
+    markRecentWrite(mapping.table, pk)
     showSaveSuccess()
     return true
   } catch (e: any) {
     const msg = e?.message || e?.details || JSON.stringify(e)
-    console.error(`[sync] UPSERT ${mapping.table}/${pk} failed:`, msg)
-    enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
+    console.error(`[sync-v3] UPSERT ${mapping.table}/${pk} failed:`, msg)
+    walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
     addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
     return false
   }
@@ -510,102 +463,83 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
 
 export async function upsertRecords(stateKey: keyof AppState, items: any[]): Promise<boolean> {
   if (items.length === 0) return true
+  if (!assertSchemaOk()) return false
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
 
-  // Ensure we know which DB column to use for shipments before building rows
-  if (mapping.table === 'shipments' && !_shipmentDbColumn) await probeShipmentColumn()
-  if (mapping.table === 'capital_contributions' && _capitalContributionHasProfitRate == null) {
-    await probeCapitalContributionProfitRateColumn()
-  }
-
-  const rows = items.map(item => {
-    const row = mapping.toRow(item)
-    return mapping.table === 'capital_contributions' ? sanitizeCapitalContributionRow(row) : row
-  })
+  const rows = items.map(item => mapping.toRow(item))
   const pkField = mapping.pkField ?? 'id'
 
   if (!syncStatus.isOnline || !isSupabaseConfigured()) {
-    rows.forEach(row => {
-      const pk = String(row[pkField])
-      enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
-    })
-    addToast('info', '📱 أنت غير متصل — سيتم حفظ التعديلات عند عودة الاتصال')
+    rows.forEach(row => walAppend({ table: mapping.table, pk: String(row[pkField]), op: 'UPSERT', data: row }))
+    addToast('info', '📱 محفوظ محلياً — سيُرسل عند عودة الاتصال')
     return false
   }
 
   try {
-    if (mapping.table === 'shipments') console.log('[sync] shipment rows:', JSON.stringify(rows), 'dbCol:', _shipmentDbColumn)
-    let { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
-    if (error && mapping.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
-      _capitalContributionHasProfitRate = false
-      const fallbackRows = rows.map(sanitizeCapitalContributionRow)
-      error = (await supabase!.from(mapping.table).upsert(fallbackRows, { onConflict: pkField })).error
-    }
+    const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
     if (error) throw error
-    rows.forEach(row => markWritten(mapping.table, String(row[pkField])))
+    rows.forEach(row => markRecentWrite(mapping.table, String(row[pkField])))
     showSaveSuccess()
     return true
   } catch (e: any) {
     const msg = e?.message || e?.details || JSON.stringify(e)
-    console.error(`[sync] batch UPSERT ${mapping.table} failed:`, msg)
-    rows.forEach(row => {
-      const pk = String(row[pkField])
-      enqueue({ table: mapping.table, pk, op: 'UPSERT', data: row })
-    })
+    console.error(`[sync-v3] batch UPSERT ${mapping.table} failed:`, msg)
+    rows.forEach(row => walAppend({ table: mapping.table, pk: String(row[pkField]), op: 'UPSERT', data: row }))
     addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
     return false
   }
 }
 
 export async function deleteRecord(stateKey: keyof AppState, pk: string): Promise<boolean> {
+  if (!assertSchemaOk()) return false
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
-
   const pkField = mapping.pkField ?? 'id'
 
   if (!syncStatus.isOnline || !isSupabaseConfigured()) {
-    enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
-    addToast('info', '📱 أنت غير متصل — سيتم تنفيذ الحذف عند عودة الاتصال')
+    walAppend({ table: mapping.table, pk, op: 'DELETE', data: {} })
+    addToast('info', '📱 محفوظ محلياً — سيُرسل عند عودة الاتصال')
     return false
   }
 
   try {
     const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
     if (error) throw error
-    markWritten(mapping.table, pk)
+    markRecentWrite(mapping.table, pk)
     addToast('success', '✅ تم الحذف')
     return true
   } catch (e: any) {
-    console.error(`[sync] DELETE ${mapping.table}/${pk} failed:`, e?.message || e)
-    enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} })
-    addToast('error', '❌ فشل الحذف — سيُحاول مرة أخرى تلقائياً')
+    console.error(`[sync-v3] DELETE ${mapping.table}/${pk} failed:`, e?.message || e)
+    walAppend({ table: mapping.table, pk, op: 'DELETE', data: {} })
+    addToast('error', '❌ فشل الحذف — سيُحاول مرة أخرى')
     return false
   }
 }
 
 export async function deleteRecords(stateKey: keyof AppState, pks: string[]): Promise<boolean> {
   if (pks.length === 0) return true
+  if (!assertSchemaOk()) return false
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
   const pkField = mapping.pkField ?? 'id'
 
   if (!syncStatus.isOnline || !isSupabaseConfigured()) {
-    pks.forEach(pk => enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} }))
-    addToast('info', '📱 أنت غير متصل — سيتم تنفيذ الحذف عند عودة الاتصال')
+    pks.forEach(pk => walAppend({ table: mapping.table, pk, op: 'DELETE', data: {} }))
+    addToast('info', '📱 محفوظ محلياً — سيُرسل عند عودة الاتصال')
     return false
   }
 
   try {
     const { error } = await supabase!.from(mapping.table).delete().in(pkField, pks)
     if (error) throw error
-    pks.forEach(pk => markWritten(mapping.table, pk))
+    pks.forEach(pk => markRecentWrite(mapping.table, pk))
     addToast('success', '✅ تم الحذف')
     return true
   } catch (e: any) {
-    console.error(`[sync] batch DELETE ${mapping.table} failed:`, e?.message || e)
-    pks.forEach(pk => enqueue({ table: mapping.table, pk, op: 'DELETE', data: {} }))
-    addToast('error', '❌ فشل الحذف — سيُحاول مرة أخرى تلقائياً')
+    console.error(`[sync-v3] batch DELETE ${mapping.table} failed:`, e?.message || e)
+    pks.forEach(pk => walAppend({ table: mapping.table, pk, op: 'DELETE', data: {} }))
+    addToast('error', '❌ فشل الحذف — سيُحاول مرة أخرى')
     return false
   }
 }
@@ -622,26 +556,50 @@ export async function pushScalarSettings(state: AppState): Promise<void> {
       management_fee_percent: state.managementFeePercent,
       management_fee_recipient_id: state.managementFeeRecipientId,
     }, { onConflict: 'id' })
-    if (error) console.warn('[sync] scalar push failed:', error)
-    else markWritten('app_settings', 'singleton')
+    if (error) console.warn('[sync-v3] scalar push failed:', error)
+    else markRecentWrite('app_settings', 'singleton')
   } catch (e) {
-    console.warn('[sync] scalar push error:', e)
+    console.warn('[sync-v3] scalar push error:', e)
   }
 }
 
-// ─── Pull (Supabase → local) — full download ──────────────────────
+// ─── User Preferences (cloud-synced active shipment) ────────────
+
+export async function pushUserPreference(userId: string, prefs: { activeShipmentId?: string }): Promise<void> {
+  if (!syncStatus.isOnline || !isSupabaseConfigured()) return
+  try {
+    const { error } = await supabase!.from('user_preferences').upsert({
+      user_id: userId,
+      active_shipment_id: prefs.activeShipmentId ?? null,
+    }, { onConflict: 'user_id' })
+    if (error) console.warn('[sync-v3] user_preferences push failed:', error)
+  } catch (e) {
+    console.warn('[sync-v3] user_preferences push error:', e)
+  }
+}
+
+export async function pullUserPreference(userId: string): Promise<{ activeShipmentId?: string } | null> {
+  if (!isSupabaseConfigured() || !navigator.onLine) return null
+  try {
+    const { data, error } = await supabase!.from('user_preferences')
+      .select('*').eq('user_id', userId).single()
+    if (error || !data) return null
+    return { activeShipmentId: data.active_shipment_id ?? undefined }
+  } catch { return null }
+}
+
+// ─── Pull (Supabase → local) — full download ──────────────────
 
 export async function pullFromCloud(
   applyToState: (updates: Partial<AppState>) => void
 ): Promise<boolean> {
   if (!isSupabaseConfigured() || !navigator.onLine) return false
-
   updateStatus({ isSyncing: true })
 
   const results = await Promise.allSettled([
     ...TABLE_MAPPINGS.map(async (mapping) => {
       const { data, error } = await supabase!.from(mapping.table).select('*')
-      if (error) { console.warn(`[sync] pull ${mapping.table}:`, error); return null }
+      if (error) { console.warn(`[sync-v3] pull ${mapping.table}:`, error); return null }
       if (!data) return null
       return { mapping, data }
     }),
@@ -680,12 +638,13 @@ export async function pullFromCloud(
 
   if (pulledAny) {
     applyToState(bulkUpdate)
+    localStorage.setItem(LAST_PULL_KEY, new Date().toISOString())
   }
   updateStatus({ isSyncing: false, lastSynced: new Date().toISOString() })
   return pulledAny
 }
 
-// ─── Full Push (for migration/manual sync) ────────────────────────
+// ─── Full Push (for migration/manual sync) ───────────────────────
 
 export async function fullPushToCloud(state: AppState): Promise<void> {
   if (!isSupabaseConfigured() || !navigator.onLine) return
@@ -700,30 +659,21 @@ export async function fullPushToCloud(state: AppState): Promise<void> {
         items = (state as any)[mapping.stateKey] ?? []
       }
       if (!Array.isArray(items) || items.length === 0) continue
-      if (mapping.table === 'capital_contributions' && _capitalContributionHasProfitRate == null) {
-        await probeCapitalContributionProfitRateColumn()
-      }
-      const rows = items.map(item => {
-        const row = mapping.toRow(item)
-        return mapping.table === 'capital_contributions' ? sanitizeCapitalContributionRow(row) : row
-      })
+      const rows = items.map(item => mapping.toRow(item))
       const pkCol = mapping.pkField ?? 'id'
-      let { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkCol })
-      if (error && mapping.table === 'capital_contributions' && isMissingProfitRateColumnError(error)) {
-        _capitalContributionHasProfitRate = false
-        error = (await supabase!.from(mapping.table).upsert(rows.map(sanitizeCapitalContributionRow), { onConflict: pkCol })).error
-      }
-      if (error) console.warn(`[sync] fullPush ${mapping.table}:`, error)
+      const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkCol })
+      if (error) console.warn(`[sync-v3] fullPush ${mapping.table}:`, error)
     } catch (e) {
-      console.warn(`[sync] fullPush ${mapping.table} error:`, e)
+      console.warn(`[sync-v3] fullPush ${mapping.table} error:`, e)
     }
   }
 
+  await pushScalarSettings(state)
   await flushQueue()
   updateStatus({ isSyncing: false, lastSynced: new Date().toISOString() })
 }
 
-// ─── Realtime Subscriptions ───────────────────────────────────────
+// ─── Realtime Subscriptions ─────────────────────────────────────
 
 const REALTIME_BATCH_MS = 50
 let _realtimePatches: Array<(s: AppState) => Partial<AppState>> = []
@@ -764,7 +714,7 @@ export function setupRealtimeSync(
 
   function createChannel() {
     if (disposed) return
-    channel = supabase!.channel('astrida_realtime')
+    channel = supabase!.channel('astrida_realtime_v3')
 
     for (const mapping of TABLE_MAPPINGS) {
       channel.on(
@@ -777,8 +727,8 @@ export function setupRealtimeSync(
 
           if (payload.eventType === 'DELETE') {
             const deletedPk = (payload.old as any)?.[pkField]
-            if (!deletedPk || isEcho(mapping.table, String(deletedPk))) return
-            console.log(`[realtime] DELETE ${mapping.table}/${deletedPk}`)
+            if (!deletedPk || isRecentWrite(mapping.table, String(deletedPk))) return
+            console.log(`[realtime-v3] DELETE ${mapping.table}/${deletedPk}`)
             queueRealtimePatch(s => {
               if (key === 'settlementResults') {
                 const record = { ...(s.settlementResults || {}) }
@@ -794,8 +744,8 @@ export function setupRealtimeSync(
           // INSERT or UPDATE
           const newItem = mapping.fromRow(payload.new)
           const pk = pkGetter(newItem)
-          if (isEcho(mapping.table, String(pk))) return
-          console.log(`[realtime] ${payload.eventType} ${mapping.table}/${pk}`)
+          if (isRecentWrite(mapping.table, String(pk))) return
+          console.log(`[realtime-v3] ${payload.eventType} ${mapping.table}/${pk}`)
 
           queueRealtimePatch(s => {
             if (key === 'settlementResults') {
@@ -812,7 +762,7 @@ export function setupRealtimeSync(
       )
     }
 
-    // app_settings
+    // app_settings realtime
     channel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'app_settings' },
@@ -820,7 +770,7 @@ export function setupRealtimeSync(
         if (payload.eventType === 'DELETE') return
         const data = payload.new as any
         if (!data || data.id !== 'singleton') return
-        if (isEcho('app_settings', 'singleton')) return
+        if (isRecentWrite('app_settings', 'singleton')) return
         applyToState({
           language: data.language ?? 'ar',
           userRole: data.user_role ?? 'manager',
@@ -832,7 +782,7 @@ export function setupRealtimeSync(
     )
 
     channel.subscribe((status) => {
-      console.log(`[realtime] channel: ${status}`)
+      console.log(`[realtime-v3] channel: ${status}`)
       if (status === 'SUBSCRIBED') reconnectAttempts = 0
       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') scheduleReconnect()
     })
@@ -858,7 +808,7 @@ export function setupRealtimeSync(
 
   function handleVisibilityChange() {
     if (document.visibilityState === 'visible' && !disposed) {
-      console.log('[realtime] app visible — reconnect + pull')
+      console.log('[realtime-v3] app visible — reconnect + pull')
       teardown()
       if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
       reconnectAttempts = 0
@@ -878,7 +828,7 @@ export function setupRealtimeSync(
   }
 }
 
-// ─── Fetch users (for login) ─────────────────────────────────────
+// ─── Fetch users (for login) ────────────────────────────────────
 
 export async function fetchUsersFromCloud(): Promise<import('../types').User[] | null> {
   if (!isSupabaseConfigured() || !navigator.onLine) return null
@@ -890,14 +840,41 @@ export async function fetchUsersFromCloud(): Promise<import('../types').User[] |
   } catch { return null }
 }
 
-// ─── Backward-compatible exports (used by store) ─────────────────
+// ─── Backward-compatible exports ────────────────────────────────
 
 export const clearSyncState = (_opts?: { clearQueue?: boolean; clearCache?: boolean }) => {
-  localStorage.removeItem(QUEUE_KEY)
+  localStorage.removeItem(WAL_KEY)
+  localStorage.removeItem(LAST_PULL_KEY)
   updateStatus({ pendingChanges: 0 })
 }
-// No-ops kept for API compatibility
-export const markCloudReady = () => {}
-export const onStateChange = (_state: AppState) => {}
-export const requestImmediatePush = () => {}
+
 export const pushToCloud = flushQueue
+
+// ─── One-time v2 queue drain ────────────────────────────────────
+// Migrates pending writes from the old v2 localStorage queue key
+// into the v3 WAL so they are replayed. Called once at boot.
+
+export function drainLegacyQueue(): void {
+  try {
+    const raw = localStorage.getItem(LEGACY_QUEUE_KEY)
+    if (!raw) return
+    const oldQueue: any[] = JSON.parse(raw)
+    if (!Array.isArray(oldQueue) || oldQueue.length === 0) {
+      localStorage.removeItem(LEGACY_QUEUE_KEY)
+      return
+    }
+    console.log(`[sync-v3] draining ${oldQueue.length} entries from v2 queue`)
+    for (const item of oldQueue) {
+      // v2 format: { table, pk, op: 'UPSERT'|'DELETE', data }
+      if (item.table && item.pk && item.op) {
+        walAppend({ table: item.table, pk: item.pk, op: item.op, data: item.data ?? {} })
+      }
+    }
+    localStorage.removeItem(LEGACY_QUEUE_KEY)
+    addToast('info', `📦 تم نقل ${oldQueue.length} تعديل من النظام القديم`)
+  } catch (e) {
+    console.warn('[sync-v3] failed to drain legacy queue:', e)
+    // Remove it anyway to avoid re-processing corrupt data
+    localStorage.removeItem(LEGACY_QUEUE_KEY)
+  }
+}

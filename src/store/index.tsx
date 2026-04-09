@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { hashPassword, isPasswordHashed } from '../lib/utils';
-import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS } from '../lib/syncEngine';
+import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -86,30 +86,6 @@ const DEFAULT_USERS: User[] = [
 ];
 
 const ACTIVE_SHIPMENT_STORAGE_KEY = 'astreda_active_shipment_id';
-const CAPITAL_PROFIT_RATE_OVERRIDES_KEY = 'astreda_capital_profit_rate_overrides';
-
-function loadCapitalProfitRateOverrides(): Record<string, number> {
-  try {
-    return JSON.parse(localStorage.getItem(CAPITAL_PROFIT_RATE_OVERRIDES_KEY) || '{}');
-  } catch {
-    return {};
-  }
-}
-
-function saveCapitalProfitRateOverrides(contributions: Array<{ id: string; profitRate?: number }>) {
-  const existing = loadCapitalProfitRateOverrides();
-  const next = { ...existing };
-
-  for (const contribution of contributions) {
-    if (contribution.profitRate == null) {
-      delete next[contribution.id];
-    } else {
-      next[contribution.id] = contribution.profitRate;
-    }
-  }
-
-  localStorage.setItem(CAPITAL_PROFIT_RATE_OVERRIDES_KEY, JSON.stringify(next));
-}
 
 const initialState: AppState = {
   language: 'ar',
@@ -394,11 +370,7 @@ function loadFromLocalStorage(): AppState {
     }
 
     if (Array.isArray(merged.capitalContributions)) {
-      const overrides = loadCapitalProfitRateOverrides();
-      merged.capitalContributions = merged.capitalContributions.map((c: any) => ({
-        ...c,
-        profitRate: c.profitRate ?? overrides[c.id] ?? undefined,
-      }));
+      // v3: profitRate comes from Supabase only — no localStorage overrides
     }
 
     return cleanOrphanedLedger(merged);
@@ -437,21 +409,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const mergeCapitalContributionProfitRates = useCallback((prev: AppState, nextContributions: any[]) => {
-    const overrides = loadCapitalProfitRateOverrides();
-    const prevById = new Map(
-      (prev.capitalContributions || []).map((c: any) => [c.id, c.profitRate])
-    );
-
-    return nextContributions.map((c: any) => ({
-      ...c,
-      profitRate: c.profitRate ?? prevById.get(c.id) ?? overrides[c.id] ?? undefined,
-    }));
-  }, []);
-
   // Cloud updates are applied directly — no diff tracking needed.
   // ensureDefaults is applied inline so DEFAULT_ROLES/USERS survive every cloud
   // pull (initial load, visibilitychange, realtime), not just the first one.
+  // v3: profitRate comes from Supabase directly — no localStorage merging.
   const cloudApply = useCallback((updates: Partial<AppState>) => {
     setState(prev => {
       const merged: any = { ...prev };
@@ -459,8 +420,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (key === 'currentUser') continue;
         if (key === 'settlementResults') {
           merged[key] = { ...(prev as any)[key], ...(value as Record<string, unknown>) };
-        } else if (key === 'capitalContributions' && Array.isArray(value)) {
-          merged[key] = mergeCapitalContributionProfitRates(prev, value);
         } else {
           merged[key] = value;
         }
@@ -468,20 +427,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       merged.currentUser = prev.currentUser;
       return cleanOrphanedLedger(ensureDefaults(merged) as AppState);
     });
-  }, [mergeCapitalContributionProfitRates]);
+  }, []);
 
-  // ── Cloud-First initialization ──────────────────────────────────
+  // ── Cloud-First initialization with schema check ────────────────
   useEffect(() => {
     initNetworkMonitoring();
+    drainLegacyQueue(); // one-time: migrate v2 offline queue into v3 WAL
     const cleanup = setupRealtimeSync(cloudApply, () => stateRef.current);
 
     (async () => {
       try {
+        // Schema version gate: warn if DB hasn't been migrated
+        const schemaOk = await checkSchemaVersion();
+        if (!schemaOk) {
+          console.error('[sync-v3] schema version mismatch — run migration_v3.sql');
+        }
         const pulled = await pullFromCloud(cloudApply);
         if (pulled) {
-          console.log('[cloud-first] ✅ data loaded from Supabase');
-          // ensureDefaults is now applied inside cloudApply on every pull,
-          // so no separate setState call needed here.
+          console.log('[sync-v3] ✅ data loaded from Supabase');
         }
         await flushQueue();
       } catch (e) {
@@ -529,9 +492,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setState(() => final_);
 
-    if ('capitalContributions' in updates && Array.isArray(final_.capitalContributions)) {
-      saveCapitalProfitRateOverrides(final_.capitalContributions);
-    }
+    // v3: profitRate is synced to Supabase directly — no localStorage overrides
 
     // Push scalar settings to cloud if any changed
     const scalarKeys = ['language', 'userRole', 'exchangeRate', 'managementFeePercent', 'managementFeeRecipientId'];
@@ -591,16 +552,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // ── Active shipment selector (convenience filter) ────────────────
-  // Simple React state — just remembers which shipment the user is working
-  // with so forms auto-fill the shipment field. Defaults to first open shipment.
-  const [activeShipmentId, setActiveShipmentId] = useState<string | undefined>(
+  // ── Active shipment selector (cloud-synced via user_preferences) ──
+  const [activeShipmentId, setActiveShipmentIdLocal] = useState<string | undefined>(
     () => {
+      // Start with localStorage for instant render, then cloud pull overrides it
       const savedShipmentId = localStorage.getItem(ACTIVE_SHIPMENT_STORAGE_KEY) || undefined;
       if (savedShipmentId && state.shipments.some(s => s.id === savedShipmentId)) return savedShipmentId;
       return state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
     }
   );
+
+  // Wrap setter to also push to cloud
+  const setActiveShipmentId = useCallback((id: string) => {
+    setActiveShipmentIdLocal(id);
+    localStorage.setItem(ACTIVE_SHIPMENT_STORAGE_KEY, id);
+    // Push to cloud so other devices see this user's active shipment
+    const userId = stateRef.current.currentUser?.id;
+    if (userId) pushUserPreference(userId, { activeShipmentId: id });
+  }, []);
+
+  // On login / cloud init, pull user's preference from cloud
+  useEffect(() => {
+    const userId = state.currentUser?.id;
+    if (!userId) return;
+    pullUserPreference(userId).then(prefs => {
+      if (prefs?.activeShipmentId && state.shipments.some(s => s.id === prefs.activeShipmentId)) {
+        setActiveShipmentIdLocal(prefs.activeShipmentId);
+        localStorage.setItem(ACTIVE_SHIPMENT_STORAGE_KEY, prefs.activeShipmentId!);
+      }
+    }).catch(() => {});
+  }, [state.currentUser?.id, state.shipments]);
 
   // If shipments list changes (e.g. cloud pull adds/removes), ensure selection is still valid
   useEffect(() => {
@@ -609,15 +590,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Current selection is gone — pick a new one
     const fallback = state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
     if (fallback) setActiveShipmentId(fallback);
-  }, [state.shipments, activeShipmentId]);
-
-  useEffect(() => {
-    if (!activeShipmentId) {
-      localStorage.removeItem(ACTIVE_SHIPMENT_STORAGE_KEY);
-      return;
-    }
-    localStorage.setItem(ACTIVE_SHIPMENT_STORAGE_KEY, activeShipmentId);
-  }, [activeShipmentId]);
+  }, [state.shipments, activeShipmentId, setActiveShipmentId]);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Cloud-First: fetch fresh users from Supabase before authenticating.
