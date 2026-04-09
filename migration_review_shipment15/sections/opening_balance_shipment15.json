@@ -1,0 +1,388 @@
+{
+  "section": "opening_balance_shipment15",
+  "generatedAt": "2026-04-09T13:36:27.203Z",
+  "description": "One clean opening warehouse balance for shipment15, dated the day before the first invoice.",
+  "summary": {
+    "date": "2026-02-15",
+    "transactions": 27,
+    "totalQty": 2521,
+    "topProducts": [
+      {
+        "productId": "2",
+        "productName": "نجتس",
+        "qty": 354
+      },
+      {
+        "productId": "5",
+        "productName": "بطاطس",
+        "qty": 345
+      },
+      {
+        "productId": "19",
+        "productName": "زبدة",
+        "qty": 199
+      },
+      {
+        "productId": "1",
+        "productName": "هوت دوق",
+        "qty": 170
+      },
+      {
+        "productId": "6",
+        "productName": "جوافة",
+        "qty": 167
+      },
+      {
+        "productId": "16",
+        "productName": "مسحب رويال",
+        "qty": 135
+      },
+      {
+        "productId": "7",
+        "productName": "مانجو",
+        "qty": 90
+      },
+      {
+        "productId": "11",
+        "productName": "اصابع سمك",
+        "qty": 75
+      },
+      {
+        "productId": "12",
+        "productName": "اصابع دجاج",
+        "qty": 75
+      },
+      {
+        "productId": "13",
+        "productName": "شيش طاوق",
+        "qty": 75
+      },
+      {
+        "productId": "15",
+        "productName": "موزاريلا",
+        "qty": 75
+      },
+      {
+        "productId": "24",
+        "productName": "نجتس كرتون",
+        "qty": 75
+      },
+      {
+        "productId": "3",
+        "productName": "نجتس جبنة",
+        "qty": 75
+      },
+      {
+        "productId": "18",
+        "productName": "صدور",
+        "qty": 73
+      },
+      {
+        "productId": "25",
+        "productName": "كفتة",
+        "qty": 66
+      }
+    ]
+  },
+  "state": {
+    "inventoryTransactions": [
+      {
+        "id": "ITOB00001",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "1",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 170,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00002",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "10",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00003",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "11",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00004",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "12",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00005",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "13",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00006",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "14",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 53,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00007",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "15",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00008",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "16",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 135,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00009",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "17",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00010",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "18",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 73,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00011",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "19",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 199,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00012",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "2",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 354,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00013",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "20",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 27,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00014",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "22",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 1,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00015",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "23",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 20,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00016",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "24",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00017",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "25",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 66,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00018",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "26",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 58,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00019",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "27",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 17,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00020",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "28",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 32,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00021",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "3",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00022",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "4",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 66,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00023",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "5",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 345,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00024",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "6",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 167,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00025",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "7",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 90,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00026",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "8",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 48,
+        "notes": "Opening balance for shipment15"
+      },
+      {
+        "id": "ITOB00027",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "9",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 30,
+        "notes": "Opening balance for shipment15"
+      }
+    ]
+  }
+}

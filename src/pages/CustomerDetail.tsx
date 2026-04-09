@@ -260,7 +260,7 @@ export default function CustomerDetail() {
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
-                      <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
+                      <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}</p>
                       <p className="text-xs text-slate-500">{t('salesperson')}: {state.salespeople.find(s => s.id === invoice.salespersonId)?.name || '-'}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -297,7 +297,7 @@ export default function CustomerDetail() {
                   {invoices.length > 0 ? invoices.map((invoice) => (
                     <tr key={invoice.id} onClick={() => { setSelectedInvoiceRowId(invoice.id); setShowPrintModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedInvoiceRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
-                      <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-4 py-3 text-slate-600">{state.salespeople.find(s => s.id === invoice.salespersonId)?.name || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${ invoice.paymentType === 'cash' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }`}>
@@ -355,7 +355,7 @@ export default function CustomerDetail() {
                 <div key={payment.id} onClick={() => { setSelectedPaymentRowId(payment.id); openEditPayment(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedPaymentRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <p className="text-xs text-slate-500">{format(new Date(payment.date), 'dd/MM/yyyy')}</p>
+                      <p className="text-xs text-slate-500">{format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</p>
                       <p className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</p>
                       {payment.notes && <p className="text-xs text-slate-500 truncate">{payment.notes}</p>}
                     </div>
@@ -389,7 +389,7 @@ export default function CustomerDetail() {
                 <tbody className="divide-y divide-slate-100">
                   {paymentsWithBalance.length > 0 ? paymentsWithBalance.map((payment) => (
                     <tr key={payment.id} onClick={() => { setSelectedPaymentRowId(payment.id); openEditPayment(payment); }} className={`transition-colors cursor-pointer ${selectedPaymentRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
-                      <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-4 py-3">{state.bankAccounts.find(b => b.id === payment.bankAccountId)?.name}</td>
                       <td className="px-4 py-3">{payment.notes}</td>
                       <td className="px-4 py-3 font-bold text-emerald-600 text-right rtl:text-left">

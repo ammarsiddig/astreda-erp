@@ -60,7 +60,7 @@ export default function Ledger() {
     }).reverse();
   }, [state.ledger, filterStartDate, filterEndDate, filterAccount, filterModule, showAllShipments, activeShipmentId]);
 
-  const { items: sortedLedgerData, requestSort, sortConfig } = useSortableData(ledgerData, { key: 'date', direction: 'desc' });
+  const { items: sortedLedgerData, requestSort, sortConfig } = useSortableData(ledgerData, { key: 'id', direction: 'asc' });
 
   const printAccountStatement = () => {
     if (!stmtFromDate || !stmtToDate) return;
@@ -69,8 +69,8 @@ export default function Ledger() {
     const accountName = stmtAccount
       ? state.bankAccounts.find(b => b.id === stmtAccount)?.name || 'غير محدد'
       : 'جميع الحسابات';
-    const fromDateStr = format(new Date(stmtFromDate), 'dd/MM/yyyy');
-    const toDateStr = format(new Date(stmtToDate), 'dd/MM/yyyy');
+    const fromDateStr = format(new Date(stmtFromDate), 'dd/MM/yyyy HH:mm');
+    const toDateStr = format(new Date(stmtToDate), 'dd/MM/yyyy HH:mm');
     const printDateTime = format(new Date(), 'dd/MM/yyyy HH:mm');
     const fmt = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
 
@@ -157,7 +157,7 @@ export default function Ledger() {
         : '-';
       return `
     <tr class="${i % 2 === 1 ? 'alt' : ''}">
-      <td class="center date">${format(new Date(e.date), 'dd/MM/yyyy')}</td>
+      <td class="center date">${format(new Date(e.date), 'dd/MM/yyyy HH:mm')}</td>
       <td class="desc">${e.description.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
       <td class="center"><span class="badge">${moduleLabel(e.sourceModule)}</span></td>
       <td class="center acct">${acctDisplay}</td>
@@ -408,8 +408,9 @@ export default function Ledger() {
           <select 
             className="bg-slate-50 border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
             onChange={(e) => requestSort(e.target.value as any)}
-            value={(sortConfig?.key as string) || 'date'}
+            value={(sortConfig?.key as string) || 'id'}
           >
+            <option value="id">رقم القيد</option>
             <option value="date">التاريخ</option>
             <option value="amountIn">الوارد</option>
             <option value="amountOut">المنصرف</option>
@@ -427,7 +428,7 @@ export default function Ledger() {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-slate-900 leading-snug line-clamp-2">{entry.description}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{format(new Date(entry.date), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{format(new Date(entry.date), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
                 <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md flex-shrink-0">
                   {t(entry.sourceModule === 'sale_cash' ? 'sales' :
@@ -466,7 +467,7 @@ export default function Ledger() {
             <tbody className="divide-y divide-slate-100">
               {sortedLedgerData.length > 0 ? sortedLedgerData.map((entry, idx) => (
                 <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.03, 0.3) }} key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`transition-colors cursor-pointer ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
-                  <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
+                  <td className="px-4 py-3">{format(new Date(entry.date), 'dd/MM/yyyy HH:mm')}</td>
                   <td className="px-4 py-3 text-slate-900 font-medium">{entry.description}</td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-xs">
@@ -585,7 +586,7 @@ export default function Ledger() {
                   <div className="flex justify-between">
                     <span>{t('period')}:</span>
                     <span className="font-medium text-slate-700">
-                      {format(new Date(stmtFromDate), 'dd/MM/yyyy')} → {format(new Date(stmtToDate), 'dd/MM/yyyy')}
+                      {format(new Date(stmtFromDate), 'dd/MM/yyyy HH:mm')} → {format(new Date(stmtToDate), 'dd/MM/yyyy HH:mm')}
                     </span>
                   </div>
                   <div className="flex justify-between">

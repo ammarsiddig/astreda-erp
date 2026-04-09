@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { lazy, Suspense, useRef } from 'react';
+import React, { lazy, Suspense, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppStore } from './store';
 import Layout from './components/Layout';
+import AppUpdateBanner from './components/AppUpdateBanner';
 import { ToastProvider } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
@@ -63,6 +64,20 @@ function PageLoader() {
   );
 }
 
+function AppBootLoader() {
+  return (
+    <div className="min-h-screen bg-[#134e4a] flex items-center justify-center p-4" dir="rtl">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
+        <div>
+          <h1 className="text-xl font-bold text-amber-400">أستريدا</h1>
+          <p className="mt-1 text-sm text-slate-300">جاري استعادة الجلسة...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ pageKey, children }: { pageKey: PageKey; children: React.ReactNode }) {
   const { state } = useAppStore();
   if (!canView(state.currentUser, state.roles, pageKey)) {
@@ -80,21 +95,25 @@ function RoleLandingPage() {
 }
 
 function AppRoutes() {
-  const { state } = useAppStore();
+  const { state, isCloudLoading } = useAppStore();
   // Track whether the user has ever been authenticated in this session.
   // This prevents the Layout from unmounting (and losing sidebar state)
   // when currentUser briefly flickers to null during cloud sync / realtime.
   const wasAuthenticated = useRef(false);
   if (state.currentUser) wasAuthenticated.current = true;
 
-  // Show Login only when the user has genuinely never logged in or explicitly logged out.
-  // A brief null during sync won't pass this guard because wasAuthenticated stays true
-  // and localStorage still has the session marker.
   const hasSessionMarker = typeof window !== 'undefined' && !!localStorage.getItem('astreda_current_user');
-  if (!state.currentUser && !wasAuthenticated.current && !hasSessionMarker) {
-    return <Login />;
-  }
-  if (!state.currentUser && !hasSessionMarker) {
+
+  useEffect(() => {
+    if (!isCloudLoading && !state.currentUser && hasSessionMarker) {
+      localStorage.removeItem('astreda_current_user');
+    }
+  }, [hasSessionMarker, isCloudLoading, state.currentUser]);
+
+  if (!state.currentUser) {
+    if (isCloudLoading && (wasAuthenticated.current || hasSessionMarker)) {
+      return <AppBootLoader />;
+    }
     return <Login />;
   }
 
@@ -128,6 +147,7 @@ export default function App() {
     <ErrorBoundary>
       <AppProvider>
         <ToastProvider>
+          <AppUpdateBanner />
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>

@@ -46,7 +46,7 @@ export default function AccountTransfers() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.accountTransfers, filterDate, filterType]);
 
-  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'date', direction: 'desc' });
+  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'id', direction: 'asc' });
 
   const handleSaveTransfer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,7 +238,7 @@ export default function AccountTransfers() {
           <select 
             className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
             onChange={(e) => sortTransfers(e.target.value as any)}
-            value={(transferSortConfig?.key as string) || 'date'}
+            value={(transferSortConfig?.key as string) || 'id'}
           >
             <option value="id">{t('receiptNumber')}</option>
             <option value="date">{t('date')}</option>
@@ -256,7 +256,7 @@ export default function AccountTransfers() {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{transfer.id}</p>
-                  <p className="text-xs text-slate-400">{format(new Date(transfer.date), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(transfer.date), 'dd/MM/yyyy HH:mm')}</p>
                   <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${transfer.type === 'opening_balance' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#ccfbf1] text-[#134e4a]'}`}>
                     {t(transfer.type === 'opening_balance' ? 'openingBalance' : 'transfer')}
                   </span>
@@ -299,7 +299,7 @@ export default function AccountTransfers() {
                 <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={transfer.id} onClick={() => { setSelectedRowId(transfer.id); setShowViewModal(transfer); }} className={`transition-colors cursor-pointer ${selectedIds.has(transfer.id) ? 'bg-red-50' : selectedRowId === transfer.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(transfer.id)} onChange={() => toggleSelect(transfer.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{transfer.id}</td>
-                  <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy')}</td>
+                  <td className="px-4 py-3">{format(new Date(transfer.date), 'dd/MM/yyyy HH:mm')}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${ transfer.type === 'opening_balance' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#ccfbf1] text-[#134e4a]' }`}>
                       {t(transfer.type === 'opening_balance' ? 'openingBalance' : 'transfer')}
@@ -453,7 +453,7 @@ export default function AccountTransfers() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('date')}</label>
-                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>
+                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy HH:mm')}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('type')}</label>

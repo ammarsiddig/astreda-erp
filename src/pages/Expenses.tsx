@@ -49,7 +49,7 @@ export default function Expenses() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.expenses, activeShipmentId, filterFromDate, filterToDate, filterCategory]);
 
-  const { items: sortedExpenses, requestSort: sortExpenses, sortConfig: expSortConfig } = useSortableData(filteredExpenses, { key: 'date', direction: 'desc' });
+  const { items: sortedExpenses, requestSort: sortExpenses, sortConfig: expSortConfig } = useSortableData(filteredExpenses, { key: 'id', direction: 'asc' });
 
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,7 +216,7 @@ export default function Expenses() {
           <select 
             className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
             onChange={(e) => sortExpenses(e.target.value as any)}
-            value={(expSortConfig?.key as string) || 'date'}
+            value={(expSortConfig?.key as string) || 'id'}
           >
             <option value="id">{t('receiptNumber')}</option>
             <option value="date">{t('date')}</option>
@@ -236,7 +236,7 @@ export default function Expenses() {
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{expense.id}</p>
                   <p className="text-xs text-slate-700">{state.expenseCategories.find(c => c.id === expense.categoryId)?.name}</p>
-                  <p className="text-xs text-slate-400">{format(new Date(expense.date), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(expense.date), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
                 <span className="font-bold text-red-600 text-sm flex-shrink-0">{formatCurrency(expense.amount)}</span>
               </div>
@@ -286,7 +286,7 @@ export default function Expenses() {
                 <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={expense.id} onClick={() => { setSelectedRowId(expense.id); setShowViewModal(expense); }} className={`transition-colors cursor-pointer ${selectedIds.has(expense.id) ? 'bg-red-50' : selectedRowId === expense.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{expense.id}</td>
-                  <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy')}</td>
+                  <td className="px-4 py-3">{format(new Date(expense.date), 'dd/MM/yyyy HH:mm')}</td>
                   <td className="px-4 py-3">{state.expenseCategories.find(c => c.id === expense.categoryId)?.name}</td>
                   <td className="px-4 py-3">{state.bankAccounts.find(b => b.id === expense.bankAccountId)?.name}</td>
                   <td className="px-4 py-3 text-slate-500">{expense.notes}</td>
@@ -405,7 +405,7 @@ export default function Expenses() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('date')}</label>
-                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>
+                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy HH:mm')}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('category')}</label>

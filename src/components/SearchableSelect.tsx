@@ -79,7 +79,13 @@ export default function SearchableSelect({
   };
 
   return (
-    <div ref={containerRef} className={`relative ${className || ''}`} dir={dir}>
+    <div
+      ref={containerRef}
+      className={`relative ${className || ''}`}
+      dir={dir}
+      data-searchable-select-root="true"
+      data-searchable-select-open={isOpen ? 'true' : 'false'}
+    >
       {/* Trigger button */}
       <button
         type="button"

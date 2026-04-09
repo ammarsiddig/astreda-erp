@@ -281,7 +281,7 @@ export default function Reports() {
     if (!dailyDebtCity) return;
     const cityName = state.cities.find(c => c.id === dailyDebtCity)?.name || '';
     const shipmentName = state.shipments.find(s => s.id === dailyDebtShipment)?.name || '';
-    const dateStr = format(new Date(dailyDebtDate), 'dd/MM/yyyy');
+    const dateStr = format(new Date(dailyDebtDate), 'dd/MM/yyyy HH:mm');
     const fmt = (n: number) => new Intl.NumberFormat('en-US').format(n);
     const totalSales = dailyDebtData.reduce((sum, r) => sum + r.totalSales, 0);
     const totalPaid  = dailyDebtData.reduce((sum, r) => sum + r.totalPaid,  0);
@@ -402,8 +402,8 @@ td.low{color:#d97706!important;font-weight:700;background-color:#fef3c7!importan
     const shipmentName = transfersShipment ? state.shipments.find(s => s.id === transfersShipment)?.name || '' : 'الكل';
     const fmt = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
     const fmtSAR = (n: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-    const fromStr = transfersFromDate ? format(new Date(transfersFromDate), 'dd/MM/yyyy') : 'الكل';
-    const toStr = transfersToDate ? format(new Date(transfersToDate), 'dd/MM/yyyy') : 'الكل';
+    const fromStr = transfersFromDate ? format(new Date(transfersFromDate), 'dd/MM/yyyy HH:mm') : 'الكل';
+    const toStr = transfersToDate ? format(new Date(transfersToDate), 'dd/MM/yyyy HH:mm') : 'الكل';
 
     const sectionsHtml = transfersData.byPartner.map(partner => {
       const rows = [...partner.transfers]
@@ -411,7 +411,7 @@ td.low{color:#d97706!important;font-weight:700;background-color:#fef3c7!importan
         .map((t, i) => {
           const accts = t.splits.map(s => state.bankAccounts.find(b => b.id === s.bankAccountId)?.name || '').filter(Boolean).join(' / ');
           return `<tr class="${i % 2 === 1 ? 'alt' : ''}">
-            <td class="center">${format(new Date(t.date), 'dd/MM/yyyy')}</td>
+            <td class="center">${format(new Date(t.date), 'dd/MM/yyyy HH:mm')}</td>
             <td class="center">${t.id}</td><td class="name">${partner.name}</td>
             <td class="desc">${(t.description || '—').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</td>
             <td class="center">${accts}</td><td class="num">${fmt(t.amountSDG)}</td>
@@ -455,8 +455,8 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
   const printExpensesReport = () => {
     const shipmentName = expensesShipment ? state.shipments.find(s => s.id === expensesShipment)?.name || '' : 'الكل';
     const fmt = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
-    const fromStr = expensesFromDate ? format(new Date(expensesFromDate), 'dd/MM/yyyy') : 'الكل';
-    const toStr = expensesToDate ? format(new Date(expensesToDate), 'dd/MM/yyyy') : 'الكل';
+    const fromStr = expensesFromDate ? format(new Date(expensesFromDate), 'dd/MM/yyyy HH:mm') : 'الكل';
+    const toStr = expensesToDate ? format(new Date(expensesToDate), 'dd/MM/yyyy HH:mm') : 'الكل';
 
     const sectionsHtml = expensesChartData.byCategory.map(cat => {
       const rows = [...cat.expenses]
@@ -465,7 +465,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
           const acctName = state.bankAccounts.find(b => b.id === e.bankAccountId)?.name || '—';
           const carName = e.carId ? (state.cars.find(c => c.id === e.carId)?.name || '—') : '—';
           return `<tr class="${i % 2 === 1 ? 'alt' : ''}">
-            <td class="center">${format(new Date(e.date), 'dd/MM/yyyy')}</td>
+            <td class="center">${format(new Date(e.date), 'dd/MM/yyyy HH:mm')}</td>
             <td class="center">${e.id}</td><td class="name">${cat.name}</td>
             <td class="desc">${(e.description || '—').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</td>
             <td class="center">${acctName}</td><td class="center">${carName}</td>
@@ -678,7 +678,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 <div className="flex justify-between items-center border-b-4 border-[#134e4a] pb-6 mb-8">
                   <h2 className="text-3xl font-bold text-[#134e4a]">تقرير المديونية اليومي</h2>
                   <div className="text-lg text-[#1e293b] font-bold space-x-4 rtl:space-x-reverse">
-                    <span>التاريخ: {format(new Date(dailyDebtDate), 'dd/MM/yyyy')}</span>
+                    <span>التاريخ: {format(new Date(dailyDebtDate), 'dd/MM/yyyy HH:mm')}</span>
                     <span className="mx-2">|</span>
                     <span>الرسالة: {state.shipments.find(s => s.id === dailyDebtShipment)?.name}</span>
                     <span className="mx-2">|</span>
@@ -1055,7 +1055,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                               .map((tr, ti) => (
                                 <tr key={tr.id} className={ti % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                                  <td className="px-3 py-1.5 text-center">{format(new Date(tr.date), 'dd/MM/yyyy')}</td>
+                                  <td className="px-3 py-1.5 text-center">{format(new Date(tr.date), 'dd/MM/yyyy HH:mm')}</td>
                                   <td className="px-3 py-1.5 text-center text-slate-500">{tr.id}</td>
                                   <td className="px-3 py-1.5 font-medium text-slate-800">{partner.name}</td>
                                   <td className="px-3 py-1.5 text-slate-500">{tr.description || '—'}</td>
@@ -1223,7 +1223,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                               .map((exp, ei) => (
                                 <tr key={exp.id} className={ei % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                                  <td className="px-3 py-1.5 text-center">{format(new Date(exp.date), 'dd/MM/yyyy')}</td>
+                                  <td className="px-3 py-1.5 text-center">{format(new Date(exp.date), 'dd/MM/yyyy HH:mm')}</td>
                                   <td className="px-3 py-1.5 text-center text-slate-500">{exp.id}</td>
                                   <td className="px-3 py-1.5 font-medium text-slate-800">{cat.name}</td>
                                   <td className="px-3 py-1.5 text-slate-500">{exp.description || '—'}</td>

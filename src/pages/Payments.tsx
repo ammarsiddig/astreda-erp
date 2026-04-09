@@ -53,7 +53,7 @@ export default function Payments() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.payments, activeShipmentId, filterFromDate, filterToDate, filterCustomer]);
 
-  const { items: sortedPayments, requestSort: sortPayments, sortConfig: paySortConfig } = useSortableData(filteredPayments, { key: 'date', direction: 'desc' });
+  const { items: sortedPayments, requestSort: sortPayments, sortConfig: paySortConfig } = useSortableData(filteredPayments, { key: 'id', direction: 'asc' });
 
   const handleSavePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +218,7 @@ export default function Payments() {
           <select 
             className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
             onChange={(e) => sortPayments(e.target.value as any)}
-            value={(paySortConfig?.key as string) || 'date'}
+            value={(paySortConfig?.key as string) || 'id'}
           >
             <option value="id">{t('receiptNumber')}</option>
             <option value="date">{t('date')}</option>
@@ -238,7 +238,7 @@ export default function Payments() {
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">{payment.id}</p>
                   <p className="text-xs text-slate-700">{customerMap.get(payment.customerId)?.name}</p>
-                  <p className="text-xs text-slate-400">{format(new Date(payment.date), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
                 <span className="font-bold text-emerald-600 text-sm flex-shrink-0">{formatCurrency(payment.amount)}</span>
               </div>
@@ -288,7 +288,7 @@ export default function Payments() {
                 <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(payment.id)} onChange={() => toggleSelect(payment.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{payment.id}</td>
-                  <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy')}</td>
+                  <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</td>
                   <td className="px-4 py-3">{customerMap.get(payment.customerId)?.name}</td>
                   <td className="px-4 py-3">{bankAccountMap.get(payment.bankAccountId)?.name}</td>
                   <td className="px-4 py-3 text-slate-500">{payment.notes}</td>
@@ -407,7 +407,7 @@ export default function Payments() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('date')}</label>
-                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>
+                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy HH:mm')}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('customer')}</label>

@@ -85,6 +85,17 @@ const DEFAULT_USERS: User[] = [
   { id: 'user-hassan',     name: 'حسن',          username: 'hassan',     password: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', roleId: 'role-salesperson', salespersonId: '2', isActive: true },
 ];
 
+function mergeUsersWithDefaults(users: User[]): User[] {
+  const merged = [...users];
+  for (const defaultUser of DEFAULT_USERS) {
+    const exists = merged.some(
+      (user) => user.id === defaultUser.id || user.username === defaultUser.username
+    );
+    if (!exists) merged.unshift(defaultUser);
+  }
+  return merged;
+}
+
 const ACTIVE_SHIPMENT_STORAGE_KEY = 'astreda_active_shipment_id';
 
 const initialState: AppState = {
@@ -597,11 +608,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Resolve all async work (cloud fetch + hashing) before any setState call so
     // we can merge users + currentUser in a single update — no intermediate render
     // where currentUser is null and the sidebar flashes away.
-    let users = state.users || [];
+    let users = mergeUsersWithDefaults(state.users || []);
     let cloudUsers: User[] | null = null;
     try {
       cloudUsers = await fetchUsersFromCloud();
-      if (cloudUsers && cloudUsers.length > 0) users = cloudUsers;
+      if (cloudUsers && cloudUsers.length > 0) users = mergeUsersWithDefaults(cloudUsers);
     } catch {
       // Fallback to local users if Supabase is unreachable
     }
@@ -633,7 +644,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const finalUser = user;
     setState(prev => ({
       ...prev,
-      ...(cloudUsers && cloudUsers.length > 0 ? { users: cloudUsers } : {}),
+      ...(cloudUsers && cloudUsers.length > 0 ? { users } : {}),
       ...(upgradedUsers ? { users: upgradedUsers } : {}),
       currentUser: finalUser,
     }));

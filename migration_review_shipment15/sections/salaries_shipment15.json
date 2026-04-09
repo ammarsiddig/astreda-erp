@@ -1,0 +1,124 @@
+{
+  "section": "salaries_shipment15",
+  "generatedAt": "2026-04-09T13:36:27.214Z",
+  "description": "Only original shipment15 salary and allowance records.",
+  "summary": {
+    "shipmentId": "4",
+    "salaryCount": 10,
+    "totalSalaryAmount": 11947329
+  },
+  "state": {
+    "salaries": [
+      {
+        "id": "SA00007",
+        "date": "2026-02-28",
+        "shipmentId": "4",
+        "employeeId": "1",
+        "type": "allowance",
+        "bankAccountId": "5",
+        "month": "2026-02",
+        "amount": 894960,
+        "notes": "استحقاق بوتسودان مخصوم سلفيات"
+      },
+      {
+        "id": "SA00008",
+        "date": "2026-02-28",
+        "shipmentId": "4",
+        "employeeId": "4",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-02",
+        "amount": 828276,
+        "notes": "مخصوم سلفيات"
+      },
+      {
+        "id": "SA00009",
+        "date": "2026-02-28",
+        "shipmentId": "4",
+        "employeeId": "7",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-02",
+        "amount": 850093,
+        "notes": "مخصوم سلفيات"
+      },
+      {
+        "id": "SA00010",
+        "date": "2026-02-28",
+        "shipmentId": "4",
+        "employeeId": "5",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-02",
+        "amount": 360000,
+        "notes": "مخصوم سلفيات"
+      },
+      {
+        "id": "SA00011",
+        "date": "2026-03-02",
+        "shipmentId": "4",
+        "employeeId": "2",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-02",
+        "amount": 2739000,
+        "notes": ""
+      },
+      {
+        "id": "SA00013",
+        "date": "2026-03-15",
+        "shipmentId": "4",
+        "employeeId": "8",
+        "type": "salary",
+        "bankAccountId": "4",
+        "month": "2026-03",
+        "amount": 1000000,
+        "notes": "لايوجد سلفيات"
+      },
+      {
+        "id": "SA00014",
+        "date": "2026-04-01",
+        "shipmentId": "4",
+        "employeeId": "2",
+        "type": "salary",
+        "bankAccountId": "4",
+        "month": "2026-03",
+        "amount": 3000000,
+        "notes": ""
+      },
+      {
+        "id": "SA00015",
+        "date": "2026-04-03",
+        "shipmentId": "4",
+        "employeeId": "7",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-03",
+        "amount": 975000,
+        "notes": "مخصوم سلفيات"
+      },
+      {
+        "id": "SA00016",
+        "date": "2026-04-04",
+        "shipmentId": "4",
+        "employeeId": "4",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-03",
+        "amount": 1000000,
+        "notes": ""
+      },
+      {
+        "id": "SA00017",
+        "date": "2026-04-05",
+        "shipmentId": "4",
+        "employeeId": "5",
+        "type": "salary",
+        "bankAccountId": "5",
+        "month": "2026-03",
+        "amount": 300000,
+        "notes": "مخصوم سلفيات"
+      }
+    ]
+  }
+}

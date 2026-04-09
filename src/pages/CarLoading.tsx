@@ -258,7 +258,7 @@ export default function CarLoading() {
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <p className="font-medium text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
-                    <p className="text-xs text-slate-400">{format(new Date(log.date), 'dd/MM/yyyy')}</p>
+                    <p className="text-xs text-slate-400">{format(new Date(log.date), 'dd/MM/yyyy HH:mm')}</p>
                   </div>
                   <span className="font-bold text-slate-700 text-sm">{new Intl.NumberFormat('en-US').format(log.qty)}</span>
                 </div>
@@ -287,7 +287,7 @@ export default function CarLoading() {
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
                   <tr key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`transition-colors cursor-pointer ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
-                    <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy')}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy HH:mm')}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
                     <td className="px-4 py-3 text-center font-bold text-slate-700">
                       {new Intl.NumberFormat('en-US').format(log.qty)}
@@ -385,7 +385,7 @@ export default function CarLoading() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-slate-500">{t('date')}</label>
-                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>
+                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy HH:mm')}</p>
               </div>
               <div>
                 <label className="block text-xs text-slate-500">{t('product')}</label>

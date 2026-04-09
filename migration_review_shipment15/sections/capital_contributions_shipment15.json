@@ -1,0 +1,261 @@
+{
+  "section": "capital_contributions_shipment15",
+  "generatedAt": "2026-04-09T13:36:27.218Z",
+  "description": "Shipment15 investor contributions reconstructed from the الشركاء capital table before applying cleaned general transfers.",
+  "summary": {
+    "shipmentId": "4",
+    "workbook": "C:/Users/Ammar/Downloads/نظام امريكانا.xlsm",
+    "sheetName": "الشركاء",
+    "contributionCount": 9,
+    "totalContributionSAR": 395335,
+    "contributionDate": "2026-02-15",
+    "unresolvedPartners": [],
+    "excludedPartners": [
+      {
+        "partnerId": "4",
+        "partnerName": "العربات",
+        "amountSAR": 26000,
+        "reason": "Present in الشركاء summary table but missing matching shipment15 raw bank-outflow rows in التحاويل_العامة."
+      }
+    ],
+    "rawCapitalReturnAudit": [
+      {
+        "partnerName": "مازن",
+        "partnerId": "8",
+        "contributionSAR": 5000,
+        "deductedSAR": 5000,
+        "rawCapitalReturnSAR": 5000,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -5000
+        ]
+      },
+      {
+        "partnerName": "وائل",
+        "partnerId": "11",
+        "contributionSAR": 15000,
+        "deductedSAR": 15000,
+        "rawCapitalReturnSAR": 15000,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -14000,
+          -1000
+        ]
+      },
+      {
+        "partnerName": "جبرة",
+        "partnerId": "9",
+        "contributionSAR": 37500,
+        "deductedSAR": 37500,
+        "rawCapitalReturnSAR": 37500,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -20000,
+          -15000,
+          -2500
+        ]
+      },
+      {
+        "partnerName": "حماده كنه",
+        "partnerId": "10",
+        "contributionSAR": 100000,
+        "deductedSAR": 100000,
+        "rawCapitalReturnSAR": 100021.43020594965,
+        "rawCapitalGapSAR": -21.43,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -10947,
+          -8158,
+          -20000,
+          -18663,
+          -12233,
+          -2337,
+          -10000,
+          -17662
+        ]
+      },
+      {
+        "partnerName": "هيثم",
+        "partnerId": "13",
+        "contributionSAR": 25000,
+        "deductedSAR": 25000,
+        "rawCapitalReturnSAR": 25000,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -15000,
+          -10000
+        ]
+      },
+      {
+        "partnerName": "عصام",
+        "partnerId": "1",
+        "contributionSAR": 13500,
+        "deductedSAR": 13500,
+        "rawCapitalReturnSAR": 13500,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -3000,
+          -10500
+        ]
+      },
+      {
+        "partnerName": "محمد مدثر",
+        "partnerId": "2",
+        "contributionSAR": 100000,
+        "deductedSAR": 100000,
+        "rawCapitalReturnSAR": 100000,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -18000,
+          -20000,
+          -10000,
+          -29000,
+          -15000,
+          -8000
+        ]
+      },
+      {
+        "partnerName": "الاهل",
+        "partnerId": "5",
+        "contributionSAR": 78335,
+        "deductedSAR": 78335,
+        "rawCapitalReturnSAR": 78334.77079371434,
+        "rawCapitalGapSAR": 0.229,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -2441,
+          -5155,
+          -38000,
+          -3000,
+          -3000,
+          -2000,
+          -18932,
+          -5807
+        ]
+      },
+      {
+        "partnerName": "عمر",
+        "partnerId": "12",
+        "contributionSAR": 21000,
+        "deductedSAR": 21000,
+        "rawCapitalReturnSAR": 21000,
+        "rawCapitalGapSAR": 0,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -21000
+        ]
+      },
+      {
+        "partnerName": "العربات",
+        "partnerId": "4",
+        "contributionSAR": 26000,
+        "deductedSAR": 26000,
+        "rawCapitalReturnSAR": 0,
+        "rawCapitalGapSAR": 26000,
+        "closingBalanceSAR": 0,
+        "deductionRows": [
+          -3000,
+          -23000
+        ]
+      }
+    ],
+    "significantRawGaps": [
+      {
+        "partnerName": "حماده كنه",
+        "partnerId": "10",
+        "contributionSAR": 100000,
+        "rawCapitalReturnSAR": 100021.43020594965,
+        "gapSAR": -21.43
+      },
+      {
+        "partnerName": "العربات",
+        "partnerId": "4",
+        "contributionSAR": 26000,
+        "rawCapitalReturnSAR": 0,
+        "gapSAR": 26000
+      }
+    ]
+  },
+  "state": {
+    "capitalContributions": [
+      {
+        "id": "CC1500001",
+        "partnerId": "8",
+        "shipmentId": "4",
+        "amountSAR": 5000,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500002",
+        "partnerId": "11",
+        "shipmentId": "4",
+        "amountSAR": 15000,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500003",
+        "partnerId": "9",
+        "shipmentId": "4",
+        "amountSAR": 37500,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500004",
+        "partnerId": "10",
+        "shipmentId": "4",
+        "amountSAR": 100000,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500005",
+        "partnerId": "13",
+        "shipmentId": "4",
+        "amountSAR": 25000,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500006",
+        "partnerId": "1",
+        "shipmentId": "4",
+        "amountSAR": 13500,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500007",
+        "partnerId": "2",
+        "shipmentId": "4",
+        "amountSAR": 100000,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500008",
+        "partnerId": "5",
+        "shipmentId": "4",
+        "amountSAR": 78335,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      },
+      {
+        "id": "CC1500009",
+        "partnerId": "12",
+        "shipmentId": "4",
+        "amountSAR": 21000,
+        "date": "2026-02-15",
+        "notes": "Opening capital for shipment15 from الشركاء summary table"
+      }
+    ]
+  }
+}

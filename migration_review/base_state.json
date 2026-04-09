@@ -1,0 +1,465 @@
+{
+  "language": "ar",
+  "userRole": "manager",
+  "exchangeRate": 1000,
+  "managementFeePercent": 20,
+  "managementFeeRecipientId": "1",
+  "products": [
+    {
+      "id": "1",
+      "name": "هوت دوق"
+    },
+    {
+      "id": "2",
+      "name": "نجتس"
+    },
+    {
+      "id": "3",
+      "name": "نجتس جبنة"
+    },
+    {
+      "id": "4",
+      "name": "نجتس المرح"
+    },
+    {
+      "id": "5",
+      "name": "بطاطس"
+    },
+    {
+      "id": "6",
+      "name": "جوافة"
+    },
+    {
+      "id": "7",
+      "name": "مانجو"
+    },
+    {
+      "id": "8",
+      "name": "ذرة حلوة"
+    },
+    {
+      "id": "9",
+      "name": "سمك فيليه"
+    },
+    {
+      "id": "10",
+      "name": "بيرقر لحمة"
+    },
+    {
+      "id": "11",
+      "name": "اصابع سمك"
+    },
+    {
+      "id": "12",
+      "name": "اصابع دجاج"
+    },
+    {
+      "id": "13",
+      "name": "شيش طاوق"
+    },
+    {
+      "id": "14",
+      "name": "خضار"
+    },
+    {
+      "id": "15",
+      "name": "موزاريلا"
+    },
+    {
+      "id": "16",
+      "name": "مسحب رويال"
+    },
+    {
+      "id": "17",
+      "name": "بيرقرفراخ"
+    },
+    {
+      "id": "18",
+      "name": "صدور"
+    },
+    {
+      "id": "19",
+      "name": "زبدة"
+    },
+    {
+      "id": "20",
+      "name": "منترا"
+    },
+    {
+      "id": "21",
+      "name": "ماريتا"
+    },
+    {
+      "id": "22",
+      "name": "ملوخية"
+    },
+    {
+      "id": "23",
+      "name": "استربس"
+    },
+    {
+      "id": "24",
+      "name": "نجتس كرتون"
+    },
+    {
+      "id": "25",
+      "name": "كفتة"
+    },
+    {
+      "id": "26",
+      "name": "افخاذ"
+    },
+    {
+      "id": "27",
+      "name": "رمان"
+    },
+    {
+      "id": "28",
+      "name": "بامية"
+    }
+  ],
+  "salespeople": [
+    {
+      "id": "1",
+      "name": "أحمد ماهر"
+    },
+    {
+      "id": "2",
+      "name": "حسن"
+    },
+    {
+      "id": "3",
+      "name": "عصام خليل"
+    },
+    {
+      "id": "4",
+      "name": "السبكي"
+    },
+    {
+      "id": "5",
+      "name": "امريكانا"
+    }
+  ],
+  "cities": [
+    {
+      "id": "1",
+      "name": "بورتسودان"
+    },
+    {
+      "id": "2",
+      "name": "كسلا"
+    },
+    {
+      "id": "3",
+      "name": "عطبرة"
+    },
+    {
+      "id": "4",
+      "name": "القضارف"
+    },
+    {
+      "id": "5",
+      "name": "حلفا الجديدة"
+    },
+    {
+      "id": "6",
+      "name": "مدني"
+    },
+    {
+      "id": "7",
+      "name": "شندي"
+    },
+    {
+      "id": "8",
+      "name": "امدرمان"
+    },
+    {
+      "id": "9",
+      "name": "الخرطوم"
+    },
+    {
+      "id": "10",
+      "name": "الخرطوم بحري"
+    }
+  ],
+  "cars": [
+    {
+      "id": "1",
+      "name": "شرق"
+    },
+    {
+      "id": "2",
+      "name": "شمال"
+    },
+    {
+      "id": "3",
+      "name": "بورتسودان"
+    }
+  ],
+  "bankAccounts": [
+    {
+      "id": "1",
+      "name": "الخزينة",
+      "transferFee": 0
+    },
+    {
+      "id": "2",
+      "name": "فوري",
+      "transferFee": 0
+    },
+    {
+      "id": "3",
+      "name": "اوكاش",
+      "transferFee": 0
+    },
+    {
+      "id": "4",
+      "name": "عصام(بنكك)",
+      "transferFee": 0
+    },
+    {
+      "id": "5",
+      "name": "حسن(بنكك)",
+      "transferFee": 0
+    },
+    {
+      "id": "6",
+      "name": "خصومات",
+      "transferFee": 0
+    }
+  ],
+  "shipments": [
+    {
+      "id": "1",
+      "name": "الرسالة12",
+      "isActive": false,
+      "shareholdersPercent": 40,
+      "managementFeePercent": 20,
+      "managementFeeRecipientId": "1"
+    },
+    {
+      "id": "2",
+      "name": "الرسالة13",
+      "isActive": false,
+      "shareholdersPercent": 40,
+      "managementFeePercent": 20,
+      "managementFeeRecipientId": "1"
+    },
+    {
+      "id": "3",
+      "name": "الرسالة14",
+      "isActive": false,
+      "shareholdersPercent": 40,
+      "managementFeePercent": 20,
+      "managementFeeRecipientId": "1"
+    },
+    {
+      "id": "4",
+      "name": "الرسالة15",
+      "isActive": true,
+      "shareholdersPercent": 40,
+      "managementFeePercent": 20,
+      "managementFeeRecipientId": "1"
+    }
+  ],
+  "employees": [
+    {
+      "id": "1",
+      "name": "أحمد ماهر"
+    },
+    {
+      "id": "2",
+      "name": "حسن"
+    },
+    {
+      "id": "3",
+      "name": "عصام خليل"
+    },
+    {
+      "id": "4",
+      "name": "احمد جبرة"
+    },
+    {
+      "id": "5",
+      "name": "ادريس"
+    },
+    {
+      "id": "6",
+      "name": "السبكي"
+    },
+    {
+      "id": "7",
+      "name": "عمار"
+    },
+    {
+      "id": "8",
+      "name": "مريم"
+    }
+  ],
+  "partners": [
+    {
+      "id": "1",
+      "name": "عصام",
+      "isOperatingPartner": true
+    },
+    {
+      "id": "2",
+      "name": "محمد مدثر",
+      "isOperatingPartner": true
+    },
+    {
+      "id": "5",
+      "name": "الأهل",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "6",
+      "name": "د.نزار",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "7",
+      "name": "حسام",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "8",
+      "name": "مازن",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "9",
+      "name": "جبرة",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "10",
+      "name": "حمادة كنه",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "11",
+      "name": "وائل",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "12",
+      "name": "عمر",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "13",
+      "name": "هيثم",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "3",
+      "name": "تحاويل عامه",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "4",
+      "name": "العربات",
+      "isOperatingPartner": false
+    },
+    {
+      "id": "14",
+      "name": "الارباح",
+      "isOperatingPartner": false
+    }
+  ],
+  "expenseCategories": [
+    {
+      "id": "1",
+      "name": "وقود"
+    },
+    {
+      "id": "2",
+      "name": "راتب"
+    },
+    {
+      "id": "3",
+      "name": "سلفيات"
+    },
+    {
+      "id": "4",
+      "name": "صيانة عامة"
+    },
+    {
+      "id": "5",
+      "name": "صيانة السيارة"
+    },
+    {
+      "id": "6",
+      "name": "الكله"
+    },
+    {
+      "id": "7",
+      "name": "مستلزمات المكتب"
+    },
+    {
+      "id": "8",
+      "name": "الأتعاب"
+    },
+    {
+      "id": "9",
+      "name": "منصرفات الطريق"
+    },
+    {
+      "id": "10",
+      "name": "رسوم حكومية"
+    },
+    {
+      "id": "11",
+      "name": "ضرائب"
+    },
+    {
+      "id": "12",
+      "name": "البيت"
+    },
+    {
+      "id": "13",
+      "name": "علاج"
+    },
+    {
+      "id": "14",
+      "name": "خصومات البيع"
+    },
+    {
+      "id": "15",
+      "name": "حوافز"
+    },
+    {
+      "id": "16",
+      "name": "مصروفات اسبوعية"
+    },
+    {
+      "id": "17",
+      "name": "ارساليات"
+    },
+    {
+      "id": "18",
+      "name": "ايجار"
+    },
+    {
+      "id": "19",
+      "name": "تصفية"
+    }
+  ],
+  "customers": [],
+  "inventoryTransactions": [],
+  "invoices": [],
+  "payments": [],
+  "expenses": [],
+  "salaries": [],
+  "generalTransfers": [],
+  "accountTransfers": [],
+  "ledger": [],
+  "savedSettlements": [],
+  "capitalContributions": [],
+  "settlementResults": {},
+  "shipmentTransfers": [],
+  "roles": [],
+  "users": [],
+  "currentUser": null
+}

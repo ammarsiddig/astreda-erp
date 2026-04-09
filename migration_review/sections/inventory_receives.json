@@ -1,0 +1,473 @@
+{
+  "section": "inventory_receives",
+  "generatedAt": "2026-04-09T12:04:53.362Z",
+  "description": "Purchase receipts only. This excludes sales-related stock movements.",
+  "summary": {
+    "transactions": 46,
+    "totalQty": 4859
+  },
+  "state": {
+    "inventoryTransactions": [
+      {
+        "id": "IT00001",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "6",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 150
+      },
+      {
+        "id": "IT00002",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "7",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00003",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "8",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 85
+      },
+      {
+        "id": "IT00004",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "9",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 80
+      },
+      {
+        "id": "IT00005",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "1",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 311
+      },
+      {
+        "id": "IT00006",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "10",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 45
+      },
+      {
+        "id": "IT00007",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "3",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00008",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "11",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00009",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "13",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00010",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "5",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 400
+      },
+      {
+        "id": "IT00011",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "2",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 300
+      },
+      {
+        "id": "IT00012",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "12",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00013",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "4",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00014",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "16",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 107
+      },
+      {
+        "id": "IT00015",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "17",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 90
+      },
+      {
+        "id": "IT00016",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "18",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 130
+      },
+      {
+        "id": "IT00017",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "14",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 68
+      },
+      {
+        "id": "IT00018",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "19",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 30
+      },
+      {
+        "id": "IT00019",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "15",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 300
+      },
+      {
+        "id": "IT00020",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "20",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 40
+      },
+      {
+        "id": "IT00021",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "21",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 10
+      },
+      {
+        "id": "IT00022",
+        "date": "2026-01-09",
+        "shipmentId": "3",
+        "productId": "22",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00023",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "16",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 146
+      },
+      {
+        "id": "IT00024",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "2",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 355
+      },
+      {
+        "id": "IT00025",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "23",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 20
+      },
+      {
+        "id": "IT00026",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "17",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00027",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "24",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00028",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "4",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00029",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "3",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00030",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "12",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00031",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "11",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00032",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "13",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00033",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "25",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00034",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "15",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 75
+      },
+      {
+        "id": "IT00035",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "19",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 200
+      },
+      {
+        "id": "IT00036",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "26",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00037",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "10",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00038",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "18",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 150
+      },
+      {
+        "id": "IT00039",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "7",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 90
+      },
+      {
+        "id": "IT00040",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "8",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 30
+      },
+      {
+        "id": "IT00041",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "6",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 150
+      },
+      {
+        "id": "IT00042",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "27",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 18
+      },
+      {
+        "id": "IT00043",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "14",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 60
+      },
+      {
+        "id": "IT00044",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "9",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 30
+      },
+      {
+        "id": "IT00045",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "28",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 34
+      },
+      {
+        "id": "IT00046",
+        "date": "2026-02-15",
+        "shipmentId": "4",
+        "productId": "5",
+        "type": "receive",
+        "fromLocation": "supplier",
+        "toLocation": "warehouse",
+        "qty": 200
+      }
+    ]
+  }
+}

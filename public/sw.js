@@ -1,4 +1,4 @@
-const CACHE_NAME = 'astrida-v6';
+const CACHE_NAME = 'astrida-v7';
 
 // App shell files to precache
 const PRECACHE_URLS = [
@@ -6,6 +6,12 @@ const PRECACHE_URLS = [
   '/index.html',
   '/manifest.json',
 ];
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', event => {
   event.waitUntil(

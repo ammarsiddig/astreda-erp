@@ -71,7 +71,7 @@ export default function Salaries() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.salaries, activeShipmentId, filterDate, filterEmployee]);
 
-  const { items: sortedSalaries, requestSort: sortSalaries, sortConfig: salSortConfig } = useSortableData(filteredSalaries, { key: 'date', direction: 'desc' });
+  const { items: sortedSalaries, requestSort: sortSalaries, sortConfig: salSortConfig } = useSortableData(filteredSalaries, { key: 'id', direction: 'asc' });
 
   const allAdvances = useMemo(() =>
     state.expenses.filter(e => e.categoryId === advancesCategoryId),
@@ -91,7 +91,7 @@ export default function Salaries() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [allAdvances, advFilterShipment, advFilterEmployee, advFilterStatus, state.employees]);
 
-  const { items: sortedAdvances, requestSort: sortAdvances, sortConfig: advSortConfig } = useSortableData(filteredAdvances, { key: 'date', direction: 'desc' });
+  const { items: sortedAdvances, requestSort: sortAdvances, sortConfig: advSortConfig } = useSortableData(filteredAdvances, { key: 'id', direction: 'asc' });
 
   // Per-employee open advances summary for current shipment filter
   const employeeOpenSummary = useMemo(() => {
@@ -395,7 +395,7 @@ export default function Salaries() {
               <select 
                 className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
                 onChange={(e) => sortSalaries(e.target.value as any)}
-                value={(salSortConfig?.key as string) || 'date'}
+                value={(salSortConfig?.key as string) || 'id'}
               >
                 <option value="id">{t('receiptNumber')}</option>
                 <option value="date">{t('date')}</option>
@@ -412,7 +412,7 @@ export default function Salaries() {
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{state.employees.find(e => e.id === salary.employeeId)?.name}</p>
-                      <p className="text-xs text-slate-500">{salary.id} · {format(new Date(salary.date), 'dd/MM/yyyy')}</p>
+                      <p className="text-xs text-slate-500">{salary.id} · {format(new Date(salary.date), 'dd/MM/yyyy HH:mm')}</p>
                       <p className="text-xs text-slate-400">{t(salary.type)} · {salary.month}</p>
                     </div>
                     <span className="font-bold text-red-600 text-sm flex-shrink-0">{formatCurrency(salary.amount)}</span>
@@ -451,7 +451,7 @@ export default function Salaries() {
                   {sortedSalaries.length > 0 ? sortedSalaries.map((salary, idx) => (
                     <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
-                      <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>
                       <td className="px-4 py-3">{t(salary.type)}</td>
                       <td className="px-4 py-3">{salary.month}</td>
@@ -562,8 +562,9 @@ export default function Salaries() {
               <select 
                 className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
                 onChange={(e) => sortAdvances(e.target.value as any)}
-                value={(advSortConfig?.key as string) || 'date'}
+                value={(advSortConfig?.key as string) || 'id'}
               >
+                <option value="id">رقم السند</option>
                 <option value="date">التاريخ</option>
                 <option value="description">الموظف</option>
                 <option value="amount">المبلغ</option>
@@ -585,7 +586,7 @@ export default function Salaries() {
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{adv.description}</p>
-                      <p className="text-xs text-slate-400">{format(new Date(adv.date), 'dd/MM/yyyy')}</p>
+                      <p className="text-xs text-slate-400">{format(new Date(adv.date), 'dd/MM/yyyy HH:mm')}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       <span className="font-bold text-red-600 text-sm">{formatCurrency(adv.amount)}</span>
@@ -638,7 +639,7 @@ export default function Salaries() {
                         : 'hover:bg-amber-50';
                     return (
                     <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`transition-colors cursor-pointer ${advRowClass}`}>
-                      <td className="px-4 py-3">{format(new Date(adv.date), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3">{format(new Date(adv.date), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-4 py-3 font-medium text-slate-900">{adv.description}</td>
                       <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">
                         {formatCurrency(adv.amount)}
@@ -722,7 +723,7 @@ export default function Salaries() {
                 <ul className="space-y-1">
                   {openAdvancesForEmployee.map(adv => (
                     <li key={adv.id} className="flex justify-between text-xs text-red-600">
-                      <span>{format(new Date(adv.date), 'dd/MM/yyyy')}</span>
+                      <span>{format(new Date(adv.date), 'dd/MM/yyyy HH:mm')}</span>
                       <span className="font-semibold">{formatCurrency(adv.amount)}</span>
                     </li>
                   ))}
@@ -831,7 +832,7 @@ export default function Salaries() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('date')}</label>
-                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy')}</p>
+                <p className="font-medium">{format(new Date(showViewModal.date), 'dd/MM/yyyy HH:mm')}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('employee')}</label>

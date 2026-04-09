@@ -12,6 +12,11 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
+    "migrate:excel": "node migrate_excel.cjs",
+    "migrate:review": "node scripts/prepareMigrationReview.cjs",
+    "migrate:review-shipment15": "node scripts/prepareShipment15Review.cjs",
+    "migrate:apply-section": "node scripts/applyMigrationSection.cjs",
+    "reset:operational": "node scripts/resetOperationalData.cjs",
     "check:sync-v3": "tsx scripts/checkSyncV3.ts",
     "test": "vitest run",
     "test:watch": "vitest"

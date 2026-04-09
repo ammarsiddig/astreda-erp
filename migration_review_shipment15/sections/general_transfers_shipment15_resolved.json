@@ -1,0 +1,1022 @@
+{
+  "section": "general_transfers_shipment15_resolved",
+  "generatedAt": "2026-04-09T13:36:27.221Z",
+  "description": "Shipment15 general transfers that are fully resolved and safe to apply now; unresolved generic profit rows are excluded pending manual allocation.",
+  "summary": {
+    "shipmentId": "4",
+    "resolvedTransferCount": 48,
+    "resolvedTransferTotalSAR": 439787.948,
+    "excludedUnresolvedProfitRowCount": 9,
+    "excludedUnresolvedProfitTotalSAR": 77116.484,
+    "applyReady": true,
+    "sourceSection": "general_transfers_shipment15",
+    "includedBreakdown": {
+      "capitalReturnCount": 40,
+      "capitalReturnTotalSAR": 395356.201,
+      "mergedDrawingCount": 3,
+      "mergedDrawingTotalSAR": 26855.7,
+      "preservedMiscDrawingCount": 4,
+      "preservedMiscDrawingTotalSAR": 2964.396,
+      "explicitProfitRowCount": 1,
+      "explicitProfitTotalSAR": 14611.65
+    },
+    "excludedUnresolvedProfitRows": [
+      {
+        "id": "TR00260",
+        "date": "2026-04-05",
+        "amountSAR": 1708.5427135678392,
+        "amountSDG": 1700000,
+        "description": "خصم من الارباح"
+      },
+      {
+        "id": "TR00262",
+        "date": "2026-04-05",
+        "amountSAR": 19530.516431924883,
+        "amountSDG": 20800000,
+        "description": "خصم من الارباح"
+      },
+      {
+        "id": "TR00266",
+        "date": "2026-04-06",
+        "amountSAR": 2366.1971830985917,
+        "amountSDG": 2520000,
+        "description": "خصم من الارباح"
+      },
+      {
+        "id": "TR00267",
+        "date": "2026-04-06",
+        "amountSAR": 993.4272300469484,
+        "amountSDG": 1058000,
+        "description": "خصم من الارباح"
+      },
+      {
+        "id": "GT0902",
+        "date": "2026-04-07",
+        "amountSAR": 8628,
+        "amountSDG": 9188820,
+        "description": "ارباح"
+      },
+      {
+        "id": "GT0903",
+        "date": "2026-04-07",
+        "amountSAR": 5282.890909090909,
+        "amountSDG": 5811180,
+        "description": "ارباح"
+      },
+      {
+        "id": "GT0904",
+        "date": "2026-04-07",
+        "amountSAR": 1106.909090909091,
+        "amountSDG": 1217600,
+        "description": "ارباح"
+      },
+      {
+        "id": "GT0905",
+        "date": "2026-04-07",
+        "amountSAR": 10000,
+        "amountSDG": 10700000,
+        "description": "ارباح"
+      },
+      {
+        "id": "GT0906",
+        "date": "2026-04-08",
+        "amountSAR": 27500,
+        "amountSDG": 29370000,
+        "description": "ارباح"
+      }
+    ]
+  },
+  "state": {
+    "generalTransfers": [
+      {
+        "id": "TR00177",
+        "date": "2026-03-09",
+        "description": "راس مال وائل رسالة 15",
+        "shipmentId": "4",
+        "partnerId": "11",
+        "transferType": "capital_return",
+        "amountSDG": 12852000,
+        "exchangeRate": 918,
+        "amountSAR": 14000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 12852000
+          }
+        ],
+        "beneficiaryPartnerId": "11"
+      },
+      {
+        "id": "TR00181",
+        "date": "2026-03-10",
+        "description": "استرجاع راس مال مازن رساله 15",
+        "shipmentId": "4",
+        "partnerId": "8",
+        "transferType": "capital_return",
+        "amountSDG": 4590000,
+        "exchangeRate": 918,
+        "amountSAR": 5000,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 4590000
+          }
+        ],
+        "beneficiaryPartnerId": "8"
+      },
+      {
+        "id": "TR00186",
+        "date": "2026-03-13",
+        "description": "جزء من راس مال محمد مدثر",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "capital_return",
+        "amountSDG": 16794000,
+        "exchangeRate": 933,
+        "amountSAR": 18000,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 16794000
+          }
+        ],
+        "beneficiaryPartnerId": "2"
+      },
+      {
+        "id": "TR00187",
+        "date": "2026-03-13",
+        "description": "استرجاع راس مال عمر",
+        "shipmentId": "4",
+        "partnerId": "12",
+        "transferType": "capital_return",
+        "amountSDG": 19593000,
+        "exchangeRate": 933,
+        "amountSAR": 21000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 6387000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 13206000
+          }
+        ],
+        "beneficiaryPartnerId": "12"
+      },
+      {
+        "id": "TR00188",
+        "date": "2026-03-14",
+        "description": "خصم من راس مال هيثم",
+        "shipmentId": "4",
+        "partnerId": "13",
+        "transferType": "capital_return",
+        "amountSDG": 13845000,
+        "exchangeRate": 923,
+        "amountSAR": 15000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 6845000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 7000000
+          }
+        ],
+        "beneficiaryPartnerId": "13"
+      },
+      {
+        "id": "TR00190",
+        "date": "2026-03-15",
+        "description": "خصم من راس ماال عصام",
+        "shipmentId": "4",
+        "partnerId": "1",
+        "transferType": "capital_return",
+        "amountSDG": 2769000,
+        "exchangeRate": 923,
+        "amountSAR": 3000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 2769000
+          }
+        ],
+        "beneficiaryPartnerId": "1"
+      },
+      {
+        "id": "TR00191",
+        "date": "2026-03-15",
+        "description": "خصم من راس مال وائل",
+        "shipmentId": "4",
+        "partnerId": "11",
+        "transferType": "capital_return",
+        "amountSDG": 923000,
+        "exchangeRate": 923,
+        "amountSAR": 1000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 923000
+          }
+        ],
+        "beneficiaryPartnerId": "11"
+      },
+      {
+        "id": "TR00192",
+        "date": "2026-03-15",
+        "description": "خصم من راس مال هيثم",
+        "shipmentId": "4",
+        "partnerId": "13",
+        "transferType": "capital_return",
+        "amountSDG": 9230000,
+        "exchangeRate": 923,
+        "amountSAR": 10000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 9230000
+          }
+        ],
+        "beneficiaryPartnerId": "13"
+      },
+      {
+        "id": "TR00194",
+        "date": "2026-03-15",
+        "description": "خصم راس مال عصام",
+        "shipmentId": "4",
+        "partnerId": "1",
+        "transferType": "capital_return",
+        "amountSDG": 9691500,
+        "exchangeRate": 923,
+        "amountSAR": 10500,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 9691500
+          }
+        ],
+        "beneficiaryPartnerId": "1"
+      },
+      {
+        "id": "TR00196",
+        "date": "2026-03-17",
+        "description": "خصم راس مال جبرة",
+        "shipmentId": "4",
+        "partnerId": "9",
+        "transferType": "capital_return",
+        "amountSDG": 18360000,
+        "exchangeRate": 918,
+        "amountSAR": 20000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 14000000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 4360000
+          }
+        ],
+        "beneficiaryPartnerId": "9"
+      },
+      {
+        "id": "TR00199",
+        "date": "2026-03-18",
+        "description": "خصم من راس مال محمد مدثر",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "capital_return",
+        "amountSDG": 18520000,
+        "exchangeRate": 926,
+        "amountSAR": 20000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 9520000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 9000000
+          }
+        ],
+        "beneficiaryPartnerId": "2"
+      },
+      {
+        "id": "GT15D00002",
+        "date": "2026-03-19",
+        "description": "منصرفات شريك مجمعة - محمد مدثر - رسالة 15",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "drawings",
+        "amountSDG": 5000000,
+        "exchangeRate": 922,
+        "amountSAR": 5422.993,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 5000000
+          }
+        ]
+      },
+      {
+        "id": "TR00202",
+        "date": "2026-03-19",
+        "description": "خصم من راس مال جبرة",
+        "shipmentId": "4",
+        "partnerId": "9",
+        "transferType": "capital_return",
+        "amountSDG": 13830000,
+        "exchangeRate": 922,
+        "amountSAR": 15000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 13830000
+          }
+        ],
+        "beneficiaryPartnerId": "9"
+      },
+      {
+        "id": "TR00205",
+        "date": "2026-03-19",
+        "description": "خصم من راس مال محمد مدثر",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "capital_return",
+        "amountSDG": 9300000,
+        "exchangeRate": 930,
+        "amountSAR": 10000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 300000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 9000000
+          }
+        ],
+        "beneficiaryPartnerId": "2"
+      },
+      {
+        "id": "TR00208",
+        "date": "2026-03-23",
+        "description": "خصم من راس مال محمد مدثر",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "capital_return",
+        "amountSDG": 27260000,
+        "exchangeRate": 940,
+        "amountSAR": 29000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 12260000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 15000000
+          }
+        ],
+        "beneficiaryPartnerId": "2"
+      },
+      {
+        "id": "TR00211",
+        "date": "2026-03-24",
+        "description": "خصم من راس مال محمد مدثر",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "capital_return",
+        "amountSDG": 14100000,
+        "exchangeRate": 940,
+        "amountSAR": 15000,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 14100000
+          }
+        ],
+        "beneficiaryPartnerId": "2"
+      },
+      {
+        "id": "TR00215",
+        "date": "2026-03-25",
+        "description": "خصم من راس مال محمد مدثر",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "capital_return",
+        "amountSDG": 7600000,
+        "exchangeRate": 950,
+        "amountSAR": 8000,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 7600000
+          }
+        ],
+        "beneficiaryPartnerId": "2"
+      },
+      {
+        "id": "TR00216",
+        "date": "2026-03-25",
+        "description": "خصم من راس مال حماده كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 10400000,
+        "exchangeRate": 950,
+        "amountSAR": 10947.368421052632,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 3000000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 7400000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00218",
+        "date": "2026-03-25",
+        "description": "خصم من راس مال حماده كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 7750000,
+        "exchangeRate": 950,
+        "amountSAR": 8157.894736842105,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 7750000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00220",
+        "date": "2026-03-26",
+        "description": "خصم من راس مال حماده كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 18800000,
+        "exchangeRate": 940,
+        "amountSAR": 20000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 6520000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 12280000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00223",
+        "date": "2026-03-26",
+        "description": "خصم من راس مال حمادة كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 17750000,
+        "exchangeRate": 950,
+        "amountSAR": 18684.21052631579,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 6750000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 11000000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00224",
+        "date": "2026-03-27",
+        "description": "اجراءات مستشفس الشرطه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "drawings",
+        "amountSDG": 1000000,
+        "exchangeRate": 950,
+        "amountSAR": 1052.6315789473683,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 1000000
+          }
+        ]
+      },
+      {
+        "id": "TR00225",
+        "date": "2026-03-28",
+        "description": "خصم من راس مال حمادة كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 11670282,
+        "exchangeRate": 954,
+        "amountSAR": 12233,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 11670282
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00227",
+        "date": "2026-03-28",
+        "description": "خصم من راس مال جبرة",
+        "shipmentId": "4",
+        "partnerId": "9",
+        "transferType": "capital_return",
+        "amountSDG": 2300000,
+        "exchangeRate": 920,
+        "amountSAR": 2500,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 2300000
+          }
+        ],
+        "beneficiaryPartnerId": "9"
+      },
+      {
+        "id": "TR00228",
+        "date": "2026-03-28",
+        "description": "خصم من راس مال حمادة كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 2150000,
+        "exchangeRate": 920,
+        "amountSAR": 2336.9565217391305,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 1450000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 700000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00229",
+        "date": "2026-03-29",
+        "description": "خصم من راس مال حمادة كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 9450000,
+        "exchangeRate": 945,
+        "amountSAR": 10000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 9450000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00230",
+        "date": "2026-03-29",
+        "description": "خصم من راس مال حمادة كنه",
+        "shipmentId": "4",
+        "partnerId": "10",
+        "transferType": "capital_return",
+        "amountSDG": 17132140,
+        "exchangeRate": 970,
+        "amountSAR": 17662,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 2132140
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 15000000
+          }
+        ],
+        "beneficiaryPartnerId": "10"
+      },
+      {
+        "id": "TR00231",
+        "date": "2026-03-29",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 2367860,
+        "exchangeRate": 970,
+        "amountSAR": 2441.092783505155,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 2367860
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00232",
+        "date": "2026-03-30",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 5000000,
+        "exchangeRate": 970,
+        "amountSAR": 5154.639175257732,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 5000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00233",
+        "date": "2026-03-30",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 12000000,
+        "exchangeRate": 1000,
+        "amountSAR": 12000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 3000000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 9000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00234",
+        "date": "2026-03-30",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 3000000,
+        "exchangeRate": 1000,
+        "amountSAR": 3000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 3000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00236",
+        "date": "2026-03-31",
+        "description": "خصم راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 4080000,
+        "exchangeRate": 1020,
+        "amountSAR": 4000,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 4080000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00240",
+        "date": "2026-03-31",
+        "description": "ام اليتامي مصر",
+        "shipmentId": "4",
+        "partnerId": "3",
+        "transferType": "drawings",
+        "amountSDG": 650000,
+        "exchangeRate": 1020,
+        "amountSAR": 637.2549019607843,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 650000
+          }
+        ]
+      },
+      {
+        "id": "TR00241",
+        "date": "2026-03-31",
+        "description": "ام البنات زهور",
+        "shipmentId": "4",
+        "partnerId": "3",
+        "transferType": "drawings",
+        "amountSDG": 650000,
+        "exchangeRate": 1020,
+        "amountSAR": 637.2549019607843,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 650000
+          }
+        ]
+      },
+      {
+        "id": "TR00242",
+        "date": "2026-03-31",
+        "description": "رفقه عثمان نهال",
+        "shipmentId": "4",
+        "partnerId": "3",
+        "transferType": "drawings",
+        "amountSDG": 650000,
+        "exchangeRate": 1020,
+        "amountSAR": 637.2549019607843,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 650000
+          }
+        ]
+      },
+      {
+        "id": "TR00243",
+        "date": "2026-03-31",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 1020000,
+        "exchangeRate": 1020,
+        "amountSAR": 1000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 1020000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00244",
+        "date": "2026-03-31",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 15000000,
+        "exchangeRate": 1000,
+        "amountSAR": 15000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 4000000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 11000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00245",
+        "date": "2026-04-01",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 2000000,
+        "exchangeRate": 1000,
+        "amountSAR": 2000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 2000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00246",
+        "date": "2026-04-01",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 1030000,
+        "exchangeRate": 1030,
+        "amountSAR": 1000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 1030000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "GT15D00003",
+        "date": "2026-04-02",
+        "description": "عبء رواتب وسلفيات مجمع - محمد مدثر - رسالة 15",
+        "shipmentId": "4",
+        "partnerId": "2",
+        "transferType": "drawings",
+        "amountSDG": 5600000,
+        "exchangeRate": 973.82652,
+        "amountSAR": 5750.511,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 2240000
+          },
+          {
+            "bankAccountId": "5",
+            "amount": 3360000
+          }
+        ]
+      },
+      {
+        "id": "TR00250",
+        "date": "2026-04-02",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 2970000,
+        "exchangeRate": 990,
+        "amountSAR": 3000,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 2970000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00253",
+        "date": "2026-04-02",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 2970000,
+        "exchangeRate": 990,
+        "amountSAR": 3000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 2970000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00254",
+        "date": "2026-04-02",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 9000000,
+        "exchangeRate": 1030,
+        "amountSAR": 8737.864077669903,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 9000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00256",
+        "date": "2026-04-03",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 1994000,
+        "exchangeRate": 997,
+        "amountSAR": 2000,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 1994000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00257",
+        "date": "2026-04-04",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 10500000,
+        "exchangeRate": 1030,
+        "amountSAR": 10194.174757281553,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 8500000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 2000000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00258",
+        "date": "2026-04-04",
+        "description": "خصم من راس مال الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "capital_return",
+        "amountSDG": 5981210,
+        "exchangeRate": 1030,
+        "amountSAR": 5807,
+        "splits": [
+          {
+            "bankAccountId": "4",
+            "amount": 5981210
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "TR00261",
+        "date": "2026-04-05",
+        "description": "خصم من ارباح الاهل",
+        "shipmentId": "4",
+        "partnerId": "5",
+        "transferType": "profit_payment",
+        "amountSDG": 15050000,
+        "exchangeRate": 1030,
+        "amountSAR": 14611.650485436894,
+        "splits": [
+          {
+            "bankAccountId": "5",
+            "amount": 3000000
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 12050000
+          }
+        ],
+        "beneficiaryPartnerId": "5"
+      },
+      {
+        "id": "GT15D00001",
+        "date": "2026-05-02",
+        "description": "منصرفات شريك مجمعة - عصام - رسالة 15",
+        "shipmentId": "4",
+        "partnerId": "1",
+        "transferType": "drawings",
+        "amountSDG": 15387550,
+        "exchangeRate": 981.211442,
+        "amountSAR": 15682.196,
+        "splits": [
+          {
+            "bankAccountId": "2",
+            "amount": 25375
+          },
+          {
+            "bankAccountId": "4",
+            "amount": 6401475
+          },
+          {
+            "bankAccountId": "5",
+            "amount": 8960700
+          }
+        ]
+      }
+    ]
+  }
+}

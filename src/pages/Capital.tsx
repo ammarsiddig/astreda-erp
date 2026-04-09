@@ -395,7 +395,7 @@ export default function Capital() {
       th,td{border:1px solid #ccc;padding:4px 6px;text-align:right}th{background:#134e4a;color:#fff;font-size:9px}
       .alt{background:#f8f9fa}.num{text-align:left;font-family:monospace}.bold{font-weight:bold}
       .red{color:#dc2626}.green{color:#16a34a}.totals{background:#e2e8f0;font-weight:bold}</style></head>
-      <body><h1>أستريدا للتوزيع — متابعة رأس المال</h1><div class="sub">${shipmentName} | ${format(new Date(),'dd/MM/yyyy')}</div>
+      <body><h1>أستريدا للتوزيع — متابعة رأس المال</h1><div class="sub">${shipmentName} | ${format(new Date(),'dd/MM/yyyy HH:mm')}</div>
       <table><thead><tr><th>المساهم</th><th>رأس المال (SAR)</th><th>المُرجَع (SAR)</th><th>متبقي رأس مال</th>
       <th>أرباح مستحقة</th><th>أرباح مدفوعة</th><th>أرباح متبقية</th><th>الإجمالي المستحق</th><th>الحالة</th></tr></thead>
       <tbody>${rows}${totals}</tbody></table></body></html>`;
@@ -432,7 +432,7 @@ export default function Capital() {
       .note{font-size:9px;color:#92400e;margin-top:6px}
       .totals{background:#e2e8f0;font-weight:bold}</style></head>
       <body><h1>أستريدا للتوزيع — تصفية الرسالة</h1>
-      <div class="sub">${shipmentName} | سعر الصرف: ${sc.exchangeRate} | ${format(new Date(),'dd/MM/yyyy')}</div>
+      <div class="sub">${shipmentName} | سعر الصرف: ${sc.exchangeRate} | ${format(new Date(),'dd/MM/yyyy HH:mm')}</div>
       <h2>أ — الربح الخام</h2>
       <div class="summary-box"><div class="line"><span>الكاش المتوفر (SDG)</span><span>${fmtSDG(sc.cashBalanceSDG)}</span></div>
       <div class="line"><span>+ منصرفات الشركاء (SDG)</span><span>${fmtSDG(sc.drawingsSDG)}</span></div>
@@ -769,7 +769,7 @@ export default function Capital() {
                       <div className="flex justify-between items-start gap-2">
                         <div>
                           <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
-                          <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy')}</p>
+                          <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</p>
                         </div>
                         <div className="text-right">
                           <p className="font-mono text-sm font-bold">{fmtSDG(dt.amountSDG)}</p>
@@ -802,7 +802,7 @@ export default function Capital() {
                     <tbody className="divide-y divide-slate-100">
                       {sortedDrawingTransfers.map((dt, idx) => (
                         <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={dt.id} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
-                          <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy')}</td>
+                          <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
                           <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
                           <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
                           <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>

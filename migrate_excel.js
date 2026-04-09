@@ -4,8 +4,9 @@
  * ═══════════════════════════════════════════════════════════════
  *
  * Usage:
- *   1. node migrate_excel.js
- *   2. A file "migration_output.json" will be created
+ *   1. node migrate_excel.js "C:/path/to/file.xlsm"
+ *      or set EXCEL_PATH in the environment
+ *   2. Files "migration_output.json" and "migration_warnings.json" will be created
  *   3. Open your app in the browser
  *   4. Open DevTools Console (F12)
  *   5. Paste and run:
@@ -21,7 +22,7 @@ const XLSX = require('xlsx');
 const fs   = require('fs');
 const path = require('path');
 
-const EXCEL_PATH = 'C:/Users/Ammar/Downloads/نظام امريكانا (1).xlsm';
+const EXCEL_PATH = process.argv[2] || process.env.EXCEL_PATH || 'C:/Users/Ammar/Downloads/نظام امريكانا (1).xlsm';
 
 // ═══════════════════════════════════════════════════════════════
 //  MASTER DATA  (IDs must match what is already in the app)
@@ -276,6 +277,9 @@ function nextIT() { return `IT${String(_itN++).padStart(5, '0')}`; }
 let _ledN = 1;
 function nextLed() { return `LED${String(_ledN++).padStart(5, '0')}`; }
 
+let _payN = 1;
+function nextPay() { return `PM${String(_payN++).padStart(5, '0')}`; }
+
 // ═══════════════════════════════════════════════════════════════
 //  LOAD WORKBOOK
 // ═══════════════════════════════════════════════════════════════
@@ -455,16 +459,26 @@ for (const inv of invoices) {
 console.log('💰  Parsing payments (المدفوعات)...');
 
 const payments = [];
+const paymentRows = sheetRows('المدفوعات').slice(1);
+const existingPaymentNums = paymentRows
+  .map((r) => str(r[7]))
+  .map((id) => {
+    const m = /^PM(\d+)$/i.exec(id);
+    return m ? Number(m[1]) : null;
+  })
+  .filter((n) => Number.isFinite(n));
+_payN = existingPaymentNums.length > 0 ? Math.max(...existingPaymentNums) + 1 : 1;
 
-for (const r of sheetRows('المدفوعات').slice(1)) {
-  const payId    = str(r[7]);
+for (const r of paymentRows) {
+  const rawPayId = str(r[7]);
+  const payId    = rawPayId || nextPay();
   const date     = excelDate(r[0]);
   const custName = str(r[1]);
   const amount   = Number(r[6]) || 0;
   const shipName = str(r[4]);
   const bankName = str(r[5]);
 
-  if (!payId || !date || !amount) continue;
+  if (!date || !amount) continue;
 
   const shipmentId    = SHIPMENT_MAP[shipName];
   const bankAccountId = normBank(bankName);
@@ -702,7 +716,19 @@ const state = {
 };
 
 const OUT = path.join(__dirname, 'migration_output.json');
+const WARN_OUT = path.join(__dirname, 'migration_warnings.json');
 fs.writeFileSync(OUT, JSON.stringify(state));
+const warningGroups = {};
+warnings.forEach(w => {
+  warningGroups[w.type] = warningGroups[w.type] || [];
+  if (!warningGroups[w.type].includes(w.value)) warningGroups[w.type].push(w.value);
+});
+fs.writeFileSync(WARN_OUT, JSON.stringify({
+  source: EXCEL_PATH,
+  count: warnings.length,
+  grouped: warningGroups,
+  raw: warnings,
+}, null, 2));
 
 // ─── Summary ─────────────────────────────────────────────────
 console.log('\n══════════════════════════════════════════════');
@@ -726,6 +752,7 @@ if (warnings.length) {
 }
 
 console.log('\n📄  Output saved to:', OUT);
+console.log('📄  Warnings saved to:', WARN_OUT);
 console.log('\n📌  NEXT STEPS:');
 console.log('  1. Open your app in the browser (localhost or your domain)');
 console.log('  2. Open DevTools → Console (F12)');

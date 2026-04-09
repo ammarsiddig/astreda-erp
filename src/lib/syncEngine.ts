@@ -582,7 +582,7 @@ export async function pullUserPreference(userId: string): Promise<{ activeShipme
   if (!isSupabaseConfigured() || !navigator.onLine) return null
   try {
     const { data, error } = await supabase!.from('user_preferences')
-      .select('*').eq('user_id', userId).single()
+      .select('*').eq('user_id', userId).maybeSingle()
     if (error || !data) return null
     return { activeShipmentId: data.active_shipment_id ?? undefined }
   } catch { return null }
@@ -834,7 +834,13 @@ export async function fetchUsersFromCloud(): Promise<import('../types').User[] |
   if (!isSupabaseConfigured() || !navigator.onLine) return null
   try {
     const mapping = TABLE_MAPPINGS.find(m => m.stateKey === 'users')!
-    const { data, error } = await supabase!.from(mapping.table).select('*')
+    const timeoutMs = 4000
+    const result = await Promise.race([
+      supabase!.from(mapping.table).select('*'),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+    ])
+    if (!result) return null
+    const { data, error } = result
     if (error || !data || data.length === 0) return null
     return data.map(mapping.fromRow)
   } catch { return null }

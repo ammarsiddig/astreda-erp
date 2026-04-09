@@ -59,7 +59,7 @@ export default function Sales() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.invoices, activeShipmentId, filterFromDate, filterToDate, filterCity, filterSalesperson, filterPaymentType, isSpRole, currentUser]);
 
-  const { items: sortedInvoices, requestSort: sortInvoices, sortConfig: invSortConfig } = useSortableData(filteredInvoices, { key: 'date', direction: 'desc' });
+  const { items: sortedInvoices, requestSort: sortInvoices, sortConfig: invSortConfig } = useSortableData(filteredInvoices, { key: 'id', direction: 'asc' });
 
   const deleteInvoiceById = (invoice: Invoice) => {
     const txIds = new Set(
@@ -169,7 +169,7 @@ export default function Sales() {
     </div>
     <div class="inv-meta">
       <div class="inv-num">#${invoice.id}</div>
-      <div class="inv-date">${format(new Date(invoice.date), 'dd/MM/yyyy')}</div>
+      <div class="inv-date">${format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}</div>
     </div>
   </div>
   <div class="customer-section">
@@ -300,7 +300,7 @@ export default function Sales() {
           <select 
             className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
             onChange={(e) => sortInvoices(e.target.value as any)}
-            value={(invSortConfig?.key as string) || 'date'}
+            value={(invSortConfig?.key as string) || 'id'}
           >
             <option value="id">{t('invoiceNumber')}</option>
             <option value="date">{t('date')}</option>
@@ -320,7 +320,7 @@ export default function Sales() {
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900 text-sm">#{invoice.id}</p>
                   <p className="text-xs text-slate-500">{customerMap.get(invoice.customerId)?.name}</p>
-                  <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-400">{format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   <span className="font-bold text-slate-900 text-sm">{formatCurrency(invoice.total)}</span>
@@ -375,7 +375,7 @@ export default function Sales() {
                 <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={invoice.id} onClick={() => { setSelectedRowId(invoice.id); setShowViewModal(invoice.id); }} className={`transition-colors cursor-pointer ${selectedIds.has(invoice.id) ? 'bg-red-50' : selectedRowId === invoice.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(invoice.id)} onChange={() => toggleSelect(invoice.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{invoice.id}</td>
-                  <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy')}</td>
+                  <td className="px-4 py-3">{format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}</td>
                   <td className="px-4 py-3">{customerMap.get(invoice.customerId)?.name}</td>
                   <td className="px-4 py-3">{salespersonMap.get(invoice.salespersonId)?.name}</td>
                   <td className="px-4 py-3">
@@ -437,7 +437,7 @@ export default function Sales() {
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-bold">#{viewInvoice.id}</p>
-                  <p className="text-xs text-slate-300 mt-0.5">{format(new Date(viewInvoice.date), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-300 mt-0.5">{format(new Date(viewInvoice.date), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
               </div>
               {/* Customer info */}
