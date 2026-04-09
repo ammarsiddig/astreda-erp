@@ -59,7 +59,7 @@ export default function Sales() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.invoices, activeShipmentId, filterFromDate, filterToDate, filterCity, filterSalesperson, filterPaymentType, isSpRole, currentUser]);
 
-  const { items: sortedInvoices, requestSort: sortInvoices, sortConfig: invSortConfig } = useSortableData(filteredInvoices, { key: 'id', direction: 'asc' });
+  const { items: sortedInvoices, requestSort: sortInvoices, sortConfig: invSortConfig } = useSortableData(filteredInvoices, { key: 'id', direction: 'desc' });
 
   const deleteInvoiceById = (invoice: Invoice) => {
     const txIds = new Set(

@@ -71,7 +71,7 @@ export default function Salaries() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.salaries, activeShipmentId, filterDate, filterEmployee]);
 
-  const { items: sortedSalaries, requestSort: sortSalaries, sortConfig: salSortConfig } = useSortableData(filteredSalaries, { key: 'id', direction: 'asc' });
+  const { items: sortedSalaries, requestSort: sortSalaries, sortConfig: salSortConfig } = useSortableData(filteredSalaries, { key: 'id', direction: 'desc' });
 
   const allAdvances = useMemo(() =>
     state.expenses.filter(e => e.categoryId === advancesCategoryId),
@@ -91,7 +91,7 @@ export default function Salaries() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [allAdvances, advFilterShipment, advFilterEmployee, advFilterStatus, state.employees]);
 
-  const { items: sortedAdvances, requestSort: sortAdvances, sortConfig: advSortConfig } = useSortableData(filteredAdvances, { key: 'id', direction: 'asc' });
+  const { items: sortedAdvances, requestSort: sortAdvances, sortConfig: advSortConfig } = useSortableData(filteredAdvances, { key: 'id', direction: 'desc' });
 
   // Per-employee open advances summary for current shipment filter
   const employeeOpenSummary = useMemo(() => {

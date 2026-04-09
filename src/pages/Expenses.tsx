@@ -49,7 +49,7 @@ export default function Expenses() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.expenses, activeShipmentId, filterFromDate, filterToDate, filterCategory]);
 
-  const { items: sortedExpenses, requestSort: sortExpenses, sortConfig: expSortConfig } = useSortableData(filteredExpenses, { key: 'id', direction: 'asc' });
+  const { items: sortedExpenses, requestSort: sortExpenses, sortConfig: expSortConfig } = useSortableData(filteredExpenses, { key: 'id', direction: 'desc' });
 
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
