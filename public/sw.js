@@ -1,4 +1,4 @@
-const CACHE_NAME = 'astrida-v7';
+const CACHE_NAME = 'astrida-v8';
 
 // App shell files to precache
 const PRECACHE_URLS = [
