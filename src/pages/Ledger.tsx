@@ -452,7 +452,7 @@ export default function Ledger() {
           )}
         </div>
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto overflow-y-visible">
+        <div className="hidden md:block">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#134e4a] sticky top-0 z-10">
               <tr>
