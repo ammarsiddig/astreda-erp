@@ -230,7 +230,7 @@ export default function AccountTransfers() {
       )}
 
       {/* Transfers Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
       {/* Search & Sort Toolbar for Mobile */}
       <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
         <div className="flex items-center gap-2 justify-between">
@@ -279,7 +279,7 @@ export default function AccountTransfers() {
           )}
         </div>
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-visible">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>

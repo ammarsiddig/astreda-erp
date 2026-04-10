@@ -250,7 +250,7 @@ export default function CustomerDetail() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
         {activeTab === 'invoices' && (
           <>
             {/* Mobile card list */}
@@ -281,7 +281,7 @@ export default function CustomerDetail() {
               )}
             </div>
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto overflow-y-visible">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
@@ -374,7 +374,7 @@ export default function CustomerDetail() {
               )}
             </div>
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto overflow-y-visible">
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>

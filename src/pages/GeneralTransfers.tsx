@@ -57,6 +57,10 @@ export default function GeneralTransfers() {
   }, [state.generalTransfers, activeShipmentId, filterDate, filterPartner, filterType]);
 
   const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'date', direction: 'desc' });
+  const transferTotals = useMemo(() => ({
+    amountSDG: sortedTransfers.reduce((sum, transfer) => sum + transfer.amountSDG, 0),
+    amountSAR: sortedTransfers.reduce((sum, transfer) => sum + transfer.amountSAR, 0),
+  }), [sortedTransfers]);
 
   const handleAddSplit = () => {
     setSplits([...splits, { bankAccountId: '', amount: 0 }]);
@@ -261,7 +265,7 @@ export default function GeneralTransfers() {
       )}
 
       {/* Transfers Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
       {/* Search & Sort Toolbar for Mobile */}
       <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
         <div className="flex items-center gap-2 justify-between">
@@ -313,7 +317,7 @@ export default function GeneralTransfers() {
           )}
         </div>
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-visible">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
@@ -377,6 +381,22 @@ export default function GeneralTransfers() {
                 </tr>
               )}
             </tbody>
+            {sortedTransfers.length > 0 && (
+              <tfoot className="border-t-2 border-slate-200 bg-slate-50">
+                <tr>
+                  <td colSpan={hasWriteAccess ? 6 : 5} className="px-4 py-3 font-bold text-slate-900">
+                    {t('totalGeneralTransfers')}
+                  </td>
+                  <td className="px-4 py-3 font-extrabold text-slate-900 text-right rtl:text-left">
+                    {formatCurrency(transferTotals.amountSDG)}
+                  </td>
+                  <td className="px-4 py-3 font-extrabold text-emerald-600 text-right rtl:text-left">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(transferTotals.amountSAR)}
+                  </td>
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>

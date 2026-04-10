@@ -180,7 +180,7 @@ export default function CarLoading() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {carData.length > 0 ? carData.map((row) => (
@@ -210,7 +210,7 @@ export default function CarLoading() {
           )}
         </div>
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-visible">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>
@@ -244,7 +244,7 @@ export default function CarLoading() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
           <h2 className="font-bold text-slate-800">{t('loadingHistory')}</h2>
         </div>
@@ -271,7 +271,7 @@ export default function CarLoading() {
             ))}
         </div>
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-visible">
           <table className="w-full text-left rtl:text-right">
             <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
               <tr>

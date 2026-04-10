@@ -420,7 +420,7 @@ export default function Ledger() {
       </div>
 
       {/* Ledger Table */}
-      <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-visible">
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {sortedLedgerData.length > 0 ? sortedLedgerData.map((entry, idx) => (
@@ -452,7 +452,7 @@ export default function Ledger() {
           )}
         </div>
         {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-visible">
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#134e4a] sticky top-0 z-10">
               <tr>
