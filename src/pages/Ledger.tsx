@@ -60,7 +60,7 @@ export default function Ledger() {
     }).reverse();
   }, [state.ledger, filterStartDate, filterEndDate, filterAccount, filterModule, showAllShipments, activeShipmentId]);
 
-  const { items: sortedLedgerData, requestSort, sortConfig } = useSortableData(ledgerData, { key: 'id', direction: 'desc' });
+  const { items: sortedLedgerData, requestSort, sortConfig } = useSortableData(ledgerData, { key: 'date', direction: 'desc' });
 
   const printAccountStatement = () => {
     if (!stmtFromDate || !stmtToDate) return;

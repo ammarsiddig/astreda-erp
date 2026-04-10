@@ -46,7 +46,7 @@ export default function AccountTransfers() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.accountTransfers, filterDate, filterType]);
 
-  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'id', direction: 'desc' });
+  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'date', direction: 'desc' });
 
   const handleSaveTransfer = (e: React.FormEvent) => {
     e.preventDefault();

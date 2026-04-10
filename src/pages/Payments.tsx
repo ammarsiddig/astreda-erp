@@ -53,7 +53,7 @@ export default function Payments() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.payments, activeShipmentId, filterFromDate, filterToDate, filterCustomer]);
 
-  const { items: sortedPayments, requestSort: sortPayments, sortConfig: paySortConfig } = useSortableData(filteredPayments, { key: 'id', direction: 'desc' });
+  const { items: sortedPayments, requestSort: sortPayments, sortConfig: paySortConfig } = useSortableData(filteredPayments, { key: 'date', direction: 'desc' });
 
   const handleSavePayment = (e: React.FormEvent) => {
     e.preventDefault();

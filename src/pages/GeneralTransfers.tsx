@@ -56,7 +56,7 @@ export default function GeneralTransfers() {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.generalTransfers, activeShipmentId, filterDate, filterPartner, filterType]);
 
-  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'id', direction: 'desc' });
+  const { items: sortedTransfers, requestSort: sortTransfers, sortConfig: transferSortConfig } = useSortableData(filteredTransfers, { key: 'date', direction: 'desc' });
 
   const handleAddSplit = () => {
     setSplits([...splits, { bankAccountId: '', amount: 0 }]);
