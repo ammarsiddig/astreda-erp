@@ -26,6 +26,16 @@ function toComparableValue(value: any): string | number {
   return value;
 }
 
+function compareValues(aValue: string | number, bValue: string | number, direction: SortDirection) {
+  if (aValue < bValue) {
+    return direction === 'asc' ? -1 : 1;
+  }
+  if (aValue > bValue) {
+    return direction === 'asc' ? 1 : -1;
+  }
+  return 0;
+}
+
 export function useSortableData<T>(items: T[], config: SortConfig<T> | null = null) {
   const [sortConfig, setSortConfig] = useState<SortConfig<T> | null>(config);
 
@@ -36,13 +46,18 @@ export function useSortableData<T>(items: T[], config: SortConfig<T> | null = nu
         const key = sortConfig.key!;
         const aValue = toComparableValue(a[key]);
         const bValue = toComparableValue(b[key]);
+        const primaryComparison = compareValues(aValue, bValue, sortConfig.direction);
 
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
+        if (primaryComparison !== 0) {
+          return primaryComparison;
         }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
+
+        if (key === 'date') {
+          const aIdValue = toComparableValue((a as Record<string, unknown>).id);
+          const bIdValue = toComparableValue((b as Record<string, unknown>).id);
+          return compareValues(aIdValue, bIdValue, sortConfig.direction);
         }
+
         return 0;
       });
     }

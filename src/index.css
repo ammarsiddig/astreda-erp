@@ -29,3 +29,10 @@ html, body {
 .animate-slide-up {
   animation: slide-up 0.2s ease-out;
 }
+
+thead.sticky th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: inherit;
+}
