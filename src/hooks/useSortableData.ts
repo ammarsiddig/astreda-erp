@@ -7,6 +7,25 @@ export interface SortConfig<T> {
   direction: SortDirection;
 }
 
+function toComparableValue(value: any): string | number {
+  if (value == null) return '';
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const timestamp = Date.parse(trimmed);
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+    return trimmed.toLowerCase();
+  }
+
+  return value;
+}
+
 export function useSortableData<T>(items: T[], config: SortConfig<T> | null = null) {
   const [sortConfig, setSortConfig] = useState<SortConfig<T> | null>(config);
 
@@ -15,16 +34,8 @@ export function useSortableData<T>(items: T[], config: SortConfig<T> | null = nu
     if (sortConfig !== null && sortConfig.key !== null && sortConfig.direction !== null) {
       sortableItems.sort((a, b) => {
         const key = sortConfig.key!;
-        let aValue = a[key] as any;
-        let bValue = b[key] as any;
-
-        if (aValue == null) aValue = '';
-        if (bValue == null) bValue = '';
-
-        if (typeof aValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = (bValue || '').toString().toLowerCase();
-        }
+        const aValue = toComparableValue(a[key]);
+        const bValue = toComparableValue(b[key]);
 
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
