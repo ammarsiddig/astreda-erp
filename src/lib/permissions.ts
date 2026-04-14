@@ -11,8 +11,14 @@ export function getUserRole(user: User | null, roles: Role[]): Role | undefined 
   return roles.find(r => r.id === user.roleId);
 }
 
+function isSuperUser(user: User | null, role: Role | undefined): boolean {
+  if (!user || !role) return false;
+  return role.id === 'role-sysadmin' || user.username === 'sysadmin';
+}
+
 export function canView(user: User | null, roles: Role[], page: PageKey): boolean {
   const role = getUserRole(user, roles);
+  if (isSuperUser(user, role)) return true;
   if (!role) return false;
   const perm = role.permissions.find(p => p.pageKey === page);
   return perm?.canView ?? false;
@@ -20,6 +26,7 @@ export function canView(user: User | null, roles: Role[], page: PageKey): boolea
 
 export function canWrite(user: User | null, roles: Role[], page: PageKey): boolean {
   const role = getUserRole(user, roles);
+  if (isSuperUser(user, role)) return true;
   if (!role) return false;
   const perm = role.permissions.find(p => p.pageKey === page);
   return perm?.canWrite ?? false;
