@@ -5,11 +5,10 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Edit2, Trash2, Printer, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { v4 as uuidv4 } from 'uuid';
 import { Payment } from '../types';
 
 export default function CustomerDetail() {
@@ -113,7 +112,7 @@ export default function CustomerDetail() {
   };
 
   const openEditPayment = (payment: Payment) => {
-    setPaymentDate(payment.date);
+    setPaymentDate(payment.date.slice(0, 10));
     setPaymentAmount(payment.amount);
     setBankAccountId(payment.bankAccountId);
     setPaymentNotes(payment.notes || '');
@@ -132,7 +131,7 @@ export default function CustomerDetail() {
       id: paymentId,
       customerId: id!,
       amount: paymentAmount,
-      date: paymentDate,
+      date: dateTimeFromDateString(paymentDate),
       bankAccountId,
       shipmentId: activeShipmentId,
       notes: paymentNotes,
@@ -149,8 +148,8 @@ export default function CustomerDetail() {
 
     // Apply new effects
     const newLedgerEntry = {
-      id: uuidv4(),
-      date: paymentDate,
+      id: buildLedgerEntryId('payment', paymentId, 0, activeShipmentId),
+      date: dateTimeFromDateString(paymentDate),
       toAccount: bankAccountId,
       description: `سداد دفعة من عميل - ${customer.name}${paymentNotes ? ` (${paymentNotes})` : ''}`,
       amountIn: paymentAmount,

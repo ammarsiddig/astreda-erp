@@ -4,10 +4,9 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
 import { Salary, Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -160,7 +159,7 @@ export default function Salaries() {
     }
 
     const newLedgerEntry = {
-      id: uuidv4(),
+      id: buildLedgerEntryId('salary', salaryId, 0, activeShipmentId),
       date: dateTimeFromDateString(date),
       toAccount: bankAccountId,
       description: `راتب / Salary - ${emp?.name} ${finalNotes ? `(${finalNotes})` : ''}`,
@@ -286,7 +285,7 @@ export default function Salaries() {
     };
 
     const newLedgerEntry = {
-      id: uuidv4(),
+      id: buildLedgerEntryId('expense', newExpenseId, 0, activeShipmentId),
       date: dateTimeFromDateString(advDate),
       toAccount: advBankAccountId,
       description: `سلفية - ${emp?.name || ''}${advNotes ? ` (${advNotes})` : ''}`,

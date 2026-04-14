@@ -4,12 +4,11 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { PackagePlus, ArrowRightLeft, AlertCircle, Edit2, Eye, Trash2, Send, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction, ShipmentTransfer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
-import { formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
 
@@ -347,7 +346,7 @@ export default function Inventory() {
     if (totalAmount > 0 && shipmentTransferBankAccountId) {
       const accountId = shipmentTransferBankAccountId;
       newLedgerEntries.push({
-        id: uuidv4(),
+        id: buildLedgerEntryId('shipment_transfer', transferId, 0, activeShipmentId),
         date: shipmentTransferDate,
         toAccount: accountId,
         description: `Inter-shipment transfer (in) - ${state.shipments.find(s => s.id === targetShipmentId)?.name}`,
@@ -358,7 +357,7 @@ export default function Inventory() {
         shipmentId: activeShipmentId,
       });
       newLedgerEntries.push({
-        id: uuidv4(),
+        id: buildLedgerEntryId('shipment_transfer', transferId, 1, targetShipmentId),
         date: shipmentTransferDate,
         toAccount: accountId,
         description: `Inter-shipment transfer (cost) - ${state.shipments.find(s => s.id === activeShipmentId)?.name}`,
@@ -398,11 +397,20 @@ export default function Inventory() {
     const accountId = shipmentPaymentBankAccountId;
     const sourceShipmentName = state.shipments.find(s => s.id === activeShipmentId)?.name || '';
     const targetShipmentName = state.shipments.find(s => s.id === shipmentPaymentTargetId)?.name || '';
+    const paymentTransfer: ShipmentTransfer = {
+      id: paymentId,
+      date: shipmentPaymentDate,
+      fromShipmentId: activeShipmentId,
+      toShipmentId: shipmentPaymentTargetId,
+      items: [],
+      totalAmount: amount,
+      notes: shipmentPaymentNotes || undefined,
+    };
 
     // Two ledger entries: out from source shipment, in to target shipment (same account)
     const newLedgerEntries = [
       {
-        id: uuidv4(),
+        id: buildLedgerEntryId('shipment_transfer', paymentId, 0, activeShipmentId),
         date: shipmentPaymentDate,
         toAccount: accountId,
         description: `${t('shipmentPayment')}: ${sourceShipmentName} → ${targetShipmentName}`,
@@ -413,7 +421,7 @@ export default function Inventory() {
         shipmentId: activeShipmentId,
       },
       {
-        id: uuidv4(),
+        id: buildLedgerEntryId('shipment_transfer', paymentId, 1, shipmentPaymentTargetId),
         date: shipmentPaymentDate,
         toAccount: accountId,
         description: `${t('shipmentPayment')}: ${sourceShipmentName} → ${targetShipmentName}`,
@@ -426,6 +434,7 @@ export default function Inventory() {
     ];
 
     updateState({
+      shipmentTransfers: [...state.shipmentTransfers, paymentTransfer],
       ledger: [...state.ledger, ...newLedgerEntries],
     });
 

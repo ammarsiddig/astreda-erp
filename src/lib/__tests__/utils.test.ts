@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, formatDate, generateId, computeBankBalance } from '../utils';
+import { buildLedgerEntryId, computeBankBalance, formatCurrency, formatDate, generateId } from '../utils';
 import type { LedgerEntry } from '../../types';
 
 // ─── formatCurrency ───────────────────────────────────────────────
@@ -52,14 +52,26 @@ describe('formatDate', () => {
 // ─── generateId ───────────────────────────────────────────────────
 
 describe('generateId', () => {
-  it('generates zero-padded ID with prefix', () => {
-    expect(generateId('INV', [], 0)).toBe('INV00001');
-    expect(generateId('PM', [], 9)).toBe('PM00010');
-    expect(generateId('EX', [], 99)).toBe('EX00100');
+  it('keeps the prefix and generates a collision-safe value', () => {
+    const id = generateId('INV', [], 0);
+    expect(id.startsWith('INV')).toBe(true);
+    expect(id.length).toBeGreaterThan(10);
   });
 
-  it('handles large counts', () => {
-    expect(generateId('INV', [], 99999)).toBe('INV100000');
+  it('generates different ids even for the same prefix', () => {
+    const first = generateId('PM', [], 0);
+    const second = generateId('PM', [], 0);
+    expect(first).not.toBe(second);
+  });
+});
+
+describe('buildLedgerEntryId', () => {
+  it('is deterministic for the same inputs', () => {
+    expect(buildLedgerEntryId('payment', 'PM123', 0, '4')).toBe(buildLedgerEntryId('payment', 'PM123', 0, '4'));
+  });
+
+  it('changes when the split index changes', () => {
+    expect(buildLedgerEntryId('general_transfer', 'TR123', 0, '4')).not.toBe(buildLedgerEntryId('general_transfer', 'TR123', 1, '4'));
   });
 });
 

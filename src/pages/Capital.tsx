@@ -11,8 +11,7 @@ import {
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { computeBankBalance, formatCurrency, generateId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
-import { v4 as uuidv4 } from 'uuid';
+import { buildLedgerEntryId, computeBankBalance, formatCurrency, generateId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
 import type { CapitalContribution, GeneralTransfer, SettlementResult } from '../types';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
@@ -348,8 +347,8 @@ export default function Capital() {
     });
     // Create new ledger entries (one per split, matching GeneralTransfers.tsx)
     const partnerName = state.partners.find(p => p.id === drawPartnerId)?.name || '';
-    const newLedgerEntries = validSplits.map(split => ({
-      id: uuidv4(), date: drawDate, fromAccount: split.bankAccountId,
+    const newLedgerEntries = validSplits.map((split, index) => ({
+      id: buildLedgerEntryId('general_transfer', drawId, index, activeShipmentId), date: drawDate, fromAccount: split.bankAccountId,
       description: `منصرفات الشركاء - ${partnerName}${drawDescription ? ` (${drawDescription})` : ''}`,
       amountIn: 0, amountOut: split.amount,
       sourceModule: 'general_transfer' as const,

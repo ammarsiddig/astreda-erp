@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import Modal from './Modal';
 import SearchableSelect from './SearchableSelect';
 import { Invoice, InvoiceLine } from '../types';
@@ -158,7 +157,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     // Create new ledger entry if cash
     if (paymentType === 'cash' && bankAccountId) {
       updatedLedger.push({
-        id: uuidv4(),
+        id: buildLedgerEntryId('sale_cash', invoiceId, 0, activeShipmentId),
         date: dateTimeFromDateString(invoiceDate),
         toAccount: bankAccountId,
         description: `فاتورة مبيعات نقدية #${invoiceId}`,

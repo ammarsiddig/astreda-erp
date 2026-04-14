@@ -4,11 +4,10 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { Receipt, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -80,7 +79,7 @@ export default function Expenses() {
 
     // Apply new effects
     const newLedgerEntry = {
-      id: uuidv4(),
+      id: buildLedgerEntryId('expense', expenseId, 0, activeShipmentId),
       date: dateTimeFromDateString(date),
       toAccount: bankAccountId,
       description: `مصروفات / Expense - ${state.expenseCategories.find(c => c.id === categoryId)?.name} ${notes ? `(${notes})` : ''}`,

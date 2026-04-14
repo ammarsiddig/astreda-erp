@@ -4,10 +4,9 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { ArrowLeftRight, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { GeneralTransfer, GeneralTransferType } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -119,8 +118,8 @@ export default function GeneralTransfers() {
 
     const typeLabel = transferType === 'drawings' ? t('capitalTypeDrawings') : transferType === 'profit_payment' ? 'توزيع أرباح' : t('capitalReturn');
 
-    const newLedgerEntries = validSplits.map(split => ({
-      id: uuidv4(),
+    const newLedgerEntries = validSplits.map((split, index) => ({
+      id: buildLedgerEntryId('general_transfer', transferId, index, activeShipmentId),
       date: dateTimeFromDateString(date),
       fromAccount: split.bankAccountId,
       description: `${typeLabel} - ${partnerLabel} ${description ? `(${description})` : ''}`,

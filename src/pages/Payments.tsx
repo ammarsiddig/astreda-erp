@@ -4,11 +4,10 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { DollarSign, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { Payment } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -54,6 +53,10 @@ export default function Payments() {
   }, [state.payments, activeShipmentId, filterFromDate, filterToDate, filterCustomer]);
 
   const { items: sortedPayments, requestSort: sortPayments, sortConfig: paySortConfig } = useSortableData(filteredPayments, { key: 'date', direction: 'desc' });
+  const totalFilteredAmount = useMemo(
+    () => sortedPayments.reduce((sum, payment) => sum + payment.amount, 0),
+    [sortedPayments]
+  );
 
   const handleSavePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +86,7 @@ export default function Payments() {
 
     // Apply new effects
     const newLedgerEntry = {
-      id: uuidv4(),
+      id: buildLedgerEntryId('payment', paymentId, 0, activeShipmentId),
       date: dateTimeFromDateString(date),
       toAccount: bankAccountId,
       description: `سداد دفعة من عميل - ${state.customers.find(c => c.id === customerId)?.name} ${notes ? `(${notes})` : ''}`,
@@ -211,6 +214,12 @@ export default function Payments() {
 
       {/* Payments Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
+      <div className="px-4 py-3 border-b border-slate-100 bg-emerald-50/60">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="font-semibold text-slate-700">{t('total')}</span>
+          <span className="font-bold text-emerald-700">{formatCurrency(totalFilteredAmount)}</span>
+        </div>
+      </div>
       {/* Search & Sort Toolbar for Mobile */}
       <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
         <div className="flex items-center gap-2 justify-between">
@@ -324,6 +333,19 @@ export default function Payments() {
                 </tr>
               )}
             </tbody>
+            {sortedPayments.length > 0 && (
+              <tfoot className="bg-emerald-50 border-t-2 border-emerald-200">
+                <tr className="font-bold text-slate-900">
+                  <td colSpan={hasWriteAccess ? 6 : 5} className="px-4 py-3">
+                    {t('total')}
+                  </td>
+                  <td className="px-4 py-3 text-right rtl:text-left text-emerald-700">
+                    {formatCurrency(totalFilteredAmount)}
+                  </td>
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>

@@ -4,10 +4,9 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { ArrowRightLeft, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -85,7 +84,7 @@ export default function AccountTransfers() {
     const newLedgerEntries = [];
     if (type === 'transfer' && fromBankAccountId) {
       newLedgerEntries.push({
-        id: uuidv4(),
+        id: buildLedgerEntryId('account_transfer', transferId, 0),
         date: dateTimeFromDateString(date),
         fromAccount: fromBankAccountId,
         toAccount: toBankAccountId,
@@ -96,7 +95,7 @@ export default function AccountTransfers() {
         linkedId: transferId,
       });
       newLedgerEntries.push({
-        id: uuidv4(),
+        id: buildLedgerEntryId('account_transfer', transferId, 1),
         date: dateTimeFromDateString(date),
         fromAccount: fromBankAccountId,
         toAccount: toBankAccountId,
@@ -108,7 +107,7 @@ export default function AccountTransfers() {
       });
     } else {
       newLedgerEntries.push({
-        id: uuidv4(),
+        id: buildLedgerEntryId('account_transfer', transferId, 0),
         date: dateTimeFromDateString(date),
         toAccount: toBankAccountId,
         description: `رصيد افتتاحي ${notes ? `(${notes})` : ''}`,

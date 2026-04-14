@@ -2,6 +2,9 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import type { LedgerEntry } from '../types';
 
+let lastGeneratedTimestamp = 0;
+let intraMsCounter = 0;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -59,15 +62,32 @@ export function dateTimeFromDateString(dateString: string, now = new Date()): st
   return `${dateString}T${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
 }
 
-export function generateId(prefix: string, items: { id: string }[], offset = 0) {
-  let maxNum = 0;
-  for (const item of items) {
-    if (item.id && item.id.startsWith(prefix)) {
-      const num = parseInt(item.id.slice(prefix.length), 10);
-      if (!isNaN(num) && num > maxNum) maxNum = num;
-    }
+function getRandomIdChunk() {
+  const bytes = new Uint8Array(3);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(36).toUpperCase().padStart(2, '0')).join('').slice(0, 6);
+}
+
+export function generateId(prefix: string, _items: { id: string }[] = [], offset = 0) {
+  const nowMs = Date.now();
+  if (nowMs === lastGeneratedTimestamp) {
+    intraMsCounter += 1;
+  } else {
+    lastGeneratedTimestamp = nowMs;
+    intraMsCounter = 0;
   }
-  return `${prefix}${String(maxNum + 1 + offset).padStart(5, '0')}`;
+
+  const timePart = nowMs.toString(36).toUpperCase();
+  const counterPart = (intraMsCounter + offset).toString(36).toUpperCase().padStart(2, '0');
+  return `${prefix}${timePart}${counterPart}${getRandomIdChunk()}`;
+}
+
+export function buildLedgerEntryId(sourceModule: string, linkedId: string, index = 0, shipmentId?: string) {
+  const normalizedSource = sourceModule.replace(/[^a-z0-9]/gi, '').toUpperCase();
+  const normalizedLinked = linkedId.replace(/[^a-z0-9]/gi, '').toUpperCase();
+  const normalizedShipment = (shipmentId || 'GLOBAL').replace(/[^a-z0-9]/gi, '').toUpperCase();
+  const indexPart = String(index + 1).padStart(2, '0');
+  return `LED${normalizedSource}${normalizedShipment}${normalizedLinked}${indexPart}`;
 }
 
 /**

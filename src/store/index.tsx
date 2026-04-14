@@ -433,7 +433,12 @@ function cleanOrphanedLedger(st: AppState): AppState {
     return s;
   };
 
-  const cleaned = st.ledger.filter(entry => {
+  const deduped = new Map<string, typeof st.ledger[number]>();
+  for (const entry of st.ledger) {
+    deduped.set(entry.id, entry);
+  }
+
+  const cleaned = Array.from(deduped.values()).filter(entry => {
     const ids = getIdSet(entry.sourceModule);
     if (!ids) return true; // unknown module — keep
     return ids.has(entry.linkedId);
