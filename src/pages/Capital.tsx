@@ -11,7 +11,7 @@ import {
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { formatCurrency, generateId, computeBankBalance } from '../lib/utils';
+import { computeBankBalance, formatCurrency, generateId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import type { CapitalContribution, GeneralTransfer, SettlementResult } from '../types';
 import { useSortableData } from '../hooks/useSortableData';
@@ -58,7 +58,7 @@ export default function Capital() {
   const [showDeleteContribId, setShowDeleteContribId] = useState<string | null>(null);
   const [contribPartnerId, setContribPartnerId] = useState('');
   const [contribAmountSAR, setContribAmountSAR] = useState<number | ''>('');
-  const [contribDate, setContribDate] = useState(new Date().toISOString().split('T')[0]);
+  const [contribDate, setContribDate] = useState(getCurrentDateInputValue());
   const [contribNotes, setContribNotes] = useState('');
   const [contribProfitRate, setContribProfitRate] = useState<number | ''>('');
   const [capitalView, setCapitalView] = useState<'cards' | 'table'>('cards');
@@ -75,7 +75,7 @@ export default function Capital() {
   const [showDeleteDrawingId, setShowDeleteDrawingId] = useState<string | null>(null);
   const [editingDrawId, setEditingDrawId] = useState<string | null>(null);
   const [drawPartnerId, setDrawPartnerId] = useState('');
-  const [drawDate, setDrawDate] = useState(new Date().toISOString().split('T')[0]);
+  const [drawDate, setDrawDate] = useState(getCurrentDateInputValue());
   const [drawDescription, setDrawDescription] = useState('');
   const [drawExchangeRate, setDrawExchangeRate] = useState<number | ''>('');
   const [drawSplits, setDrawSplits] = useState<{ bankAccountId: string; amount: number }[]>([{ bankAccountId: '', amount: 0 }]);
@@ -232,7 +232,7 @@ export default function Capital() {
   const resetContribForm = () => {
     setContribPartnerId('');
     setContribAmountSAR('');
-    setContribDate(new Date().toISOString().split('T')[0]);
+    setContribDate(getCurrentDateInputValue());
     setContribNotes('');
     setContribProfitRate('');
     setEditingContribId(null);
@@ -281,7 +281,7 @@ export default function Capital() {
     if (!hasWriteAccess) return;
     if (!activeShipmentId || !settlementCalc) return;
     const result: SettlementResult = {
-      shipmentId: activeShipmentId, savedAt: new Date().toISOString(),
+      shipmentId: activeShipmentId, savedAt: getCurrentDateTimeValue(),
       exchangeRate: settlementCalc.exchangeRate,
       investorsProfitPercent: settlementCalc.investorsPct,
       managementFeePercent: settlementCalc.mgmtFeePct,
@@ -292,7 +292,7 @@ export default function Capital() {
   };
 
   const resetDrawForm = () => {
-    setDrawPartnerId(''); setDrawDate(new Date().toISOString().split('T')[0]);
+    setDrawPartnerId(''); setDrawDate(getCurrentDateInputValue());
     setDrawDescription(''); setDrawExchangeRate('');
     setDrawSplits([{ bankAccountId: '', amount: 0 }]);
     setEditingDrawId(null);

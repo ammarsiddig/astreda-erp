@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
+import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -30,7 +30,7 @@ export default function AccountTransfers() {
   const [filterType, setFilterType] = useState('');
 
   // Form State
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getCurrentDateInputValue());
   const [type, setType] = useState<'transfer' | 'opening_balance'>('transfer');
   const [fromBankAccountId, setFromBankAccountId] = useState('');
   const [toBankAccountId, setToBankAccountId] = useState('');
@@ -138,7 +138,7 @@ export default function AccountTransfers() {
     setAmount('');
     setTransferFee(0);
     setNotes('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(getCurrentDateInputValue());
   };
 
   const openEditModal = (transfer: AccountTransfer) => {

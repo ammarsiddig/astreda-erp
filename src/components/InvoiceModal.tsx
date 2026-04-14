@@ -3,7 +3,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { generateId, formatCurrency, dateTimeFromDateString } from '../lib/utils';
+import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import Modal from './Modal';
 import SearchableSelect from './SearchableSelect';
 import { Invoice, InvoiceLine } from '../types';
@@ -24,7 +24,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     ? state.customers.filter(c => c.salespersonId === currentUser.salespersonId)
     : state.customers;
 
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [invoiceDate, setInvoiceDate] = useState(getCurrentDateInputValue());
   const [customerId, setCustomerId] = useState('');
   const [cityId, setCityId] = useState('');
   const [carId, setCarId] = useState('');
@@ -42,7 +42,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
       setBankAccountId(invoiceToEdit.bankAccountId || '');
       setLines(invoiceToEdit.lines);
     } else {
-      setInvoiceDate(new Date().toISOString().split('T')[0]);
+      setInvoiceDate(getCurrentDateInputValue());
       setCustomerId('');
       setCityId('');
       setCarId('');

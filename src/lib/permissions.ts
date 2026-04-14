@@ -3,7 +3,7 @@ import { User, Role, Customer, PageKey } from '../types';
 export const ALL_PAGE_KEYS: PageKey[] = [
   'dashboard', 'inventory', 'carLoading', 'sales', 'customers',
   'payments', 'expenses', 'salaries', 'generalTransfers',
-  'accountTransfers', 'ledger', 'reports', 'capital', 'settings',
+  'accountTransfers', 'ledger', 'reports', 'capital', 'auditLog', 'settings',
 ];
 
 export function getUserRole(user: User | null, roles: Role[]): Role | undefined {

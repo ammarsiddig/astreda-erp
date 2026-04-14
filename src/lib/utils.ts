@@ -24,13 +24,39 @@ export function formatDate(dateString: string) {
   }).format(date);
 }
 
-/** Combines a YYYY-MM-DD date string with the current local time → "YYYY-MM-DDTHH:mm:ss" */
-export function dateTimeFromDateString(dateString: string): string {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  const ss = String(now.getSeconds()).padStart(2, '0');
-  return `${dateString}T${hh}:${mm}:${ss}`;
+function pad2(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+export function getCurrentDateInputValue(now = new Date()): string {
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+}
+
+export function getCurrentMonthInputValue(now = new Date()): string {
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+}
+
+export function getCurrentDateTimeValue(now = new Date()): string {
+  return `${getCurrentDateInputValue(now)}T${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+}
+
+export function formatDateTimeValue(value: string | Date, includeSeconds = false): string {
+  const date = value instanceof Date ? value : new Date(value);
+  const time = includeSeconds
+    ? `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
+    : `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+  return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()} ${time}`;
+}
+
+export function formatDateOnlyValue(dateString: string): string {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (!year || !month || !day) return formatDate(dateString);
+  return `${pad2(day)}/${pad2(month)}/${year}`;
+}
+
+export function dateTimeFromDateString(dateString: string, now = new Date()): string {
+  return `${dateString}T${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
 }
 
 export function generateId(prefix: string, items: { id: string }[], offset = 0) {

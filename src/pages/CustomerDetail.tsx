@@ -5,7 +5,7 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Edit2, Trash2, Printer, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
@@ -32,7 +32,7 @@ export default function CustomerDetail() {
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [showDeletePaymentConfirm, setShowDeletePaymentConfirm] = useState<Payment | null>(null);
   const [paymentAmount, setPaymentAmount] = useState(0);
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentDate, setPaymentDate] = useState(getCurrentDateInputValue());
   const [bankAccountId, setBankAccountId] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
 
@@ -106,7 +106,7 @@ export default function CustomerDetail() {
 
   const resetPaymentForm = () => {
     setPaymentAmount(0);
-    setPaymentDate(new Date().toISOString().split('T')[0]);
+    setPaymentDate(getCurrentDateInputValue());
     setBankAccountId('');
     setPaymentNotes('');
     setEditingPayment(null);

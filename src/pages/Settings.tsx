@@ -30,6 +30,7 @@ const PAGE_LABELS: Record<PageKey, string> = {
   ledger: 'الدفتر',
   reports: 'التقارير',
   capital: 'رأس المال',
+  auditLog: '\u0633\u062c\u0644 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a',
   settings: 'الإعدادات',
 };
 

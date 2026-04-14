@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { AppState, Language, UserRole, Role, User } from '../types';
+import { AppState, AuditLogDetail, AuditLogEntry, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
-import { hashPassword, isPasswordHashed } from '../lib/utils';
+import { getCurrentDateTimeValue, hashPassword, isPasswordHashed } from '../lib/utils';
 import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
@@ -231,6 +231,7 @@ const initialState: AppState = {
   capitalContributions: [],
   settlementResults: {},
   shipmentTransfers: [],
+  auditLogs: [],
   roles: DEFAULT_ROLES,
   users: DEFAULT_USERS,
   currentUser: null,
@@ -264,6 +265,157 @@ const SOURCE_MODULE_TO_STATE_KEY: Record<string, keyof AppState> = {
   sale_cash: 'invoices',
   shipment_transfer: 'shipmentTransfers',
 };
+
+const NON_AUDITABLE_KEYS = new Set<keyof AppState>(['currentUser', 'auditLogs', 'ledger']);
+const AUDIT_ID_LIMIT = 10;
+
+function getAuditPk(key: keyof AppState, item: any): string {
+  if (key === 'savedSettlements') return String(item.shipmentId);
+  return String(item.id ?? item.shipmentId ?? JSON.stringify(item));
+}
+
+function collectChangedFields(previousValue: any, nextValue: any): string[] {
+  const keys = new Set([
+    ...Object.keys(previousValue ?? {}),
+    ...Object.keys(nextValue ?? {}),
+  ]);
+  const changed = Array.from(keys).filter((key) =>
+    JSON.stringify(previousValue?.[key]) !== JSON.stringify(nextValue?.[key])
+  );
+  return changed.slice(0, AUDIT_ID_LIMIT);
+}
+
+function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextValue: any[]): AuditLogDetail | null {
+  const previousMap = new Map(previousValue.map((item) => [getAuditPk(key, item), item]));
+  const nextMap = new Map(nextValue.map((item) => [getAuditPk(key, item), item]));
+
+  const addedIds: string[] = [];
+  const updatedIds: string[] = [];
+  const deletedIds: string[] = [];
+  const changedFields = new Set<string>();
+
+  for (const [id, nextItem] of nextMap) {
+    const previousItem = previousMap.get(id);
+    if (!previousItem) {
+      addedIds.push(id);
+      continue;
+    }
+    if (JSON.stringify(previousItem) !== JSON.stringify(nextItem)) {
+      updatedIds.push(id);
+      collectChangedFields(previousItem, nextItem).forEach((field) => changedFields.add(field));
+    }
+  }
+
+  for (const id of previousMap.keys()) {
+    if (!nextMap.has(id)) deletedIds.push(id);
+  }
+
+  if (addedIds.length === 0 && updatedIds.length === 0 && deletedIds.length === 0) return null;
+
+  return {
+    stateKey: String(key),
+    addedIds: addedIds.slice(0, AUDIT_ID_LIMIT),
+    updatedIds: updatedIds.slice(0, AUDIT_ID_LIMIT),
+    deletedIds: deletedIds.slice(0, AUDIT_ID_LIMIT),
+    changedFields: Array.from(changedFields),
+  };
+}
+
+function buildObjectAuditDetail(key: keyof AppState, previousValue: Record<string, any>, nextValue: Record<string, any>): AuditLogDetail | null {
+  const previousKeys = new Set(Object.keys(previousValue ?? {}));
+  const nextKeys = new Set(Object.keys(nextValue ?? {}));
+  const addedIds: string[] = [];
+  const updatedIds: string[] = [];
+  const deletedIds: string[] = [];
+  const changedFields = new Set<string>();
+
+  for (const id of nextKeys) {
+    if (!previousKeys.has(id)) {
+      addedIds.push(id);
+      continue;
+    }
+    if (JSON.stringify(previousValue[id]) !== JSON.stringify(nextValue[id])) {
+      updatedIds.push(id);
+      collectChangedFields(previousValue[id], nextValue[id]).forEach((field) => changedFields.add(field));
+    }
+  }
+
+  for (const id of previousKeys) {
+    if (!nextKeys.has(id)) deletedIds.push(id);
+  }
+
+  if (addedIds.length === 0 && updatedIds.length === 0 && deletedIds.length === 0) return null;
+
+  return {
+    stateKey: String(key),
+    addedIds: addedIds.slice(0, AUDIT_ID_LIMIT),
+    updatedIds: updatedIds.slice(0, AUDIT_ID_LIMIT),
+    deletedIds: deletedIds.slice(0, AUDIT_ID_LIMIT),
+    changedFields: Array.from(changedFields),
+  };
+}
+
+function buildScalarAuditDetail(key: keyof AppState, previousValue: unknown, nextValue: unknown): AuditLogDetail | null {
+  if (JSON.stringify(previousValue) === JSON.stringify(nextValue)) return null;
+  return {
+    stateKey: String(key),
+    addedIds: [],
+    updatedIds: [],
+    deletedIds: [],
+    changedFields: [String(key)],
+  };
+}
+
+function createAuditLogEntry(prev: AppState, next: AppState, updates: Partial<AppState>): AuditLogEntry | null {
+  const details: AuditLogDetail[] = [];
+
+  for (const key of Object.keys(updates) as (keyof AppState)[]) {
+    if (NON_AUDITABLE_KEYS.has(key)) continue;
+
+    const previousValue = prev[key];
+    const nextValue = next[key];
+    let detail: AuditLogDetail | null = null;
+
+    if (Array.isArray(previousValue) && Array.isArray(nextValue)) {
+      detail = buildArrayAuditDetail(key, previousValue, nextValue);
+    } else if (
+      previousValue &&
+      nextValue &&
+      typeof previousValue === 'object' &&
+      typeof nextValue === 'object'
+    ) {
+      detail = buildObjectAuditDetail(
+        key,
+        previousValue as Record<string, any>,
+        nextValue as Record<string, any>
+      );
+    } else {
+      detail = buildScalarAuditDetail(key, previousValue, nextValue);
+    }
+
+    if (detail) details.push(detail);
+  }
+
+  if (details.length === 0) return null;
+
+  const addedCount = details.reduce((sum, detail) => sum + detail.addedIds.length, 0);
+  const updatedCount = details.reduce((sum, detail) => sum + detail.updatedIds.length, 0);
+  const deletedCount = details.reduce((sum, detail) => sum + detail.deletedIds.length, 0);
+
+  let action: AuditLogEntry['action'] = 'mixed';
+  if (addedCount > 0 && updatedCount === 0 && deletedCount === 0) action = 'create';
+  else if (deletedCount > 0 && addedCount === 0 && updatedCount === 0) action = 'delete';
+  else if (updatedCount > 0 && addedCount === 0 && deletedCount === 0) action = 'update';
+
+  return {
+    id: crypto.randomUUID(),
+    timestamp: getCurrentDateTimeValue(),
+    userId: prev.currentUser?.id ?? null,
+    userName: prev.currentUser?.name ?? 'Unknown',
+    action,
+    details,
+  };
+}
 
 function cleanOrphanedLedger(st: AppState): AppState {
   if (!Array.isArray(st.ledger) || st.ledger.length === 0) return st;
@@ -316,6 +468,7 @@ function loadFromLocalStorage(): AppState {
       });
     }
     if (merged.currentUser === undefined) merged.currentUser = null;
+    if (!Array.isArray(merged.auditLogs)) merged.auditLogs = [];
 
     // Deep-patch partners
     if (Array.isArray(parsed.partners)) {
@@ -394,6 +547,7 @@ function loadFromLocalStorage(): AppState {
 // Helper: ensure default roles/users exist in cloud-pulled state
 function ensureDefaults(state: AppState): AppState {
   const merged = { ...state };
+  if (!Array.isArray(merged.auditLogs)) merged.auditLogs = [];
   if (!Array.isArray(merged.roles) || merged.roles.length === 0) {
     merged.roles = DEFAULT_ROLES;
   } else {
@@ -501,7 +655,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updates = { ...updates, ledger: final_.ledger };
     }
 
-    setState(() => final_);
+    const auditEntry = createAuditLogEntry(prev, final_, updates);
+    const auditedFinal = auditEntry
+      ? {
+          ...final_,
+          auditLogs: [auditEntry, ...final_.auditLogs].slice(0, 500),
+        }
+      : final_;
+
+    setState(() => auditedFinal);
 
     // v3: profitRate is synced to Supabase directly — no localStorage overrides
 
@@ -513,8 +675,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Auto-sync array and object changes to Supabase (fire-and-forget)
     for (const key of Object.keys(updates) as (keyof AppState)[]) {
-      if (scalarKeys.includes(key) || key === 'currentUser') continue;
-      const newVal = (final_ as any)[key];
+      if (scalarKeys.includes(key) || key === 'currentUser' || key === 'auditLogs') continue;
+      const newVal = (auditedFinal as any)[key];
       const oldVal = prev[key];
 
       // settlementResults is Record<shipmentId, result> — sync each changed entry

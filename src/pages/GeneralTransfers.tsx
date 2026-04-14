@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
+import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { GeneralTransfer, GeneralTransferType } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -31,7 +31,7 @@ export default function GeneralTransfers() {
   const [filterType, setFilterType] = useState<GeneralTransferType | ''>('');
 
   // Form State
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getCurrentDateInputValue());
   const [partnerId, setPartnerId] = useState('');
   const [transferType, setTransferType] = useState<GeneralTransferType>('capital_return');
   const [beneficiaryPartnerId, setBeneficiaryPartnerId] = useState('');
@@ -149,7 +149,7 @@ export default function GeneralTransfers() {
     setTransferType('capital_return');
     setDescription('');
     setSplits([{ bankAccountId: '', amount: 0 }]);
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(getCurrentDateInputValue());
     setExchangeRate('');
   };
 

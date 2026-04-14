@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
-import { cn } from '../lib/utils';
+import { cn, formatDateTimeValue } from '../lib/utils';
 import {
   LayoutDashboard, Package, Truck, ShoppingCart, Users, CreditCard,
   Receipt, Wallet, ArrowRightLeft, RefreshCw, BookOpen, BarChart3,
-  Settings, Menu, X, Globe, UserCircle, PiggyBank, LogOut,
+  Settings, Menu, X, Globe, UserCircle, PiggyBank, LogOut, History, Clock3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { canView, getUserRole } from '../lib/permissions';
@@ -30,6 +30,7 @@ const navItems: { path: string; icon: any; labelKey: string; pageKey: PageKey }[
   { path: '/account-transfers', icon: RefreshCw, labelKey: 'accountTransfers', pageKey: 'accountTransfers' },
   { path: '/ledger', icon: BookOpen, labelKey: 'financialLedger', pageKey: 'ledger' },
   { path: '/reports', icon: BarChart3, labelKey: 'reports', pageKey: 'reports' },
+  { path: '/audit-log', icon: History, labelKey: 'auditLog', pageKey: 'auditLog' },
   { path: '/settings', icon: Settings, labelKey: 'settings', pageKey: 'settings' },
 ];
 
@@ -49,7 +50,13 @@ export default function Layout() {
   const { state, updateState, logout, manualSync, activeShipmentId, setActiveShipmentId } = useAppStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingShipmentId, setPendingShipmentId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => new Date());
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const currentUser = state.currentUser;
   const role = getUserRole(currentUser, state.roles);
@@ -219,6 +226,12 @@ export default function Layout() {
           <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Sync Status */}
             <SyncStatusIndicator onManualSync={manualSync} />
+
+            <div className="flex items-center gap-2 bg-slate-50 text-slate-700 border border-slate-200 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium">
+              <Clock3 className="w-3.5 h-3.5 text-[#134e4a]" />
+              <span className="hidden sm:inline">{t('currentTime')}:</span>
+              <span className="font-semibold text-[#134e4a]">{formatDateTimeValue(now, true)}</span>
+            </div>
 
             {/* Language toggle */}
             <button

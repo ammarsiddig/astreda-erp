@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
+import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
 import { Salary, Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -32,10 +32,10 @@ export default function Salaries() {
   const [filterEmployee, setFilterEmployee] = useState('');
 
   // Salary form state
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getCurrentDateInputValue());
   const [employeeId, setEmployeeId] = useState('');
   const [type, setType] = useState<'salary' | 'allowance'>('salary');
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(getCurrentMonthInputValue());
   const [amount, setAmount] = useState<number | ''>('');
   const [bankAccountId, setBankAccountId] = useState('');
   const [notes, setNotes] = useState('');
@@ -50,7 +50,7 @@ export default function Salaries() {
   const [showNewAdvanceModal, setShowNewAdvanceModal] = useState(false);
 
   // New advance form state
-  const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]);
+  const [advDate, setAdvDate] = useState(getCurrentDateInputValue());
   const [advEmployee, setAdvEmployee] = useState('');
   const [advAmount, setAdvAmount] = useState<number | ''>('');
   const [advBankAccountId, setAdvBankAccountId] = useState('');
@@ -198,9 +198,9 @@ export default function Salaries() {
     setAmount('');
     setBankAccountId('');
     setNotes('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(getCurrentDateInputValue());
     setType('salary');
-    setMonth(new Date().toISOString().slice(0, 7));
+    setMonth(getCurrentMonthInputValue());
     setAutoSettle(true);
   };
 
@@ -228,7 +228,7 @@ export default function Salaries() {
   // === Advance handlers ===
   const handleSettleAdvance = () => {
     if (!showSettleConfirm) return;
-    const settleDate = new Date().toISOString().split('T')[0];
+    const settleDate = getCurrentDateInputValue();
     updateState({
       expenses: state.expenses.map(e =>
         e.id === showSettleConfirm ? { ...e, settled: true, settledDate: settleDate } : e
@@ -240,7 +240,7 @@ export default function Salaries() {
   const handleSettleAll = () => {
     if (!showSettleAllConfirm) return;
     const employeeName = showSettleAllConfirm;
-    const settleDate = new Date().toISOString().split('T')[0];
+    const settleDate = getCurrentDateInputValue();
     updateState({
       expenses: state.expenses.map(e => {
         if (
@@ -258,7 +258,7 @@ export default function Salaries() {
   };
 
   const resetAdvanceForm = () => {
-    setAdvDate(new Date().toISOString().split('T')[0]);
+    setAdvDate(getCurrentDateInputValue());
     setAdvEmployee('');
     setAdvAmount('');
     setAdvBankAccountId('');

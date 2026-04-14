@@ -9,7 +9,7 @@ import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction, ShipmentTransfer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
-import { formatCurrency, generateId } from '../lib/utils';
+import { formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
 
@@ -37,17 +37,17 @@ export default function Inventory() {
   const [selectedLogRowId, setSelectedLogRowId] = useState<string | null>(null);
 
   // Receive Stock State
-  const [receiveDate, setReceiveDate] = useState(new Date().toISOString().split('T')[0]);
+  const [receiveDate, setReceiveDate] = useState(getCurrentDateInputValue());
   const [receiveItems, setReceiveItems] = useState<{ productId: string; qty: number }[]>([{ productId: '', qty: 0 }]);
 
   // Transfer Stock State
-  const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
+  const [transferDate, setTransferDate] = useState(getCurrentDateInputValue());
   const [transferFrom, setTransferFrom] = useState('warehouse');
   const [transferTo, setTransferTo] = useState('');
   const [transferItems, setTransferItems] = useState<{ productId: string; qty: number }[]>([{ productId: '', qty: 0 }]);
 
   // Car Transfer State
-  const [carTransferDate, setCarTransferDate] = useState(new Date().toISOString().split('T')[0]);
+  const [carTransferDate, setCarTransferDate] = useState(getCurrentDateInputValue());
   const [carTransferFrom, setCarTransferFrom] = useState('');
   const [carTransferTo, setCarTransferTo] = useState('');
   const [carTransferItems, setCarTransferItems] = useState<{ productId: string; qty: number }[]>([{ productId: '', qty: 0 }]);
@@ -56,7 +56,7 @@ export default function Inventory() {
 
   // Shipment Transfer State
   const [showShipmentTransferModal, setShowShipmentTransferModal] = useState(false);
-  const [shipmentTransferDate, setShipmentTransferDate] = useState(new Date().toISOString().split('T')[0]);
+  const [shipmentTransferDate, setShipmentTransferDate] = useState(getCurrentDateInputValue());
   const [targetShipmentId, setTargetShipmentId] = useState('');
   const [shipmentTransferItems, setShipmentTransferItems] = useState<{ productId: string; qty: number }[]>([]);
   const [shipmentTransferTotalAmount, setShipmentTransferTotalAmount] = useState<number | ''>('');
@@ -65,7 +65,7 @@ export default function Inventory() {
 
   // Shipment Payment State (standalone balance transfer between shipments)
   const [showShipmentPaymentModal, setShowShipmentPaymentModal] = useState(false);
-  const [shipmentPaymentDate, setShipmentPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [shipmentPaymentDate, setShipmentPaymentDate] = useState(getCurrentDateInputValue());
   const [shipmentPaymentTargetId, setShipmentPaymentTargetId] = useState('');
   const [shipmentPaymentAmount, setShipmentPaymentAmount] = useState<number | ''>('');
   const [shipmentPaymentBankAccountId, setShipmentPaymentBankAccountId] = useState('');
@@ -81,7 +81,7 @@ export default function Inventory() {
     setShipmentTransferBankAccountId('');
     setTargetShipmentId('');
     setShipmentTransferNotes('');
-    setShipmentTransferDate(new Date().toISOString().split('T')[0]);
+    setShipmentTransferDate(getCurrentDateInputValue());
     setShowShipmentTransferModal(true);
   };
 
@@ -380,7 +380,7 @@ export default function Inventory() {
   };
 
   const openShipmentPaymentModal = () => {
-    setShipmentPaymentDate(new Date().toISOString().split('T')[0]);
+    setShipmentPaymentDate(getCurrentDateInputValue());
     setShipmentPaymentTargetId('');
     setShipmentPaymentAmount('');
     setShipmentPaymentBankAccountId('');

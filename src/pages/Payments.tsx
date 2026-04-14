@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { formatCurrency, generateId, dateTimeFromDateString } from '../lib/utils';
+import { dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { Payment } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -33,7 +33,7 @@ export default function Payments() {
   const [filterCustomer, setFilterCustomer] = useState('');
 
   // Form State
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getCurrentDateInputValue());
   const [customerId, setCustomerId] = useState('');
   const [amount, setAmount] = useState<number | ''>('');
   const [bankAccountId, setBankAccountId] = useState('');
@@ -113,7 +113,7 @@ export default function Payments() {
     setAmount('');
     setBankAccountId('');
     setNotes('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(getCurrentDateInputValue());
   };
 
   const openEditModal = (payment: Payment) => {

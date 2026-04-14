@@ -3,7 +3,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatDateOnlyValue, formatDateTimeValue, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
 import SearchableSelect from '../components/SearchableSelect';
 import { Printer, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
@@ -33,7 +33,7 @@ export default function Reports() {
   // Daily Debt Report Filters
   const [dailyDebtCity, setDailyDebtCity] = useState('');
   const [dailyDebtShipment, setDailyDebtShipment] = useState(activeShipmentId || '');
-  const [dailyDebtDate, setDailyDebtDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dailyDebtDate, setDailyDebtDate] = useState(getCurrentDateInputValue());
 
   // Salesperson Report Filter
   const [salespersonCityFilter, setSalespersonCityFilter] = useState('');
@@ -281,7 +281,9 @@ export default function Reports() {
     if (!dailyDebtCity) return;
     const cityName = state.cities.find(c => c.id === dailyDebtCity)?.name || '';
     const shipmentName = state.shipments.find(s => s.id === dailyDebtShipment)?.name || '';
-    const dateStr = format(new Date(dailyDebtDate), 'dd/MM/yyyy HH:mm');
+    const generatedAt = getCurrentDateTimeValue();
+    const generatedAtLabel = formatDateTimeValue(generatedAt, true);
+    const reportDateLabel = formatDateOnlyValue(dailyDebtDate);
     const fmt = (n: number) => new Intl.NumberFormat('en-US').format(n);
     const totalSales = dailyDebtData.reduce((sum, r) => sum + r.totalSales, 0);
     const totalPaid  = dailyDebtData.reduce((sum, r) => sum + r.totalPaid,  0);
@@ -310,7 +312,7 @@ export default function Reports() {
   tfoot td.name { font-weight: 900; } tfoot td.debt { color: #e11d48 !important; font-weight: 900; }
 </style></head><body>
   <div class="title">تقرير المديونية اليومي</div>
-  <div class="subtitle">التاريخ: ${dateStr} | الرسالة: ${shipmentName} | المدينة: ${cityName}</div>
+  <div class="subtitle">وقت إنشاء التقرير: ${generatedAtLabel} | تاريخ التقرير: ${reportDateLabel} | الرسالة: ${shipmentName} | المدينة: ${cityName}</div>
   <table>
     <thead><tr>
       <th style="width:40%;text-align:right">العميل</th><th style="width:20%">إجمالي المبيعات</th>
@@ -678,7 +680,9 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                 <div className="flex justify-between items-center border-b-4 border-[#134e4a] pb-6 mb-8">
                   <h2 className="text-3xl font-bold text-[#134e4a]">تقرير المديونية اليومي</h2>
                   <div className="text-lg text-[#1e293b] font-bold space-x-4 rtl:space-x-reverse">
-                    <span>التاريخ: {format(new Date(dailyDebtDate), 'dd/MM/yyyy HH:mm')}</span>
+                    <span>وقت إنشاء التقرير: {formatDateTimeValue(new Date(), true)}</span>
+                    <span className="mx-2">|</span>
+                    <span>تاريخ التقرير: {formatDateOnlyValue(dailyDebtDate)}</span>
                     <span className="mx-2">|</span>
                     <span>الرسالة: {state.shipments.find(s => s.id === dailyDebtShipment)?.name}</span>
                     <span className="mx-2">|</span>

@@ -4,7 +4,7 @@ export type UserRole = 'manager' | 'staff';
 export type PageKey =
   | 'dashboard' | 'inventory' | 'carLoading' | 'sales' | 'customers'
   | 'payments' | 'expenses' | 'salaries' | 'generalTransfers'
-  | 'accountTransfers' | 'ledger' | 'reports' | 'capital' | 'settings';
+  | 'accountTransfers' | 'ledger' | 'reports' | 'capital' | 'auditLog' | 'settings';
 
 export interface PagePermission {
   pageKey: PageKey;
@@ -254,6 +254,23 @@ export interface ShipmentTransfer {
   notes?: string;
 }
 
+export interface AuditLogDetail {
+  stateKey: string;
+  addedIds: string[];
+  updatedIds: string[];
+  deletedIds: string[];
+  changedFields: string[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  userId: string | null;
+  userName: string;
+  action: 'create' | 'update' | 'delete' | 'mixed';
+  details: AuditLogDetail[];
+}
+
 export interface AppState {
   language: Language;
   userRole: UserRole;
@@ -282,6 +299,7 @@ export interface AppState {
   capitalContributions: CapitalContribution[];
   settlementResults: { [shipmentId: string]: SettlementResult };
   shipmentTransfers: ShipmentTransfer[];
+  auditLogs: AuditLogEntry[];
   roles: Role[];
   users: User[];
   currentUser: User | null;

@@ -50,6 +50,7 @@ const Capital          = lazyRetry(() => import('./pages/Capital'));
 const AccountTransfers = lazyRetry(() => import('./pages/AccountTransfers'));
 const Ledger           = lazyRetry(() => import('./pages/Ledger'));
 const Reports          = lazyRetry(() => import('./pages/Reports'));
+const AuditLog         = lazyRetry(() => import('./pages/AuditLog'));
 const Settings         = lazyRetry(() => import('./pages/Settings'));
 
 // Clear stale reload flag on successful app boot
@@ -135,6 +136,7 @@ function AppRoutes() {
           <Route path="account-transfers" element={<ProtectedRoute pageKey="accountTransfers"><AccountTransfers /></ProtectedRoute>} />
           <Route path="ledger" element={<ProtectedRoute pageKey="ledger"><Ledger /></ProtectedRoute>} />
           <Route path="reports" element={<ProtectedRoute pageKey="reports"><Reports /></ProtectedRoute>} />
+          <Route path="audit-log" element={<ProtectedRoute pageKey="auditLog"><AuditLog /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute pageKey="settings"><Settings /></ProtectedRoute>} />
         </Route>
       </Routes>

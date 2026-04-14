@@ -9,7 +9,7 @@ import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction } from '../types';
 import { canWrite } from '../lib/permissions';
-import { generateId } from '../lib/utils';
+import { generateId, getCurrentDateInputValue } from '../lib/utils';
 
 export default function CarLoading() {
   const { t, lang } = useTranslation();
@@ -63,7 +63,7 @@ export default function CarLoading() {
   };
 
   // Load Stock State
-  const [loadDate, setLoadDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loadDate, setLoadDate] = useState(getCurrentDateInputValue());
   const [loadItems, setLoadItems] = useState<{ productId: string; qty: number }[]>([{ productId: '', qty: 0 }]);
 
   const carData = state.products.map(product => {
@@ -130,7 +130,7 @@ export default function CarLoading() {
 
   const handleReturnAll = () => {
     if (!activeShipmentId || !selectedCarId) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getCurrentDateInputValue();
 
     const returnTransactions = productsWithStock.map((row, idx) => ({
       id: generateId('IT', state.inventoryTransactions, idx),
