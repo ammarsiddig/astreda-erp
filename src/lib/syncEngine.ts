@@ -450,7 +450,7 @@ function assertSchemaOk(): boolean {
 
 // ─── Write API: Cloud-First ─────────────────────────────────────
 
-export async function upsertRecord(stateKey: keyof AppState, item: any): Promise<boolean> {
+export async function upsertRecord(stateKey: keyof AppState, item: any, silent = false): Promise<boolean> {
   if (!assertSchemaOk()) return false
   const mapping = TABLE_MAPPINGS.find(m => m.stateKey === stateKey)
   if (!mapping) return false
@@ -461,7 +461,7 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
 
   if (!syncStatus.isOnline || !isSupabaseConfigured()) {
     walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
-    addToast('info', '📱 محفوظ محلياً — سيُرسل عند عودة الاتصال')
+    if (!silent) addToast('info', '📱 محفوظ محلياً — سيُرسل عند عودة الاتصال')
     return false
   }
 
@@ -469,13 +469,13 @@ export async function upsertRecord(stateKey: keyof AppState, item: any): Promise
     const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
     if (error) throw error
     markRecentWrite(mapping.table, pk)
-    showSaveSuccess()
+    if (!silent) showSaveSuccess()
     return true
   } catch (e: any) {
     const msg = e?.message || e?.details || JSON.stringify(e)
     console.error(`[sync-v3] UPSERT ${mapping.table}/${pk} failed:`, msg)
     walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
-    addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
+    if (!silent) addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
     return false
   }
 }
