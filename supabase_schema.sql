@@ -259,6 +259,18 @@ CREATE TABLE shipment_transfers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ─── Audit Log ──────────────────────────────────────────────────
+
+CREATE TABLE audit_logs (
+  id TEXT PRIMARY KEY,
+  timestamp TEXT NOT NULL,
+  user_id TEXT,
+  user_name TEXT NOT NULL DEFAULT 'Unknown',
+  action TEXT NOT NULL, -- 'create' | 'update' | 'delete' | 'mixed'
+  details JSONB NOT NULL DEFAULT '[]',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ─── App Settings (scalar state fields) ─────────────────────────
 
 CREATE TABLE app_settings (
@@ -340,6 +352,7 @@ CREATE TRIGGER tr_capital_contributions BEFORE UPDATE ON capital_contributions F
 CREATE TRIGGER tr_settlement_results BEFORE UPDATE ON settlement_results FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER tr_shipment_transfers BEFORE UPDATE ON shipment_transfers FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER tr_app_settings BEFORE UPDATE ON app_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER tr_audit_logs BEFORE UPDATE ON audit_logs FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =============================================
 -- Row Level Security — allow all (customize later)
@@ -369,6 +382,7 @@ ALTER TABLE capital_contributions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settlement_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shipment_transfers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_queue ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "allow_all" ON products FOR ALL USING (true) WITH CHECK (true);
@@ -396,6 +410,7 @@ CREATE POLICY "allow_all" ON capital_contributions FOR ALL USING (true) WITH CHE
 CREATE POLICY "allow_all" ON settlement_results FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON shipment_transfers FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON app_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON sync_queue FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================
@@ -427,6 +442,7 @@ ALTER TABLE capital_contributions REPLICA IDENTITY FULL;
 ALTER TABLE settlement_results REPLICA IDENTITY FULL;
 ALTER TABLE shipment_transfers REPLICA IDENTITY FULL;
 ALTER TABLE app_settings REPLICA IDENTITY FULL;
+ALTER TABLE audit_logs REPLICA IDENTITY FULL;
 
 -- =============================================
 -- Enable Realtime on transactional tables
@@ -456,6 +472,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE capital_contributions;
 ALTER PUBLICATION supabase_realtime ADD TABLE settlement_results;
 ALTER PUBLICATION supabase_realtime ADD TABLE shipment_transfers;
 ALTER PUBLICATION supabase_realtime ADD TABLE app_settings;
+ALTER PUBLICATION supabase_realtime ADD TABLE audit_logs;
 
 -- =============================================
 -- Insert singleton settings row

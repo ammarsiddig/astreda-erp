@@ -14,7 +14,7 @@ import { SortIcon } from '../components/SortIcon';
 
 export default function AccountTransfers() {
   const { t } = useTranslation();
-  const { state, updateState } = useAppStore();
+  const { state, updateState, activeShipmentId } = useAppStore();
   const hasWriteAccess = canWrite(state.currentUser, state.roles, 'accountTransfers');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<AccountTransfer | null>(null);
@@ -49,6 +49,7 @@ export default function AccountTransfers() {
 
   const handleSaveTransfer = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!activeShipmentId) return;
     if (!amount || !toBankAccountId) return;
     if (type === 'transfer' && !fromBankAccountId) return;
     if (type === 'transfer' && fromBankAccountId === toBankAccountId) {
@@ -93,6 +94,7 @@ export default function AccountTransfers() {
         amountOut: transferAmount + fee,
         sourceModule: 'account_transfer' as const,
         linkedId: transferId,
+        shipmentId: activeShipmentId,
       });
       newLedgerEntries.push({
         id: buildLedgerEntryId('account_transfer', transferId, 1),
@@ -104,6 +106,7 @@ export default function AccountTransfers() {
         amountOut: 0,
         sourceModule: 'account_transfer' as const,
         linkedId: transferId,
+        shipmentId: activeShipmentId,
       });
     } else {
       newLedgerEntries.push({
@@ -115,6 +118,7 @@ export default function AccountTransfers() {
         amountOut: 0,
         sourceModule: 'account_transfer' as const,
         linkedId: transferId,
+        shipmentId: activeShipmentId,
       });
     }
 

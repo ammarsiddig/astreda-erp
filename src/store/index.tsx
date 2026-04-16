@@ -670,6 +670,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setState(() => auditedFinal);
 
+    // Push new audit entry to cloud so all users see it
+    if (auditEntry) upsertRecord('auditLogs', auditEntry);
+
     // v3: profitRate is synced to Supabase directly — no localStorage overrides
 
     // Push scalar settings to cloud if any changed

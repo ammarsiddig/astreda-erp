@@ -205,6 +205,25 @@ export const TABLE_MAPPINGS: TableMapping[] = [
       totalAmount: row.total_amount, notes: row.notes,
     }),
   },
+  {
+    table: 'audit_logs', stateKey: 'auditLogs',
+    toRow: (entry) => ({
+      id: entry.id,
+      timestamp: entry.timestamp,
+      user_id: entry.userId ?? null,
+      user_name: entry.userName,
+      action: entry.action,
+      details: JSON.stringify(entry.details),
+    }),
+    fromRow: (row) => ({
+      id: row.id,
+      timestamp: row.timestamp,
+      userId: row.user_id ?? null,
+      userName: row.user_name,
+      action: row.action,
+      details: typeof row.details === 'string' ? JSON.parse(row.details) : (row.details ?? []),
+    }),
+  },
 ]
 
 // ─── Online Status ──────────────────────────────────────────────
