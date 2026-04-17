@@ -108,8 +108,11 @@ export default function Salaries() {
   const [showSettleConfirm, setShowSettleConfirm] = useState<string | null>(null);
   const [showSettleAllConfirm, setShowSettleAllConfirm] = useState<string | null>(null);
   const [showNewAdvanceModal, setShowNewAdvanceModal] = useState(false);
+  const [showAdvViewModal, setShowAdvViewModal] = useState<Expense | null>(null);
+  const [showAdvEditModal, setShowAdvEditModal] = useState<Expense | null>(null);
+  const [showAdvDeleteConfirm, setShowAdvDeleteConfirm] = useState<Expense | null>(null);
 
-  // New advance form state
+  // New/Edit advance form state
   const [advDate, setAdvDate] = useState(getCurrentDateInputValue());
   const [advEmployee, setAdvEmployee] = useState('');
   const [advAmount, setAdvAmount] = useState<number | ''>('');
@@ -323,6 +326,58 @@ export default function Salaries() {
     setAdvAmount('');
     setAdvBankAccountId('');
     setAdvNotes('');
+  };
+
+  const openAdvEdit = (adv: Expense) => {
+    setAdvDate(adv.date.slice(0, 10));
+    const emp = state.employees.find(e => e.name === adv.description);
+    setAdvEmployee(emp?.id || '');
+    setAdvAmount(adv.amount);
+    setAdvBankAccountId(adv.bankAccountId);
+    setAdvNotes(adv.notes || '');
+    setShowAdvEditModal(adv);
+  };
+
+  const handleUpdateAdvance = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showAdvEditModal || !advAmount || !advBankAccountId) return;
+    const adv = showAdvEditModal;
+    const emp = state.employees.find(em => em.id === advEmployee);
+    const newDate = dateTimeFromDateString(advDate);
+    const updatedExpense: Expense = {
+      ...adv,
+      date: newDate,
+      description: emp?.name || adv.description,
+      amount: Number(advAmount),
+      bankAccountId: advBankAccountId,
+      notes: advNotes,
+    };
+    const updatedLedger = state.ledger.map(l =>
+      l.linkedId === adv.id
+        ? {
+            ...l,
+            date: newDate,
+            toAccount: advBankAccountId,
+            description: `سلفية - ${emp?.name || adv.description}${advNotes ? ` (${advNotes})` : ''}`,
+            amountOut: Number(advAmount),
+          }
+        : l
+    );
+    updateState({
+      expenses: state.expenses.map(ex => ex.id === adv.id ? updatedExpense : ex),
+      ledger: updatedLedger,
+    });
+    setShowAdvEditModal(null);
+    resetAdvanceForm();
+  };
+
+  const handleDeleteAdvance = () => {
+    if (!showAdvDeleteConfirm) return;
+    updateState({
+      expenses: state.expenses.filter(e => e.id !== showAdvDeleteConfirm.id),
+      ledger: state.ledger.filter(l => l.linkedId !== showAdvDeleteConfirm.id),
+    });
+    setShowAdvDeleteConfirm(null);
   };
 
   const handleSaveAdvance = (e: React.FormEvent) => {
@@ -732,7 +787,7 @@ export default function Salaries() {
                     ? 'bg-green-50 hover:bg-green-100'
                     : 'hover:bg-amber-50';
                 return (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${advCardClass}`}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={adv.id} onClick={() => { setSelectedAdvanceRowId(adv.id); setShowAdvViewModal(adv); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${advCardClass}`}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{adv.description}</p>
@@ -750,14 +805,17 @@ export default function Salaries() {
                   {adv.notes && <p className="text-xs text-slate-500 truncate">{adv.notes}</p>}
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-xs text-slate-400">{state.bankAccounts.find(b => b.id === adv.bankAccountId)?.name}</span>
-                    {!adv.settled && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setShowSettleConfirm(adv.id); }}
-                        className="px-3 py-1 bg-[#134e4a] text-white text-xs rounded-lg hover:bg-[#0c3531] transition-colors font-semibold"
-                      >
-                        تسوية
-                      </button>
-                    )}
+                    <div className="flex gap-1">
+                      {!adv.settled && (
+                        <button onClick={(e) => { e.stopPropagation(); setShowSettleConfirm(adv.id); }} className="px-3 py-1 bg-[#134e4a] text-white text-xs rounded-lg hover:bg-[#0c3531] transition-colors font-semibold">تسوية</button>
+                      )}
+                      {hasWriteAccess && !adv.settled && (
+                        <button onClick={(e) => { e.stopPropagation(); openAdvEdit(adv); }} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      )}
+                      {hasWriteAccess && (
+                        <button onClick={(e) => { e.stopPropagation(); setShowAdvDeleteConfirm(adv); }} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
                 );
@@ -777,7 +835,7 @@ export default function Salaries() {
                     <th className="px-4 py-3">الرسالة</th>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('settled')}><div className="flex items-center gap-1">الحالة <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'settled'}/></div></th>
                     <th className="px-4 py-3">ملاحظات</th>
-                    <th className="px-4 py-3 text-center">إجراء</th>
+                    <th className="px-4 py-3 text-center w-32">إجراء</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -809,14 +867,41 @@ export default function Salaries() {
                       </td>
                       <td className="px-4 py-3 text-slate-500">{adv.notes}</td>
                       <td className="px-4 py-3 text-center">
-                        {!adv.settled && (
+                        <div className="flex justify-center gap-1">
                           <button
-                            onClick={(e) => { e.stopPropagation(); setShowSettleConfirm(adv.id); }}
-                            className="px-3 py-1 bg-[#134e4a] text-white text-xs rounded-lg hover:bg-[#0c3531] transition-colors font-semibold"
+                            onClick={(e) => { e.stopPropagation(); setShowAdvViewModal(adv); }}
+                            className="p-1.5 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"
+                            title={t('view')}
                           >
-                            تسوية
+                            <Eye className="w-4 h-4" />
                           </button>
-                        )}
+                          {!adv.settled && hasWriteAccess && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openAdvEdit(adv); }}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              title={t('edit')}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {hasWriteAccess && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setShowAdvDeleteConfirm(adv); }}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title={t('delete')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {!adv.settled && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setShowSettleConfirm(adv.id); }}
+                              className="px-2 py-1 bg-[#134e4a] text-white text-xs rounded-lg hover:bg-[#0c3531] transition-colors font-semibold whitespace-nowrap"
+                            >
+                              تسوية
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </motion.tr>
                     );
@@ -1160,6 +1245,106 @@ export default function Salaries() {
             >
               تسوية الكل
             </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* View Advance Modal */}
+      <Modal isOpen={!!showAdvViewModal} onClose={() => setShowAdvViewModal(null)} title="عرض سلفية" size="sm">
+        {showAdvViewModal && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500">{t('date')}</label>
+                <p className="font-medium text-sm">{format(new Date(showAdvViewModal.date), 'dd/MM/yyyy HH:mm')}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500">الموظف</label>
+                <p className="font-medium text-sm">{showAdvViewModal.description}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500">{t('amount')}</label>
+                <p className="font-bold text-red-600">{formatCurrency(showAdvViewModal.amount)}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500">{t('bankAccount')}</label>
+                <p className="font-medium text-sm">{state.bankAccounts.find(b => b.id === showAdvViewModal.bankAccountId)?.name}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500">الرسالة</label>
+                <p className="font-medium text-sm">{state.shipments.find(s => s.id === showAdvViewModal.shipmentId)?.name}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500">الحالة</label>
+                <p className="font-medium text-sm">{showAdvViewModal.settled ? '✅ مُسوَّى' : '🔴 مفتوح'}</p>
+              </div>
+              {showAdvViewModal.notes && (
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-slate-500">{t('notes')}</label>
+                  <p className="font-medium text-sm">{showAdvViewModal.notes}</p>
+                </div>
+              )}
+            </div>
+            <div className="pt-3 border-t border-slate-100 flex justify-end">
+              <button onClick={() => setShowAdvViewModal(null)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors">{t('close')}</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Advance Modal */}
+      <Modal
+        isOpen={!!showAdvEditModal}
+        onClose={() => { setShowAdvEditModal(null); resetAdvanceForm(); }}
+        title="تعديل سلفية"
+        size="md"
+      >
+        <form onSubmit={handleUpdateAdvance} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">التاريخ</label>
+              <input type="date" required value={advDate} onChange={(e) => setAdvDate(e.target.value)}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">الموظف</label>
+              <SearchableSelect required value={advEmployee} onChange={(val) => setAdvEmployee(val)}
+                options={state.employees.map(e => ({ value: e.id, label: e.name }))} placeholder={t('select')} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ</label>
+              <input type="number" required min="1" step="1" value={advAmount} onChange={(e) => setAdvAmount(Number(e.target.value))}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">الحساب</label>
+              <SearchableSelect required value={advBankAccountId} onChange={(val) => setAdvBankAccountId(val)}
+                options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))} placeholder={t('select')} />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1">ملاحظات</label>
+              <textarea value={advNotes} onChange={(e) => setAdvNotes(e.target.value)}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none resize-none h-20" />
+            </div>
+          </div>
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button type="button" onClick={() => { setShowAdvEditModal(null); resetAdvanceForm(); }}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('cancel')}</button>
+            <button type="submit"
+              className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm transition-colors">{t('save')}</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Advance Confirmation */}
+      <Modal isOpen={!!showAdvDeleteConfirm} onClose={() => setShowAdvDeleteConfirm(null)} title="حذف سلفية" size="sm">
+        <div className="space-y-4">
+          <p className="text-slate-600">هل تريد حذف سلفية <strong>{showAdvDeleteConfirm?.description}</strong> بمبلغ <strong>{showAdvDeleteConfirm ? formatCurrency(showAdvDeleteConfirm.amount) : ''}</strong>؟</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setShowAdvDeleteConfirm(null)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleDeleteAdvance}
+              className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
           </div>
         </div>
       </Modal>
