@@ -56,6 +56,34 @@ const Settings         = lazyRetry(() => import('./pages/Settings'));
 // Clear stale reload flag on successful app boot
 if (typeof window !== 'undefined') sessionStorage.removeItem('chunk_reload');
 
+// Eagerly preload all page chunks after a short idle so navigation is instant
+function preloadAllChunks() {
+  const load = () => {
+    import('./pages/Dashboard');
+    import('./pages/Inventory');
+    import('./pages/CarLoading');
+    import('./pages/Sales');
+    import('./pages/Customers');
+    import('./pages/CustomerDetail');
+    import('./pages/Payments');
+    import('./pages/Expenses');
+    import('./pages/Salaries');
+    import('./pages/GeneralTransfers');
+    import('./pages/Capital');
+    import('./pages/AccountTransfers');
+    import('./pages/Ledger');
+    import('./pages/Reports');
+    import('./pages/AuditLog');
+    import('./pages/Settings');
+  };
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(load, { timeout: 3000 });
+  } else {
+    setTimeout(load, 1500);
+  }
+}
+if (typeof window !== 'undefined') preloadAllChunks();
+
 // Simple fallback shown while a lazy chunk is loading
 function PageLoader() {
   return (
@@ -119,7 +147,7 @@ function AppRoutes() {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
+    <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<RoleLandingPage />} />
