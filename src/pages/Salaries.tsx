@@ -384,9 +384,16 @@ export default function Salaries() {
     const shipmentName = advFilterShipment
       ? state.shipments.find(s => s.id === advFilterShipment)?.name || 'الكل'
       : 'كل الرسائل';
+    const employeeName = advFilterEmployee
+      ? state.employees.find(em => em.id === advFilterEmployee)?.name || 'الكل'
+      : 'كل الموظفين';
 
     const openAdv = allAdvances.filter(e => {
       if (advFilterShipment && e.shipmentId !== advFilterShipment) return false;
+      if (advFilterEmployee) {
+        const empName = state.employees.find(em => em.id === advFilterEmployee)?.name;
+        if (e.description !== empName) return false;
+      }
       return !e.settled;
     });
 
@@ -442,7 +449,7 @@ export default function Salaries() {
       '.generated { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 12px; }',
       '</style></head><body>',
       '<div class="title">كشف السلفيات المفتوحة</div>',
-      `<div class="subtitle">الرسالة: ${shipmentName} &nbsp;|&nbsp; تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>`,
+      `<div class="subtitle">الموظف: ${employeeName} &nbsp;|&nbsp; الرسالة: ${shipmentName} &nbsp;|&nbsp; تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>`,
       sectionsHtml || '<p style="text-align:center;color:#94a3b8;padding:20px">لا توجد سلفيات مفتوحة</p>',
       `<div class="grand">الإجمالي الكلي: ${fmt(grandTotal)} &nbsp;|&nbsp; عدد الموظفين: ${Object.keys(byEmp).length}</div>`,
       '<div class="generated">طُبع بواسطة النظام</div>',
