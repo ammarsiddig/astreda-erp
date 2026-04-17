@@ -2,12 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { Plus, Edit2, Eye, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Eye, Trash2, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
-import { Salary, Expense } from '../types';
+import { Salary, Expense, Employee } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
@@ -18,7 +18,68 @@ export default function Salaries() {
   const hasWriteAccess = canWrite(state.currentUser, state.roles, 'salaries');
 
   // === Tab ===
-  const [activeTab, setActiveTab] = useState<'salaries' | 'advances'>('salaries');
+  const [activeTab, setActiveTab] = useState<'employees' | 'salaries' | 'advances'>('salaries');
+
+  // === Employees tab state ===
+  const [showEmpAddModal, setShowEmpAddModal] = useState(false);
+  const [showEmpEditModal, setShowEmpEditModal] = useState<Employee | null>(null);
+  const [showEmpDeleteConfirm, setShowEmpDeleteConfirm] = useState<Employee | null>(null);
+  const [empName, setEmpName] = useState('');
+  const [empPhone, setEmpPhone] = useState('');
+  const [empJobTitle, setEmpJobTitle] = useState('');
+  const [empSearch, setEmpSearch] = useState('');
+
+  const filteredEmployees = useMemo(() =>
+    state.employees.filter(e =>
+      !empSearch || e.name.toLowerCase().includes(empSearch.toLowerCase()) ||
+      (e.jobTitle || '').toLowerCase().includes(empSearch.toLowerCase())
+    ),
+    [state.employees, empSearch]
+  );
+
+  const resetEmpForm = () => {
+    setEmpName('');
+    setEmpPhone('');
+    setEmpJobTitle('');
+  };
+
+  const openEmpEdit = (emp: Employee) => {
+    setEmpName(emp.name);
+    setEmpPhone(emp.phone || '');
+    setEmpJobTitle(emp.jobTitle || '');
+    setShowEmpEditModal(emp);
+  };
+
+  const handleSaveEmployee = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!empName.trim()) return;
+    if (showEmpEditModal) {
+      updateState({
+        employees: state.employees.map(em =>
+          em.id === showEmpEditModal.id
+            ? { ...em, name: empName.trim(), phone: empPhone.trim() || undefined, jobTitle: empJobTitle.trim() || undefined }
+            : em
+        ),
+      });
+      setShowEmpEditModal(null);
+    } else {
+      const newEmp: Employee = {
+        id: generateId('EMP', state.employees),
+        name: empName.trim(),
+        phone: empPhone.trim() || undefined,
+        jobTitle: empJobTitle.trim() || undefined,
+      };
+      updateState({ employees: [...state.employees, newEmp] });
+      setShowEmpAddModal(false);
+    }
+    resetEmpForm();
+  };
+
+  const handleDeleteEmployee = () => {
+    if (!showEmpDeleteConfirm) return;
+    updateState({ employees: state.employees.filter(e => e.id !== showEmpDeleteConfirm.id) });
+    setShowEmpDeleteConfirm(null);
+  };
 
   // === Salaries tab state ===
   const [showAddModal, setShowAddModal] = useState(false);
@@ -310,30 +371,51 @@ export default function Salaries() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-slate-800">{t('salaries')}</h1>
+          <h1 className="text-xl font-bold text-slate-800">{t('staffManagement')}</h1>
           {!hasWriteAccess && <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-xs font-medium">{t('readOnlyMode')}</span>}
         </div>
-        {hasWriteAccess && (activeTab === 'salaries' ? (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
-          >
-            <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />
-            {t('recordSalary')}
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowNewAdvanceModal(true)}
-            className="flex items-center px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm transition-colors"
-          >
-            <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />
-            سلفية جديدة
-          </button>
-        ))}
+        {hasWriteAccess && (
+          activeTab === 'employees' ? (
+            <button
+              onClick={() => setShowEmpAddModal(true)}
+              className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
+            >
+              <UserPlus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />
+              {t('addEmployee')}
+            </button>
+          ) : activeTab === 'salaries' ? (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
+            >
+              <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />
+              {t('recordSalary')}
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowNewAdvanceModal(true)}
+              className="flex items-center px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm transition-colors"
+            >
+              <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />
+              سلفية جديدة
+            </button>
+          )
+        )}
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('employees')}
+          className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 ${
+            activeTab === 'employees'
+              ? 'border-[#134e4a] text-[#134e4a]'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          {t('employees')}
+          <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">{state.employees.length}</span>
+        </button>
         <button
           onClick={() => setActiveTab('salaries')}
           className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
@@ -361,7 +443,76 @@ export default function Salaries() {
         </button>
       </div>
 
-      {activeTab === 'salaries' ? (
+      {activeTab === 'employees' ? (
+        <>
+          {/* Employees search */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <input
+              type="text"
+              placeholder={t('search')}
+              value={empSearch}
+              onChange={(e) => setEmpSearch(e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
+            />
+          </div>
+
+          {/* Employees Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredEmployees.length > 0 ? filteredEmployees.map((emp) => (
+                <div key={emp.id} className="p-4 flex justify-between items-center gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm">{emp.name}</p>
+                    {emp.jobTitle && <p className="text-xs text-slate-500">{emp.jobTitle}</p>}
+                    {emp.phone && <p className="text-xs text-slate-400">{emp.phone}</p>}
+                  </div>
+                  {hasWriteAccess && (
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button onClick={() => openEmpEdit(emp)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => setShowEmpDeleteConfirm(emp)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  )}
+                </div>
+              )) : (
+                <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
+              )}
+            </div>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3">{t('name')}</th>
+                    <th className="px-4 py-3">{t('jobTitle')}</th>
+                    <th className="px-4 py-3">{t('phone')}</th>
+                    {hasWriteAccess && <th className="px-4 py-3 text-center w-24">{t('action')}</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredEmployees.length > 0 ? filteredEmployees.map((emp) => (
+                    <tr key={emp.id} className="hover:bg-[#f0fdfa] transition-colors">
+                      <td className="px-4 py-3 font-semibold text-slate-900">{emp.name}</td>
+                      <td className="px-4 py-3 text-slate-500">{emp.jobTitle || '—'}</td>
+                      <td className="px-4 py-3 text-slate-500">{emp.phone || '—'}</td>
+                      {hasWriteAccess && (
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center gap-2">
+                            <button onClick={() => openEmpEdit(emp)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title={t('edit')}><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => setShowEmpDeleteConfirm(emp)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title={t('delete')}><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  )) : (
+                    <tr><td colSpan={hasWriteAccess ? 4 : 3} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : activeTab === 'salaries' ? (
         <>
           {/* Salaries Filters */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -682,6 +833,84 @@ export default function Salaries() {
       )}
 
       {/* ============ MODALS ============ */}
+
+      {/* Add/Edit Employee Modal */}
+      <Modal
+        isOpen={showEmpAddModal || !!showEmpEditModal}
+        onClose={() => { setShowEmpAddModal(false); setShowEmpEditModal(null); resetEmpForm(); }}
+        title={showEmpEditModal ? t('editEmployee') : t('addEmployee')}
+        size="sm"
+      >
+        <form onSubmit={handleSaveEmployee} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('name')} *</label>
+            <input
+              type="text"
+              required
+              value={empName}
+              onChange={(e) => setEmpName(e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('jobTitle')}</label>
+            <input
+              type="text"
+              value={empJobTitle}
+              onChange={(e) => setEmpJobTitle(e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('phone')}</label>
+            <input
+              type="tel"
+              value={empPhone}
+              onChange={(e) => setEmpPhone(e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
+              dir="ltr"
+            />
+          </div>
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => { setShowEmpAddModal(false); setShowEmpEditModal(null); resetEmpForm(); }}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold shadow-sm transition-colors"
+            >
+              {t('save')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Employee Confirmation */}
+      <Modal isOpen={!!showEmpDeleteConfirm} onClose={() => setShowEmpDeleteConfirm(null)} title={t('confirmDelete')} size="sm">
+        <div className="space-y-4">
+          <p className="text-slate-600">
+            {t('areYouSure')} <strong>{showEmpDeleteConfirm?.name}</strong>؟
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowEmpDeleteConfirm(null)}
+              className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >
+              {t('no')}
+            </button>
+            <button
+              onClick={handleDeleteEmployee}
+              className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors"
+            >
+              {t('yes')}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add/Edit Salary Modal */}
       <Modal

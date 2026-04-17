@@ -24,7 +24,7 @@ const navItems: { path: string; icon: any; labelKey: string; pageKey: PageKey }[
   { path: '/customers', icon: Users, labelKey: 'customers', pageKey: 'customers' },
   { path: '/payments', icon: CreditCard, labelKey: 'payments', pageKey: 'payments' },
   { path: '/expenses', icon: Receipt, labelKey: 'expenses', pageKey: 'expenses' },
-  { path: '/salaries', icon: Wallet, labelKey: 'salaries', pageKey: 'salaries' },
+  { path: '/salaries', icon: Wallet, labelKey: 'staffManagement', pageKey: 'salaries' },
   { path: '/general-transfers', icon: ArrowRightLeft, labelKey: 'generalTransfers', pageKey: 'generalTransfers' },
   { path: '/capital', icon: PiggyBank, labelKey: 'capitalManagement', pageKey: 'capital' },
   { path: '/account-transfers', icon: RefreshCw, labelKey: 'accountTransfers', pageKey: 'accountTransfers' },

@@ -70,6 +70,8 @@ export interface Shipment {
 export interface Employee {
   id: string;
   name: string;
+  phone?: string;
+  jobTitle?: string;
 }
 
 export interface Partner {
