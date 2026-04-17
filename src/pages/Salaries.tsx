@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { Plus, Edit2, Eye, Trash2, UserPlus } from 'lucide-react';
+import { Plus, Edit2, Eye, Trash2, UserPlus, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
@@ -380,6 +380,80 @@ export default function Salaries() {
     setShowAdvDeleteConfirm(null);
   };
 
+  const printOpenAdvances = () => {
+    const shipmentName = advFilterShipment
+      ? state.shipments.find(s => s.id === advFilterShipment)?.name || 'الكل'
+      : 'كل الرسائل';
+
+    const openAdv = allAdvances.filter(e => {
+      if (advFilterShipment && e.shipmentId !== advFilterShipment) return false;
+      return !e.settled;
+    });
+
+    // Group by employee name
+    const byEmp: Record<string, { rows: typeof openAdv; total: number }> = {};
+    openAdv.forEach(e => {
+      if (!byEmp[e.description]) byEmp[e.description] = { rows: [], total: 0 };
+      byEmp[e.description].rows.push(e);
+      byEmp[e.description].total += e.amount;
+    });
+
+    const fmt = (n: number) => n.toLocaleString('ar-EG', { minimumFractionDigits: 0 });
+    const grandTotal = openAdv.reduce((s, e) => s + e.amount, 0);
+
+    const sectionsHtml = Object.entries(byEmp).map(([empName, { rows, total }]) => `
+      <div class="emp-section">
+        <div class="emp-header">${empName} &mdash; الإجمالي: <span class="total">${fmt(total)}</span></div>
+        <table>
+          <thead><tr>
+            <th>التاريخ</th><th>المبلغ</th><th>الحساب</th><th>ملاحظات</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(r => `<tr>
+              <td>${r.date.slice(0, 10)}</td>
+              <td class="num">${fmt(r.amount)}</td>
+              <td>${state.bankAccounts.find(b => b.id === r.bankAccountId)?.name || ''}</td>
+              <td>${r.notes || ''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+
+    const scriptTag = '<scr' + 'ipt>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</' + 'script>';
+    const html = [
+      '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>السلفيات المفتوحة</title>',
+      '<style>',
+      "@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');",
+      '@page { size: A4 portrait; margin: 12mm; }',
+      '* { box-sizing: border-box; margin: 0; padding: 0; }',
+      "body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }",
+      '.title { font-size: 17px; font-weight: 900; color: #134e4a; text-align: center; margin-bottom: 2px; }',
+      '.subtitle { font-size: 11px; color: #475569; text-align: center; margin-bottom: 14px; }',
+      '.emp-section { margin-bottom: 16px; }',
+      '.emp-header { font-size: 12px; font-weight: 700; background: #134e4a; color: #fff; padding: 5px 8px; border-radius: 4px 4px 0 0; }',
+      '.total { font-weight: 900; }',
+      'table { width: 100%; border-collapse: collapse; font-size: 10.5px; }',
+      'thead tr { background: #e2e8f0; }',
+      'th { padding: 5px 8px; font-weight: 700; text-align: right; border: 1px solid #cbd5e1; }',
+      'td { padding: 4px 8px; border: 1px solid #e2e8f0; }',
+      'td.num { font-weight: 700; color: #b91c1c; text-align: right; }',
+      '.grand { margin-top: 14px; text-align: left; font-size: 13px; font-weight: 900; color: #134e4a; border-top: 2px solid #134e4a; padding-top: 6px; }',
+      '.generated { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 12px; }',
+      '</style></head><body>',
+      '<div class="title">كشف السلفيات المفتوحة</div>',
+      `<div class="subtitle">الرسالة: ${shipmentName} &nbsp;|&nbsp; تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>`,
+      sectionsHtml || '<p style="text-align:center;color:#94a3b8;padding:20px">لا توجد سلفيات مفتوحة</p>',
+      `<div class="grand">الإجمالي الكلي: ${fmt(grandTotal)} &nbsp;|&nbsp; عدد الموظفين: ${Object.keys(byEmp).length}</div>`,
+      '<div class="generated">طُبع بواسطة النظام</div>',
+      scriptTag,
+      '</body></html>',
+    ].join('\n');
+
+    const win = window.open('', '_blank', 'width=850,height=1100');
+    if (win) { win.document.write(html); win.document.close(); }
+  };
+
   const handleSaveAdvance = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeShipmentId || !advEmployee || !advAmount || !advBankAccountId) return;
@@ -725,7 +799,8 @@ export default function Salaries() {
           )}
 
           {/* Advances Filters */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">الموظف</label>
               <SearchableSelect
@@ -756,6 +831,16 @@ export default function Salaries() {
                 placeholder="الكل"
               />
             </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={printOpenAdvances}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white text-sm rounded-lg hover:bg-slate-800 font-semibold transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              طباعة السلفيات المفتوحة
+            </button>
+          </div>
           </div>
 
           {/* Advances Table */}
