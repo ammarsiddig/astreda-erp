@@ -120,7 +120,7 @@ export default function Dashboard() {
   const PIE_COLORS = ['#14b8a6', '#f59e0b', '#ef4444', '#6366f1', '#22c55e', '#ec4899', '#8b5cf6', '#06b6d4'];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       {/* Page Header */}
       <div className="bg-white rounded-xl border border-slate-200 px-6 py-4 shadow-modern glass">
         <h1 className="text-xl font-bold gap-2 flex items-center text-slate-800"><PieChartIcon className="text-[#134e4a]"/> {t('dashboard')}</h1>

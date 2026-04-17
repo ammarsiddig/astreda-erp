@@ -163,7 +163,7 @@ export default function Payments() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('payments')}</h1>
@@ -241,7 +241,7 @@ export default function Payments() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {sortedPayments.length > 0 ? sortedPayments.map((payment, idx) => (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(payment.id)} onChange={() => toggleSelect(payment.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
@@ -294,7 +294,7 @@ export default function Payments() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sortedPayments.length > 0 ? sortedPayments.map((payment, idx) => (
-                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={payment.id} onClick={() => { setSelectedRowId(payment.id); setShowViewModal(payment); }} className={`transition-colors cursor-pointer ${selectedIds.has(payment.id) ? 'bg-red-50' : selectedRowId === payment.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                   {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.has(payment.id)} onChange={() => toggleSelect(payment.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                   <td className="px-4 py-3 font-medium text-slate-900">{payment.id}</td>
                   <td className="px-4 py-3">{format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</td>

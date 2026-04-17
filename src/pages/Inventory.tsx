@@ -442,7 +442,7 @@ export default function Inventory() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{t('inventory')}</h1>
@@ -504,7 +504,7 @@ export default function Inventory() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {sortedInventory.map((row, idx) => (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={row.product.id} className={`p-4 space-y-3 ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={row.product.id} className={`p-4 space-y-3 ${row.hasNegative ? 'bg-red-50/50' : ''}`}>
               <div className="flex items-center gap-2">
                 {row.hasNegative && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0"/>}
                 <span className="font-semibold text-slate-900 text-sm">{row.product.name}</span>

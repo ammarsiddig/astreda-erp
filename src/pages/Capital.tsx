@@ -472,7 +472,7 @@ export default function Capital() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6" dir="rtl">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
@@ -545,7 +545,7 @@ export default function Capital() {
                 const initials = d.partner.name.split(' ').map(w => w[0]).slice(0, 2).join('');
                 const isExpanded = expandedPartnerIds.has(d.partner.id);
                 return (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={d.partner.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={d.partner.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     {/* Card header */}
                     <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
                       <div className="flex items-center gap-3">
@@ -625,7 +625,7 @@ export default function Capital() {
               {/* Mobile cards */}
               <div className="md:hidden divide-y divide-slate-100">
                 {sortedInvestorData.length > 0 ? sortedInvestorData.map((d, idx) => (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <p className="font-bold text-slate-900 text-sm">{d.partner.name}</p>
@@ -682,7 +682,7 @@ export default function Capital() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {sortedInvestorData.map((d, idx) => (
-                      <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`transition-colors cursor-pointer ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                      <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={d.partner.id} onClick={() => setSelectedInvestorRowId(d.partner.id)} className={`transition-colors cursor-pointer ${selectedInvestorRowId === d.partner.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                         <td className="px-4 py-3 font-semibold text-slate-900">{d.partner.name}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.capital)}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.returned)}</td>
@@ -764,7 +764,7 @@ export default function Capital() {
                 {/* Mobile cards */}
                 <div className="md:hidden divide-y divide-slate-100">
                   {sortedDrawingTransfers.map((dt, idx) => (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={dt.id} className="p-3 space-y-1">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className="p-3 space-y-1">
                       <div className="flex justify-between items-start gap-2">
                         <div>
                           <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
@@ -800,7 +800,7 @@ export default function Capital() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {sortedDrawingTransfers.map((dt, idx) => (
-                        <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={dt.id} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
+                        <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
                           <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
                           <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
                           <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>

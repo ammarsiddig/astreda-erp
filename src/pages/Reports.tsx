@@ -510,7 +510,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
   // ─── JSX ──────────────────────────────────────────────────────────
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-xl font-bold text-slate-800">{t('reports')}</h1>
       </div>
@@ -590,7 +590,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
               {/* Mobile card list */}
               <div className="md:hidden divide-y divide-slate-100">
                 {sortedDebtData.length > 0 ? sortedDebtData.map((row, idx) => (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={row.id} className="p-4 space-y-1">
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={row.id} className="p-4 space-y-1">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900 text-sm">{row.name}</p>
@@ -757,7 +757,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                     const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
                     const barColor = sp.collectionRate >= 80 ? 'bg-emerald-500' : sp.collectionRate >= 50 ? 'bg-amber-400' : 'bg-red-500';
                     return (
-                      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={sp.id} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col gap-3 min-w-[280px]">
+                      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={sp.id} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col gap-3 min-w-[280px]">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-[#134e4a] text-white flex items-center justify-center font-bold text-lg shrink-0">{initials}</div>
@@ -839,7 +839,7 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                       {sortedSalespersonData.map((sp, idx) => {
                         const rateColor = sp.collectionRate >= 80 ? 'bg-emerald-100 text-emerald-700' : sp.collectionRate >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
                         return (
-                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={sp.id} className="p-4 space-y-2">
+                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={sp.id} className="p-4 space-y-2">
                             <div className="flex justify-between items-start gap-2">
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 text-sm">{sp.name}</p>

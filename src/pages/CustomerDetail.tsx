@@ -190,7 +190,7 @@ export default function CustomerDetail() {
   }).reverse();
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/customers')}
           className="p-2 hover:bg-slate-100 rounded-lg transition-colors"

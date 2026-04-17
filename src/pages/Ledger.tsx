@@ -330,7 +330,7 @@ export default function Ledger() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-xl font-bold text-slate-800">{t('ledger')}</h1>
         <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function Ledger() {
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
           {sortedLedgerData.length > 0 ? sortedLedgerData.map((entry, idx) => (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.05, 0.5) }} key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`p-4 space-y-1 cursor-pointer transition-colors ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={entry.id} onClick={() => setSelectedRowId(entry.id)} className={`p-4 space-y-1 cursor-pointer transition-colors ${selectedRowId === entry.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-slate-900 leading-snug line-clamp-2">{entry.description}</p>
