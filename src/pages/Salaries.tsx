@@ -407,52 +407,108 @@ export default function Salaries() {
 
     const fmt = (n: number) => n.toLocaleString('ar-EG', { minimumFractionDigits: 0 });
     const grandTotal = openAdv.reduce((s, e) => s + e.amount, 0);
+    const printDate = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const sectionsHtml = Object.entries(byEmp).map(([empName, { rows, total }]) => `
-      <div class="emp-section">
-        <div class="emp-header">${empName} &mdash; الإجمالي: <span class="total">${fmt(total)}</span></div>
+    const sectionsHtml = Object.entries(byEmp).map(([empName, { rows, total }], idx) => `
+      <div class="emp-block${idx > 0 ? ' page-break' : ''}">
+        <div class="emp-header">
+          <div class="emp-name">${empName}</div>
+          <div class="emp-total">إجمالي السلفيات: <span>${fmt(total)}</span></div>
+        </div>
         <table>
-          <thead><tr>
-            <th>التاريخ</th><th>المبلغ</th><th>الحساب</th><th>ملاحظات</th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th style="width:15%">التاريخ</th>
+              <th style="width:20%;text-align:right">المبلغ</th>
+              <th style="width:25%">الحساب</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
           <tbody>
-            ${rows.map(r => `<tr>
+            ${rows.map((r, i) => `
+            <tr class="${i % 2 === 1 ? 'alt' : ''}">
               <td>${r.date.slice(0, 10)}</td>
-              <td class="num">${fmt(r.amount)}</td>
-              <td>${state.bankAccounts.find(b => b.id === r.bankAccountId)?.name || ''}</td>
-              <td>${r.notes || ''}</td>
+              <td class="amount">${fmt(r.amount)}</td>
+              <td>${state.bankAccounts.find(b => b.id === r.bankAccountId)?.name || '—'}</td>
+              <td class="notes">${r.notes || '—'}</td>
             </tr>`).join('')}
           </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align:right;font-weight:700;padding:6px 10px;">إجمالي ${empName}</td>
+              <td class="amount" style="font-weight:900;font-size:12px">${fmt(total)}</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     `).join('');
 
+    const summaryCards = Object.entries(byEmp).map(([empName, { total }]) => `
+      <div class="summary-card">
+        <div class="summary-name">${empName}</div>
+        <div class="summary-amount">${fmt(total)}</div>
+      </div>`).join('');
+
     const scriptTag = '<scr' + 'ipt>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</' + 'script>';
     const html = [
-      '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>السلفيات المفتوحة</title>',
+      '<!DOCTYPE html><html dir="rtl" lang="ar">',
+      '<head><meta charset="UTF-8">',
+      '<title>كشف السلفيات المفتوحة</title>',
+      '<link rel="preconnect" href="https://fonts.googleapis.com">',
+      '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">',
       '<style>',
-      "@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');",
-      '@page { size: A4 portrait; margin: 12mm; }',
+      '@page { size: A4 portrait; margin: 14mm; }',
       '* { box-sizing: border-box; margin: 0; padding: 0; }',
-      "body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }",
-      '.title { font-size: 17px; font-weight: 900; color: #134e4a; text-align: center; margin-bottom: 2px; }',
-      '.subtitle { font-size: 11px; color: #475569; text-align: center; margin-bottom: 14px; }',
-      '.emp-section { margin-bottom: 16px; }',
-      '.emp-header { font-size: 12px; font-weight: 700; background: #134e4a; color: #fff; padding: 5px 8px; border-radius: 4px 4px 0 0; }',
-      '.total { font-weight: 900; }',
-      'table { width: 100%; border-collapse: collapse; font-size: 10.5px; }',
-      'thead tr { background: #e2e8f0; }',
-      'th { padding: 5px 8px; font-weight: 700; text-align: right; border: 1px solid #cbd5e1; }',
-      'td { padding: 4px 8px; border: 1px solid #e2e8f0; }',
-      'td.num { font-weight: 700; color: #b91c1c; text-align: right; }',
-      '.grand { margin-top: 14px; text-align: left; font-size: 13px; font-weight: 900; color: #134e4a; border-top: 2px solid #134e4a; padding-top: 6px; }',
-      '.generated { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 12px; }',
+      "body { font-family: 'Cairo', sans-serif; direction: rtl; font-size: 11px; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }",
+      '.header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 3px solid #134e4a; margin-bottom: 16px; }',
+      '.company-name { font-size: 26px; font-weight: 900; color: #134e4a; letter-spacing: -0.5px; }',
+      '.company-sub { font-size: 10px; color: #64748b; margin-top: 2px; }',
+      '.doc-meta { text-align: left; }',
+      '.doc-title { font-size: 16px; font-weight: 800; color: #134e4a; }',
+      '.doc-date { font-size: 10px; color: #64748b; margin-top: 3px; }',
+      '.info-bar { display: flex; gap: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }',
+      '.info-item { display: flex; flex-direction: column; }',
+      '.info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }',
+      '.info-value { font-size: 12px; font-weight: 700; color: #134e4a; }',
+      '.summary-section { margin-bottom: 18px; }',
+      '.summary-title { font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }',
+      '.summary-grid { display: flex; flex-wrap: wrap; gap: 8px; }',
+      '.summary-card { background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #134e4a; border-radius: 6px; padding: 8px 12px; min-width: 130px; }',
+      '.summary-name { font-size: 10px; color: #64748b; font-weight: 600; margin-bottom: 2px; }',
+      '.summary-amount { font-size: 14px; font-weight: 900; color: #b91c1c; }',
+      '.emp-block { margin-bottom: 20px; }',
+      '.page-break { page-break-before: auto; }',
+      '.emp-header { display: flex; justify-content: space-between; align-items: center; background: #134e4a; color: #fff; padding: 7px 12px; border-radius: 6px 6px 0 0; }',
+      '.emp-name { font-size: 13px; font-weight: 800; }',
+      '.emp-total { font-size: 11px; font-weight: 600; opacity: 0.9; }',
+      '.emp-total span { font-weight: 900; font-size: 13px; }',
+      'table { width: 100%; border-collapse: collapse; }',
+      'thead tr { background: #0f4340 !important; }',
+      'th { padding: 7px 10px; font-size: 10px; font-weight: 700; color: #fff; text-align: right; border: none; }',
+      'td { padding: 6px 10px; font-size: 10.5px; color: #334155; border-bottom: 1px solid #f1f5f9; }',
+      'tr.alt td { background: #f8fafc; }',
+      'tfoot tr td { background: #f0fdf4 !important; border-top: 2px solid #134e4a; color: #134e4a; }',
+      'td.amount { font-weight: 700; color: #b91c1c; text-align: right; }',
+      'td.notes { color: #64748b; font-size: 10px; }',
+      '.grand-total { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding: 12px 16px; background: #134e4a; border-radius: 8px; color: #fff; }',
+      '.grand-label { font-size: 14px; font-weight: 700; }',
+      '.grand-value { font-size: 20px; font-weight: 900; }',
+      '.footer { text-align: center; font-size: 9px; color: #94a3b8; margin-top: 16px; padding-top: 10px; border-top: 1px solid #e2e8f0; }',
       '</style></head><body>',
-      '<div class="title">كشف السلفيات المفتوحة</div>',
-      `<div class="subtitle">الموظف: ${employeeName} &nbsp;|&nbsp; الرسالة: ${shipmentName} &nbsp;|&nbsp; تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>`,
-      sectionsHtml || '<p style="text-align:center;color:#94a3b8;padding:20px">لا توجد سلفيات مفتوحة</p>',
-      `<div class="grand">الإجمالي الكلي: ${fmt(grandTotal)} &nbsp;|&nbsp; عدد الموظفين: ${Object.keys(byEmp).length}</div>`,
-      '<div class="generated">طُبع بواسطة النظام</div>',
+      '<div class="header">',
+      '  <div><div class="company-name">ASTREDA</div><div class="company-sub">Frozen Food Distribution</div></div>',
+      `  <div class="doc-meta"><div class="doc-title">كشف السلفيات المفتوحة</div><div class="doc-date">${printDate}</div></div>`,
+      '</div>',
+      '<div class="info-bar">',
+      `  <div class="info-item"><div class="info-label">الموظف</div><div class="info-value">${employeeName}</div></div>`,
+      `  <div class="info-item"><div class="info-label">الرسالة</div><div class="info-value">${shipmentName}</div></div>`,
+      `  <div class="info-item"><div class="info-label">عدد السلفيات</div><div class="info-value">${openAdv.length}</div></div>`,
+      `  <div class="info-item"><div class="info-label">عدد الموظفين</div><div class="info-value">${Object.keys(byEmp).length}</div></div>`,
+      '</div>',
+      Object.keys(byEmp).length > 1 ? `<div class="summary-section"><div class="summary-title">ملخص السلفيات بالموظف</div><div class="summary-grid">${summaryCards}</div></div>` : '',
+      sectionsHtml || '<p style="text-align:center;color:#94a3b8;padding:30px 0;font-size:13px">لا توجد سلفيات مفتوحة</p>',
+      `<div class="grand-total"><span class="grand-label">الإجمالي الكلي</span><span class="grand-value">${fmt(grandTotal)}</span></div>`,
+      '<div class="footer">طُبع بواسطة نظام أسترِدا &nbsp;|&nbsp; جميع المبالغ بالجنيه السوداني</div>',
       scriptTag,
       '</body></html>',
     ].join('\n');
