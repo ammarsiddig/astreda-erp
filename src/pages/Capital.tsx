@@ -85,7 +85,7 @@ export default function Capital() {
     (state.capitalContributions || []).filter(c => c.shipmentId === activeShipmentId),
     [state.capitalContributions, activeShipmentId]);
   const capitalReturns = useMemo(() =>
-    state.generalTransfers.filter(t => t.shipmentId === activeShipmentId && t.transferType === 'capital_return'),
+    state.generalTransfers.filter(t => t.shipmentId === activeShipmentId && (t.transferType === 'capital_return' || t.transferType === 'capital')),
     [state.generalTransfers, activeShipmentId]);
   const profitPayments = useMemo(() =>
     state.generalTransfers.filter(t => t.shipmentId === activeShipmentId && t.transferType === 'profit_payment'),
@@ -149,6 +149,7 @@ export default function Capital() {
 
   const totalContributed = investorData.reduce((s, d) => s + d.capital, 0);
   const totalReturned = investorData.reduce((s, d) => s + d.returned, 0);
+  const totalProfitPaid = investorData.reduce((s, d) => s + d.profitPaid, 0);
   const totalRemaining = totalContributed - totalReturned;
 
   // === TAB 2: Settlement calculations ===
@@ -525,8 +526,9 @@ export default function Capital() {
               <p className="text-xl font-bold text-slate-800">{fmtSAR(totalContributed)}</p>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <p className="text-xs text-slate-500 mb-1">إجمالي ما تم إرجاعه</p>
+              <p className="text-xs text-slate-500 mb-1">إجمالي ما تم إرجاعه (رأس مال فقط)</p>
               <p className="text-xl font-bold text-slate-800">{fmtSAR(totalReturned)}</p>
+              {totalProfitPaid > 0 && <p className="text-xs text-blue-600 mt-0.5">+ أرباح مدفوعة: {fmtSAR(totalProfitPaid)}</p>}
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">إجمالي المتبقي</p>
