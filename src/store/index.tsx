@@ -738,7 +738,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     () => {
       // Start with localStorage for instant render, then cloud pull overrides it
       const savedShipmentId = localStorage.getItem(ACTIVE_SHIPMENT_STORAGE_KEY) || undefined;
-      if (savedShipmentId && state.shipments.some(s => s.id === savedShipmentId)) return savedShipmentId;
+      if (savedShipmentId && state.shipments.some(s => s.id === savedShipmentId && !s.isClosed)) return savedShipmentId;
       return state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
     }
   );
@@ -757,18 +757,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const userId = state.currentUser?.id;
     if (!userId) return;
     pullUserPreference(userId).then(prefs => {
-      if (prefs?.activeShipmentId && state.shipments.some(s => s.id === prefs.activeShipmentId)) {
-        setActiveShipmentIdLocal(prefs.activeShipmentId);
-        localStorage.setItem(ACTIVE_SHIPMENT_STORAGE_KEY, prefs.activeShipmentId!);
+      const target = prefs?.activeShipmentId
+        ? state.shipments.find(s => s.id === prefs.activeShipmentId && !s.isClosed)
+        : null;
+      if (target) {
+        setActiveShipmentIdLocal(target.id);
+        localStorage.setItem(ACTIVE_SHIPMENT_STORAGE_KEY, target.id);
       }
     }).catch(() => {});
   }, [state.currentUser?.id, state.shipments]);
 
-  // If shipments list changes (e.g. cloud pull adds/removes), ensure selection is still valid
+  // If shipments list changes (e.g. cloud pull adds/removes/closes), ensure selection is still valid
   useEffect(() => {
     if (state.shipments.length === 0) return;
-    if (activeShipmentId && state.shipments.some(s => s.id === activeShipmentId)) return;
-    // Current selection is gone — pick a new one
+    const active = state.shipments.find(s => s.id === activeShipmentId);
+    // Stay put if the active shipment still exists AND is open
+    if (active && !active.isClosed) return;
+    // Active shipment was deleted or just closed — jump to first open shipment
     const fallback = state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id;
     if (fallback) setActiveShipmentId(fallback);
   }, [state.shipments, activeShipmentId, setActiveShipmentId]);
