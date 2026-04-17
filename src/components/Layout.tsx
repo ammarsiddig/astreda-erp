@@ -36,6 +36,52 @@ const navItems: { path: string; icon: any; labelKey: string; pageKey: PageKey }[
 
 const navItemClass = 'flex items-center gap-3 px-4 py-2.5 rounded-lg mx-2 text-sm transition-colors duration-150';
 
+interface SidebarContentProps {
+  visibleNavItems: typeof navItems;
+  t: (key: any) => string;
+  onNavClick?: () => void;
+}
+
+const SidebarContent = React.memo(({ visibleNavItems, t, onNavClick }: SidebarContentProps) => (
+  <>
+    {/* Logo */}
+    <div className="px-5 pt-5 pb-4 flex-shrink-0">
+      <div className="flex items-center gap-3">
+        <img src="/logo-header.png" alt="أستريدا" className="w-9 h-9 object-contain" />
+        <div>
+          <h1 className="text-xl font-bold tracking-wide text-amber-400 leading-tight">أستريدا</h1>
+          <p className="text-[10px] text-slate-400">نظام التوزيع</p>
+        </div>
+      </div>
+      <div className="border-t border-slate-700 mt-4" />
+    </div>
+    {/* Nav */}
+    <nav className="flex-1 overflow-y-auto py-2">
+      <ul className="space-y-0.5">
+        {visibleNavItems.map((item) => (
+          <li key={item.path}>
+            <NavLink
+              to={item.path}
+              onClick={onNavClick}
+              className={({ isActive }) =>
+                cn(
+                  navItemClass,
+                  isActive
+                    ? 'bg-[#134e4a] text-white font-medium'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                )
+              }
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span>{t(item.labelKey as any)}</span>
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </>
+));
+
 function getRoleBadgeColor(roleName: string): string {
   if (roleName === 'مدير النظام') return 'bg-red-700 text-white';
   if (roleName === 'مدير') return 'bg-[#134e4a] text-white';
@@ -87,52 +133,12 @@ export default function Layout() {
     ? state.salespeople.find(s => s.id === currentUser.salespersonId)?.name
     : null;
 
-  const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => (
-    <>
-      {/* Logo */}
-      <div className="px-5 pt-5 pb-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <img src="/logo-header.png" alt="أستريدا" className="w-9 h-9 object-contain" />
-          <div>
-            <h1 className="text-xl font-bold tracking-wide text-amber-400 leading-tight">أستريدا</h1>
-            <p className="text-[10px] text-slate-400">نظام التوزيع</p>
-          </div>
-        </div>
-        <div className="border-t border-slate-700 mt-4" />
-      </div>
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-2">
-        <ul className="space-y-0.5">
-          {visibleNavItems.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                onClick={onNavClick}
-                className={({ isActive }) =>
-                  cn(
-                    navItemClass,
-                    isActive
-                      ? 'bg-[#134e4a] text-white font-medium'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-                  )
-                }
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span>{t(item.labelKey as any)}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </>
-  );
-
   return (
     <div className="flex h-screen bg-[#f0fdfa] font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* Sidebar — Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-[#0c3531] text-white shadow-xl z-20 flex-shrink-0">
-        <SidebarContent />
+        <SidebarContent visibleNavItems={visibleNavItems} t={t} />
       </aside>
 
       {/* Mobile Sidebar */}
@@ -167,29 +173,7 @@ export default function Layout() {
                 </button>
               </div>
               <div className="border-t border-slate-700 mx-4 mb-2" />
-              <nav className="flex-1 overflow-y-auto py-2">
-                <ul className="space-y-0.5">
-                  {visibleNavItems.map((item) => (
-                    <li key={item.path}>
-                      <NavLink
-                        to={item.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={({ isActive }) =>
-                          cn(
-                            navItemClass,
-                            isActive
-                              ? 'bg-[#134e4a] text-white font-medium'
-                              : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-                          )
-                        }
-                      >
-                        <item.icon className="w-5 h-5 flex-shrink-0" />
-                        <span>{t(item.labelKey as any)}</span>
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+              <SidebarContent visibleNavItems={visibleNavItems} t={t} onNavClick={() => setIsMobileMenuOpen(false)} />
             </motion.div>
           </>
         )}
