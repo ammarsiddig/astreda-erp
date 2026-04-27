@@ -12,12 +12,13 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { buildLedgerEntryId, computeBankBalance, formatCurrency, generateId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
-import type { CapitalContribution, GeneralTransfer, SettlementResult } from '../types';
+import type { CapitalContribution, GeneralTransfer } from '../types';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
 import { canWrite } from '../lib/permissions';
+import { computeExpenseDeduction } from './Settings';
 
-type Tab = 'investors' | 'settlement' | 'verification';
+type Tab = 'investors' | 'distribution' | 'verification';
 
 const fmtSAR = (v: number) =>
   new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + ' SAR';
@@ -66,9 +67,6 @@ export default function Capital() {
     setExpandedPartnerIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
   const autoExchangeRate = getLastExchangeRate(state.generalTransfers);
-  const [settlementExRateOverride, setSettlementExRateOverride] = useState<number | ''>('');
-  const [investorsPctOverride, setInvestorsPctOverride] = useState<number | ''>('');
-  const [mgmtFeePctOverride, setMgmtFeePctOverride] = useState<number | ''>('');
 
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [showDeleteDrawingId, setShowDeleteDrawingId] = useState<string | null>(null);
@@ -93,26 +91,7 @@ export default function Capital() {
   const drawingTransfers = useMemo(() =>
     state.generalTransfers.filter(t => t.transferType === 'drawings' && t.shipmentId === activeShipmentId),
     [state.generalTransfers, activeShipmentId]);
-  const savedSettlement = activeShipmentId ? (state.settlementResults || {})[activeShipmentId] : undefined;
-
-  // === TAB 1: Investor data per partner (live profit calculation) ===
-  const liveExchangeRate = autoExchangeRate ?? 0;
-  const liveProfitCalc = useMemo(() => {
-    if (!activeShipmentId || liveExchangeRate === 0) return null;
-    const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
-    const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
-    const drawingsSDG = drawingTransfers.reduce((s, t) => s + t.amountSDG, 0);
-    const totalCreditInvoices = state.invoices.filter(i => i.shipmentId === activeShipmentId && i.paymentType === 'credit').reduce((s, i) => s + i.total, 0);
-    const totalPaymentsCollected = state.payments.filter(p => p.shipmentId === activeShipmentId).reduce((s, p) => s + p.amount, 0);
-    const receivablesSDG = Math.max(0, totalCreditInvoices - totalPaymentsCollected);
-    const grossProfitSDG = cashBalanceSDG + drawingsSDG + receivablesSDG;
-    const grossProfitSAR = grossProfitSDG / liveExchangeRate;
-    const investorsPct = activeShipment?.shareholdersPercent ?? 40;
-    const investorShareSAR = grossProfitSAR * investorsPct / 100;
-    const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
-    return { investorShareSAR, totalCapitalSAR };
-  }, [activeShipmentId, liveExchangeRate, state.ledger, state.bankAccounts, state.invoices, state.payments, drawingTransfers, contributions, activeShipment]);
-
+  // === TAB 1: Investor data per partner (capital tracking only) ===
   const investorData = useMemo(() => {
     if (!activeShipmentId) return [];
     const partnersWithContribs = new Set(contributions.map(c => c.partnerId));
@@ -120,95 +99,24 @@ export default function Capital() {
       partner,
       ...getPartnerContributionStats(contributions, partner.id),
     }));
-    const totalWeighted = partnerList.reduce((sum, p) => sum + p.weightedCapital, 0);
-    return partnerList.map(({ partner, capital, weightedCapital, profitRate }) => {
+    return partnerList.map(({ partner, capital, profitRate }) => {
       const returned = capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
       const remainingCapital = Math.max(0, capital - returned);
-      let profitEntitled = 0;
-      if (liveProfitCalc && totalWeighted > 0) {
-        profitEntitled = liveProfitCalc.investorShareSAR * (weightedCapital / totalWeighted);
-      }
-      const profitEntitledRounded = roundDownToNearest10(profitEntitled);
-      const profitPaid = profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
-      const profitRemaining = Math.max(0, profitEntitled - profitPaid);
-      const totalDue = remainingCapital + profitRemaining;
-      let status: 'complete' | 'profit_pending' | 'not_returned' = 'not_returned';
-      if (remainingCapital === 0 && profitRemaining === 0) status = 'complete';
-      else if (remainingCapital === 0 && profitRemaining > 0) status = 'profit_pending';
+      const capitalStatus: 'returned' | 'pending' = remainingCapital === 0 ? 'returned' : 'pending';
       const transactions = [
         ...contributions.filter(c => c.partnerId === partner.id).map(c => ({ id: c.id, date: c.date, type: 'مساهمة' as const, sar: c.amountSAR, sdg: 0, desc: c.notes || 'مساهمة رأس مال', original: c })),
         ...capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ id: t.id, date: t.date, type: 'إرجاع' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-', original: undefined })),
-        ...profitPayments.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ id: t.id, date: t.date, type: 'أرباح' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-', original: undefined })),
       ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      return { partner, capital, profitRate, returned, remainingCapital, profitEntitled, profitEntitledRounded, profitPaid, profitRemaining, totalDue, status, transactions };
+      return { partner, capital, profitRate, returned, remainingCapital, capitalStatus, transactions };
     });
-  }, [activeShipmentId, contributions, capitalReturns, profitPayments, liveProfitCalc, state.partners]);
+  }, [activeShipmentId, contributions, capitalReturns, state.partners]);
 
   const { items: sortedInvestorData, requestSort: sortInvestors, sortConfig: invSortConfig } = useSortableData(investorData, { key: 'partner.name' as any, direction: 'asc' });
   const { items: sortedDrawingTransfers, requestSort: sortDrawings, sortConfig: drawSortConfig } = useSortableData(drawingTransfers, { key: 'date', direction: 'desc' });
 
   const totalContributed = investorData.reduce((s, d) => s + d.capital, 0);
   const totalReturned = investorData.reduce((s, d) => s + d.returned, 0);
-  const totalProfitPaid = investorData.reduce((s, d) => s + d.profitPaid, 0);
   const totalRemaining = totalContributed - totalReturned;
-
-  // === TAB 2: Settlement calculations ===
-  const settlementCalc = useMemo(() => {
-    if (!activeShipmentId) return null;
-    const exchangeRate = settlementExRateOverride !== '' ? Number(settlementExRateOverride) : (autoExchangeRate ?? 0);
-    const noExRate = exchangeRate === 0;
-    const investorsPct = investorsPctOverride !== '' ? Number(investorsPctOverride) : (activeShipment?.shareholdersPercent ?? 40);
-    const partnersPct = 100 - investorsPct;
-    const mgmtFeePct = mgmtFeePctOverride !== '' ? Number(mgmtFeePctOverride) : (activeShipment?.managementFeePercent ?? 20);
-    const mgmtFeeRecipientId = activeShipment?.managementFeeRecipientId || '1';
-    const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
-    const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
-    const drawingsSDG = drawingTransfers.reduce((s, t) => s + t.amountSDG, 0);
-    const totalCreditInvoices = state.invoices.filter(i => i.shipmentId === activeShipmentId && i.paymentType === 'credit').reduce((s, i) => s + i.total, 0);
-    const totalPaymentsCollected = state.payments.filter(p => p.shipmentId === activeShipmentId).reduce((s, p) => s + p.amount, 0);
-    const receivablesSDG = Math.max(0, totalCreditInvoices - totalPaymentsCollected);
-    const grossProfitSDG = cashBalanceSDG + drawingsSDG + receivablesSDG;
-    const grossProfitSAR = exchangeRate > 0 ? grossProfitSDG / exchangeRate : 0;
-    const investorsShareSAR = grossProfitSAR * investorsPct / 100;
-    const totalCapitalSAR = contributions.reduce((s, c) => s + c.amountSAR, 0);
-    const investorShares = state.partners.filter(p => contributions.some(c => c.partnerId === p.id)).map(partner => ({
-      partner,
-      ...getPartnerContributionStats(contributions, partner.id),
-    }));
-    const totalWeighted = investorShares.reduce((sum, r) => sum + r.weightedCapital, 0);
-    const investorSharesWithProfit = investorShares.map(r => {
-      const pct = totalWeighted > 0 ? (r.weightedCapital / totalWeighted) * 100 : 0;
-      const rawProfit = investorsShareSAR * pct / 100;
-      const profit = roundDownToNearest10(rawProfit);
-      return { ...r, pct, profit };
-    });
-    // Rename for rest of function
-    const investorSharesFinal = investorSharesWithProfit;
-    const totalRoundedInvestorProfits = investorSharesFinal.reduce((s, r) => s + r.profit, 0);
-    const investorRoundingRemainder = investorsShareSAR - totalRoundedInvestorProfits;
-    const partnersShareSAR = grossProfitSAR * partnersPct / 100;
-    const managementFeeSAR = grossProfitSAR * mgmtFeePct / 100;
-    const remainingForPartners = (partnersShareSAR - managementFeeSAR) + investorRoundingRemainder;
-    const perPartnerSAR = operatingPartners.length > 0 ? remainingForPartners / operatingPartners.length : 0;
-    const partnerSummaries = operatingPartners.map(partner => {
-      const investorEntry = investorSharesFinal.find(r => r.partner.id === partner.id);
-      const investorProfit = investorEntry?.profit || 0;
-      const capitalAmount = investorEntry?.capital || 0;
-      const drawings = drawingTransfers.filter(t => t.partnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
-      const fee = partner.id === mgmtFeeRecipientId ? managementFeeSAR : 0;
-      const total = perPartnerSAR + fee + investorProfit + capitalAmount - drawings;
-      return { partner, partnerShare: perPartnerSAR, fee, investorProfit, capital: capitalAmount, drawings, total };
-    });
-    const regularInvestors = investorSharesFinal.filter(r => !r.partner.isOperatingPartner);
-    return {
-      exchangeRate, noExRate, investorsPct, partnersPct, mgmtFeePct, mgmtFeeRecipientId,
-      cashBalanceSDG, drawingsSDG, receivablesSDG, grossProfitSDG, grossProfitSAR,
-      investorsShareSAR, totalRoundedInvestorProfits, investorRoundingRemainder, totalCapitalSAR, investorShares: investorSharesFinal,
-      partnersShareSAR, managementFeeSAR, remainingForPartners, perPartnerSAR,
-      partnerSummaries, regularInvestors,
-    };
-  }, [activeShipmentId, state, contributions, drawingTransfers, operatingPartners,
-      settlementExRateOverride, autoExchangeRate, investorsPctOverride, mgmtFeePctOverride, activeShipment]);
 
   // === TAB 3: Verification ===
   const verification = useMemo(() => {
@@ -275,20 +183,6 @@ export default function Capital() {
     if (!hasWriteAccess || !showDeleteContribId) return;
     updateState({ capitalContributions: (state.capitalContributions || []).filter(c => c.id !== showDeleteContribId) });
     setShowDeleteContribId(null);
-  };
-
-  const handleSaveSettlement = () => {
-    if (!hasWriteAccess) return;
-    if (!activeShipmentId || !settlementCalc) return;
-    const result: SettlementResult = {
-      shipmentId: activeShipmentId, savedAt: getCurrentDateTimeValue(),
-      exchangeRate: settlementCalc.exchangeRate,
-      investorsProfitPercent: settlementCalc.investorsPct,
-      managementFeePercent: settlementCalc.mgmtFeePct,
-      partnerProfits: settlementCalc.partnerSummaries.map(ps => ({ partnerId: ps.partner.id, profit: ps.partnerShare + ps.fee })),
-      investorProfits: settlementCalc.investorShares.map(is => ({ partnerId: is.partner.id, profit: is.profit })),
-    };
-    updateState({ settlementResults: { ...(state.settlementResults || {}), [activeShipmentId]: result } });
   };
 
   const resetDrawForm = () => {
@@ -380,15 +274,10 @@ export default function Capital() {
     const rows = investorData.map((d, i) => `<tr class="${i % 2 === 1 ? 'alt' : ''}">
       <td>${d.partner.name}</td><td class="num">${fmtSAR(d.capital)}</td><td class="num">${fmtSAR(d.returned)}</td>
       <td class="num ${d.remainingCapital > 0 ? 'red' : 'green'}">${fmtSAR(d.remainingCapital)}</td>
-      <td class="num">${liveProfitCalc ? fmtSAR(d.profitEntitled) : '⚠️ لا يوجد سعر صرف'}</td>
-      <td class="num">${fmtSAR(d.profitPaid)}</td><td class="num">${fmtSAR(d.profitRemaining)}</td>
-      <td class="num bold">${fmtSAR(d.totalDue)}</td>
-      <td>${d.status === 'complete' ? '🟢 مكتمل' : d.status === 'profit_pending' ? '🟡 أرباح معلقة' : '🔴 لم يُرجَع'}</td>
+      <td>${d.capitalStatus === 'returned' ? '🟢 مُرجَع' : '🔴 لم يُرجَع'}</td>
     </tr>`).join('');
     const totals = `<tr class="totals"><td>الإجمالي</td><td class="num">${fmtSAR(totalContributed)}</td><td class="num">${fmtSAR(totalReturned)}</td>
-      <td class="num">${fmtSAR(totalRemaining)}</td><td class="num">${fmtSAR(investorData.reduce((s,d)=>s+d.profitEntitled,0))}</td>
-      <td class="num">${fmtSAR(investorData.reduce((s,d)=>s+d.profitPaid,0))}</td><td class="num">${fmtSAR(investorData.reduce((s,d)=>s+d.profitRemaining,0))}</td>
-      <td class="num bold">${fmtSAR(investorData.reduce((s,d)=>s+d.totalDue,0))}</td><td></td></tr>`;
+      <td class="num">${fmtSAR(totalRemaining)}</td><td></td></tr>`;
     const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>متابعة رأس المال</title>
       <style>body{font:10px/1.4 sans-serif;direction:rtl;margin:20px}h1{font-size:14px;text-align:center;margin-bottom:4px}
       .sub{text-align:center;font-size:11px;color:#555;margin-bottom:12px}table{width:100%;border-collapse:collapse}
@@ -396,79 +285,20 @@ export default function Capital() {
       .alt{background:#f8f9fa}.num{text-align:left;font-family:monospace}.bold{font-weight:bold}
       .red{color:#dc2626}.green{color:#16a34a}.totals{background:#e2e8f0;font-weight:bold}</style></head>
       <body><h1>أستريدا للتوزيع — متابعة رأس المال</h1><div class="sub">${shipmentName} | ${format(new Date(),'dd/MM/yyyy HH:mm')}</div>
-      <table><thead><tr><th>المساهم</th><th>رأس المال (SAR)</th><th>المُرجَع (SAR)</th><th>متبقي رأس مال</th>
-      <th>أرباح مستحقة</th><th>أرباح مدفوعة</th><th>أرباح متبقية</th><th>الإجمالي المستحق</th><th>الحالة</th></tr></thead>
+      <table><thead><tr><th>المساهم</th><th>رأس المال (SAR)</th><th>المُرجَع (SAR)</th><th>متبقي رأس مال</th><th>الحالة</th></tr></thead>
       <tbody>${rows}${totals}</tbody></table></body></html>`;
-    const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); w.print(); }
-  };
-
-  const printSettlement = () => {
-    if (!settlementCalc) return;
-    const sc = settlementCalc;
-    const shipmentName = activeShipment?.name || '';
-    const investorRows = sc.investorShares.map((r, i) => `<tr class="${i%2===1?'alt':''}"><td>${r.partner.name}</td><td class="n">${fmtSAR(r.capital)}</td><td class="n">${fmtPct(r.pct)}</td><td class="n">${fmtSAR(r.profit)}</td></tr>`).join('');
-    const partnerBlocks = sc.partnerSummaries.map(ps => {
-      const lines = [
-        ps.fee > 0 ? `<div class="line"><span>نسبة الإدارة</span><span class="g">+ ${fmtSAR(ps.fee)}</span></div>` : '',
-        `<div class="line"><span>نصيبه من أرباح الشركاء</span><span class="g">+ ${fmtSAR(ps.partnerShare)}</span></div>`,
-        ps.investorProfit > 0 ? `<div class="line"><span>نصيبه كمساهم</span><span class="g">+ ${fmtSAR(ps.investorProfit)}</span></div>` : '',
-        ps.capital > 0 ? `<div class="line"><span>رأس ماله</span><span class="g">+ ${fmtSAR(ps.capital)}</span></div>` : '',
-        ps.drawings > 0 ? `<div class="line"><span>منصرفاته</span><span class="r">- ${fmtSAR(ps.drawings)}</span></div>` : '',
-        `<div class="total-line"><span>= الإجمالي المستحق</span><span>${fmtSAR(ps.total)}</span></div>`,
-      ].filter(Boolean).join('');
-      return `<div class="partner-block"><h3>${ps.partner.name}</h3>${lines}</div>`;
-    }).join('');
-    const regRows = sc.regularInvestors.map((r, i) => `<tr class="${i%2===1?'alt':''}"><td>${r.partner.name}</td><td class="n">${fmtSAR(r.capital)}</td><td class="n">${fmtSAR(r.profit)}</td><td class="n bold">${fmtSAR(r.capital + r.profit)}</td></tr>`).join('');
-    const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تصفية الرسالة</title>
-      <style>body{font:10px/1.5 sans-serif;direction:rtl;margin:20px;color:#1e293b}h1{font-size:14px;text-align:center}
-      .sub{text-align:center;font-size:10px;color:#555;margin-bottom:16px}h2{font-size:12px;background:#134e4a;color:#fff;padding:4px 8px;margin:12px 0 6px}
-      h3{font-size:11px;border-bottom:2px solid #134e4a;padding-bottom:2px;margin:8px 0 4px}
-      table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #ccc;padding:3px 6px;text-align:right}
-      th{background:#134e4a;color:#fff;font-size:9px}.alt{background:#f8f9fa}.n{text-align:left;font-family:monospace}.bold{font-weight:bold}
-      .line{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted #e2e8f0;font-size:10px}
-      .total-line{display:flex;justify-content:space-between;padding:4px 0;border-top:2px double #134e4a;font-weight:bold;font-size:11px;margin-top:4px}
-      .g{color:#16a34a}.r{color:#dc2626}.partner-block{background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:8px;margin-bottom:8px}
-      .summary-box{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:6px 10px;margin-bottom:6px}
-      .note{font-size:9px;color:#92400e;margin-top:6px}
-      .totals{background:#e2e8f0;font-weight:bold}</style></head>
-      <body><h1>أستريدا للتوزيع — تصفية الرسالة</h1>
-      <div class="sub">${shipmentName} | سعر الصرف: ${sc.exchangeRate} | ${format(new Date(),'dd/MM/yyyy HH:mm')}</div>
-      <h2>أ — الربح الخام</h2>
-      <div class="summary-box"><div class="line"><span>الكاش المتوفر (SDG)</span><span>${fmtSDG(sc.cashBalanceSDG)}</span></div>
-      <div class="line"><span>+ منصرفات الشركاء (SDG)</span><span>${fmtSDG(sc.drawingsSDG)}</span></div>
-      <div class="line"><span>+ المديونية (أموال غير محصلة) (SDG)</span><span>${fmtSDG(sc.receivablesSDG)}</span></div>
-      <div class="total-line"><span>= الربح الخام (SDG)</span><span>${fmtSDG(sc.grossProfitSDG)}</span></div>
-      <div class="total-line"><span>= الربح الخام (SAR)</span><span>${fmtSAR(sc.grossProfitSAR)}</span></div></div>
-      <h2>ب — توزيع أرباح المساهمين (${fmtPct(sc.investorsPct)})</h2>
-      <div class="summary-box"><div class="line"><span>حصة المساهمين بعد التقريب</span><span>${fmtSAR(sc.totalRoundedInvestorProfits)}</span></div></div>
-      <table><thead><tr><th>المساهم</th><th>رأس المال</th><th>النسبة%</th><th>الربح (SAR)</th></tr></thead><tbody>${investorRows}
-      <tr class="totals"><td>الإجمالي</td><td class="n">${fmtSAR(sc.totalCapitalSAR)}</td><td class="n">100%</td><td class="n">${fmtSAR(sc.totalRoundedInvestorProfits)}</td></tr></tbody></table>
-      <div class="note">* الأرباح مقربة لأقرب 10 ريال — الفرق (${fmtSAR(sc.investorRoundingRemainder)}) أضيف لحصة الشركاء</div>
-      <h2>ج — توزيع أرباح الشركاء (${fmtPct(sc.partnersPct)})</h2>
-      <div class="summary-box"><div class="line"><span>حصة الشركاء</span><span>${fmtSAR(sc.partnersShareSAR)}</span></div>
-      <div class="line"><span>نسبة الإدارة (${fmtPct(sc.mgmtFeePct)})</span><span>- ${fmtSAR(sc.managementFeeSAR)}</span></div>
-      <div class="line"><span>المتبقي للتوزيع</span><span>${fmtSAR(sc.remainingForPartners)}</span></div>
-      <div class="line"><span>نصيب كل شريك</span><span>${fmtSAR(sc.perPartnerSAR)}</span></div></div>
-      ${partnerBlocks}
-      <h2>د — ملخص المساهمين العاديين</h2>
-      <table><thead><tr><th>المساهم</th><th>رأس المال (SAR)</th><th>الأرباح (SAR)</th><th>الإجمالي المستحق (SAR)</th></tr></thead>
-      <tbody>${regRows}<tr class="totals"><td>الإجمالي</td><td class="n">${fmtSAR(sc.regularInvestors.reduce((s,r)=>s+r.capital,0))}</td>
-      <td class="n">${fmtSAR(sc.regularInvestors.reduce((s,r)=>s+r.profit,0))}</td>
-      <td class="n bold">${fmtSAR(sc.regularInvestors.reduce((s,r)=>s+r.capital+r.profit,0))}</td></tr></tbody></table>
-      </body></html>`;
     const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); w.print(); }
   };
 
   // === RENDER ===
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'investors', label: 'المساهمون', icon: <Users className="w-4 h-4" /> },
-    { key: 'settlement', label: 'تصفية الرسالة', icon: <TrendingUp className="w-4 h-4" /> },
+    { key: 'distribution', label: 'توزيع الأرباح', icon: <TrendingUp className="w-4 h-4" /> },
     { key: 'verification', label: 'التحقق من الرسالة', icon: <CheckCircle className="w-4 h-4" /> },
   ];
 
-  const statusBadge = (status: string) => {
-    if (status === 'complete') return <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700">🟢 مكتمل</span>;
-    if (status === 'profit_pending') return <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700">🟡 أرباح معلقة</span>;
+  const capitalStatusBadge = (status: string) => {
+    if (status === 'returned') return <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700">🟢 مُرجَع</span>;
     return <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-red-100 text-red-700">🔴 لم يُرجَع</span>;
   };
 
@@ -633,14 +463,11 @@ export default function Capital() {
                         <p className="font-bold text-slate-900 text-sm">{d.partner.name}</p>
                         <p className="text-xs text-slate-500">رأس المال: <span className="font-mono">{fmtSAR(d.capital)}</span></p>
                       </div>
-                      {statusBadge(d.status)}
+                      {capitalStatusBadge(d.capitalStatus)}
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                       <span className="text-slate-500">المُرجَع</span><span className="font-mono text-right">{fmtSAR(d.returned)}</span>
-                      <span className="text-slate-500">متبقي رأس مال</span><span className={`font-mono font-bold text-right ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{fmtSAR(d.remainingCapital)}</span>
-                      <span className="text-slate-500">أرباح مستحقة</span><span className="font-mono text-right">{liveProfitCalc ? fmtSAR(d.profitEntitled) : <span className="text-amber-500">⚠️</span>}</span>
-                      <span className="text-slate-500">أرباح مدفوعة</span><span className="font-mono text-right">{fmtSAR(d.profitPaid)}</span>
-                      <span className="text-slate-500">الإجمالي المستحق</span><span className="font-mono font-bold text-right">{fmtSAR(d.totalDue)}</span>
+                      <span className={`font-mono font-bold text-right col-span-1 ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>متبقي رأس مال: {fmtSAR(d.remainingCapital)}</span>
                     </div>
                   </motion.div>
                 )) : (
@@ -660,7 +487,6 @@ export default function Capital() {
             <option value="partner.name">المساهم</option>
             <option value="capital">رأس المال</option>
             <option value="remainingCapital">متبقي رأس مال</option>
-            <option value="totalDue">الإجمالي المستحق</option>
           </select>
         </div>
       </div>
@@ -675,10 +501,6 @@ export default function Capital() {
                       <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('capital')}><div className="flex items-center justify-end rtl:justify-start gap-1">رأس المال (SAR) <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'capital'}/></div></th>
                       <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('returned')}><div className="flex items-center justify-end rtl:justify-start gap-1">المُرجَع (SAR) <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'returned'}/></div></th>
                       <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('remainingCapital')}><div className="flex items-center justify-end rtl:justify-start gap-1">متبقي رأس مال <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'remainingCapital'}/></div></th>
-                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('profitEntitled')}><div className="flex items-center justify-end rtl:justify-start gap-1">أرباح مستحقة <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'profitEntitled'}/></div></th>
-                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('profitPaid')}><div className="flex items-center justify-end rtl:justify-start gap-1">أرباح مدفوعة <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'profitPaid'}/></div></th>
-                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('profitRemaining')}><div className="flex items-center justify-end rtl:justify-start gap-1">أرباح متبقية <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'profitRemaining'}/></div></th>
-                      <th className="px-4 py-3 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortInvestors('totalDue')}><div className="flex items-center justify-end rtl:justify-start gap-1">الإجمالي المستحق <SortIcon direction={invSortConfig?.direction!} active={invSortConfig?.key === 'totalDue'}/></div></th>
                       <th className="px-4 py-3 text-center">الحالة</th>
                     </tr>
                   </thead>
@@ -689,11 +511,7 @@ export default function Capital() {
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.capital)}</td>
                         <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.returned)}</td>
                         <td className={`px-4 py-3 text-left font-mono font-bold ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{fmtSAR(d.remainingCapital)}</td>
-                        <td className="px-4 py-3 text-left font-mono">{liveProfitCalc ? fmtSAR(d.profitEntitled) : <span className="text-amber-500 text-xs">⚠️ أدخل سعر الصرف</span>}</td>
-                        <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.profitPaid)}</td>
-                        <td className="px-4 py-3 text-left font-mono">{fmtSAR(d.profitRemaining)}</td>
-                        <td className="px-4 py-3 text-left font-mono font-bold">{fmtSAR(d.totalDue)}</td>
-                        <td className="px-4 py-3 text-center">{statusBadge(d.status)}</td>
+                        <td className="px-4 py-3 text-center">{capitalStatusBadge(d.capitalStatus)}</td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -703,10 +521,6 @@ export default function Capital() {
                       <td className="px-4 py-3 text-left font-mono">{fmtSAR(totalContributed)}</td>
                       <td className="px-4 py-3 text-left font-mono">{fmtSAR(totalReturned)}</td>
                       <td className="px-4 py-3 text-left font-mono">{fmtSAR(totalRemaining)}</td>
-                      <td className="px-4 py-3 text-left font-mono">{fmtSAR(investorData.reduce((s,d)=>s+d.profitEntitled,0))}</td>
-                      <td className="px-4 py-3 text-left font-mono">{fmtSAR(investorData.reduce((s,d)=>s+d.profitPaid,0))}</td>
-                      <td className="px-4 py-3 text-left font-mono">{fmtSAR(investorData.reduce((s,d)=>s+d.profitRemaining,0))}</td>
-                      <td className="px-4 py-3 text-left font-mono">{fmtSAR(investorData.reduce((s,d)=>s+d.totalDue,0))}</td>
                       <td></td>
                     </tr>
                   </tfoot>
@@ -717,296 +531,146 @@ export default function Capital() {
         </div>
       )}
 
-      {/* ═══════════ TAB 2: تصفية الشركاء ═══════════ */}
-      {activeTab === 'settlement' && settlementCalc && (
-        <div className="space-y-6 max-w-4xl mx-auto">
-          {/* Exchange rate */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex flex-wrap items-center gap-4">
-              <label className="text-sm font-semibold text-slate-700">سعر الصرف:</label>
-              <input type="number" min="0" step="0.01"
-                value={settlementExRateOverride !== '' ? settlementExRateOverride : (autoExchangeRate ?? '')}
-                onChange={e => setSettlementExRateOverride(e.target.value ? Number(e.target.value) : '')}
-                className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#14b8a6] outline-none" />
-              <span className="text-xs text-slate-400">جنيه/ريال</span>
-              {autoExchangeRate && <span className="text-xs text-slate-400">(مأخوذ تلقائياً من آخر تحويل عام)</span>}
+      {/* ═══════════ TAB 2: توزيع الأرباح ═══════════ */}
+      {activeTab === 'distribution' && (() => {
+        const savedDist = (state.manualProfitDistributions || []).find(d => d.shipmentId === activeShipmentId);
+        if (!savedDist) {
+          return (
+            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center space-y-3">
+              <TrendingUp className="w-12 h-12 text-slate-300 mx-auto" />
+              <p className="text-slate-600 font-semibold">لم يتم إدخال توزيع الأرباح بعد</p>
+              <p className="text-sm text-slate-400">يمكنك إدخال بيانات التوزيع من صفحة <strong>الإعدادات ← إعدادات الشركاء</strong></p>
             </div>
-            {settlementCalc.noExRate && (
-              <div className="mt-2 flex items-center gap-2 text-amber-600 text-sm"><AlertTriangle className="w-4 h-4" />لم يتم تسجيل سعر صرف</div>
-            )}
-          </div>
-
-          {/* Drawings Table */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><CreditCard className="w-4 h-4" />منصرفات الشركاء</h3>
-              {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] text-xs font-semibold shadow-sm">
-                <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
-              }
+          );
+        }
+        return (
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><TrendingUp className="w-4 h-4" />توزيع الأرباح</h3>
+              <span className="text-xs text-slate-400">حُفظ بتاريخ {format(new Date(savedDist.savedAt), 'dd/MM/yyyy HH:mm')}</span>
             </div>
-            {drawingTransfers.length > 0 ? (
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
-      {/* Search & Sort Toolbar for Drawings Mobile */}
-      <div className="md:hidden bg-slate-50 p-4 border-b border-slate-100">
-        <div className="flex items-center gap-2 justify-between">
-          <span className="text-sm font-semibold text-slate-700">ترتيب بواسطة:</span>
-          <select 
-            className="bg-white border border-slate-300 text-sm rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#134e4a] outline-none"
-            onChange={(e) => sortDrawings(e.target.value as any)}
-            value={(drawSortConfig?.key as string) || 'date'}
-          >
-            <option value="date">التاريخ</option>
-            <option value="amountSDG">المبلغ SDG</option>
-            <option value="amountSAR">المبلغ SAR</option>
-          </select>
-        </div>
-      </div>
-
-                {/* Mobile cards */}
-                <div className="md:hidden divide-y divide-slate-100">
-                  {sortedDrawingTransfers.map((dt, idx) => (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className="p-3 space-y-1">
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
-                          <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</p>
+            {savedDist.entries.map(e => {
+              const partnerName = state.partners.find(p => p.id === e.partnerId)?.name || e.partnerId;
+              const d = computeExpenseDeduction(e.capitalReturn, e.profit, e.expenses);
+              return (
+                <div key={e.partnerId} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-bold text-slate-900 text-base">{partnerName}</h4>
+                    {e.profit === null && <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700">لم يُحدَّد الربح بعد</span>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                    <span className="text-slate-500">رأس المال العائد</span><span className="font-mono text-right">{fmtSAR(e.capitalReturn)}</span>
+                    <span className="text-slate-500">الربح المُدخَل</span><span className="font-mono text-right">{e.profit !== null ? fmtSAR(e.profit) : '—'}</span>
+                    <span className="text-slate-500">المصروفات</span><span className="font-mono text-right">{fmtSAR(e.expenses)}</span>
+                  </div>
+                  {e.profit !== null && (
+                    <>
+                      <div className="border-t border-slate-100 pt-3 space-y-1.5 text-sm">
+                        {d.fromProfit > 0 && <div className="flex justify-between"><span className="text-slate-500">من الربح</span><span className="font-mono text-red-600">- {fmtSAR(d.fromProfit)}</span></div>}
+                        {d.fromCapital > 0 && <div className="flex justify-between"><span className="text-slate-500">من رأس المال</span><span className="font-mono text-red-600">- {fmtSAR(d.fromCapital)}</span></div>}
+                        <div className="flex justify-between font-bold border-t border-slate-200 pt-1.5">
+                          <span>صافي الربح</span><span className="font-mono text-[#134e4a]">{fmtSAR(d.netProfit)}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-mono text-sm font-bold">{fmtSDG(dt.amountSDG)}</p>
-                          <p className="font-mono text-xs text-[#134e4a]">{fmtSAR(dt.amountSAR)}</p>
+                        <div className="flex justify-between font-bold">
+                          <span>صافي رأس المال العائد</span><span className="font-mono">{fmtSAR(d.netCapitalReturn)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-base border-t-2 border-[#134e4a] pt-2 mt-1">
+                          <span>الإجمالي المستحق</span><span className="font-mono text-[#134e4a]">{fmtSAR(d.netProfit + d.netCapitalReturn)}</span>
                         </div>
                       </div>
-                      {dt.description && <p className="text-xs text-slate-500">{dt.description}</p>}
-                      {hasWriteAccess && (
-                        <div className="flex gap-1 pt-1">
-                          <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                        </div>
+                      {d.fromCapital > 0 && (
+                        <p className="text-xs text-amber-700">⚠️ المصروفات تجاوزت الربح — الفرق خُصم من رأس المال</p>
                       )}
-                    </motion.div>
-                  ))}
+                    </>
+                  )}
+                  {e.profit === null && e.expenses > 0 && (
+                    <p className="text-xs text-slate-400">المصروفات لن تُخصَم من رأس المال حتى يُحدَّد الربح</p>
+                  )}
                 </div>
-                {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="text-xs text-white bg-[#134e4a]">
-                      <tr>
-                        <th className="px-3 py-2 text-right cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDrawings('date')}><div className="flex items-center justify-end rtl:justify-start gap-1">التاريخ <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'date'}/></div></th>
-                        <th className="px-3 py-2 text-right">الشريك</th>
-                        <th className="px-3 py-2 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDrawings('amountSDG')}><div className="flex items-center justify-end gap-1">المبلغ (SDG) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSDG'}/></div></th>
-                        <th className="px-3 py-2 text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortDrawings('amountSAR')}><div className="flex items-center justify-end gap-1">المبلغ (SAR) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSAR'}/></div></th>
-                        <th className="px-3 py-2 text-right">الوصف</th>
-                        <th className="px-3 py-2 text-center">إجراء</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {sortedDrawingTransfers.map((dt, idx) => (
-                        <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
-                          <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
-                          <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
-                          <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
-                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>
-                          <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
-                          <td className="px-3 py-2 text-center">
-                            <div className="flex justify-center gap-1">
-                              {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>}
-                              {hasWriteAccess && <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
-                            </div>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                      <tr>
-                        <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
-                        <td colSpan={2}></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">لا توجد منصرفات مسجلة</p>
-            )}
-          </div>
+              );
+            })}
 
-          {/* Section أ — Gross Profit */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4" />أ — الربح الخام</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-1"><span className="text-slate-600">الكاش المتوفر (بنوك + خزينة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.cashBalanceSDG)}</span></div>
-              <div className="flex justify-between py-1"><span className="text-slate-600">+ منصرفات الشركاء (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.drawingsSDG)}</span></div>
-              <div className="flex justify-between py-1"><span className="text-slate-600">+ المديونية (أموال غير محصلة) (SDG)</span><span className="font-semibold">{fmtSDG(settlementCalc.receivablesSDG)}</span></div>
-              <div className="border-t-2 border-[#134e4a] pt-2 flex justify-between font-bold"><span>= الربح الخام (SDG)</span><span>{fmtSDG(settlementCalc.grossProfitSDG)}</span></div>
-              <div className="flex justify-between font-bold text-[#134e4a]"><span>= الربح الخام (SAR) = SDG ÷ سعر الصرف</span><span>{fmtSAR(settlementCalc.grossProfitSAR)}</span></div>
-            </div>
-          </div>
-
-          {/* Section ب — Shareholders */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><Users className="w-4 h-4" />ب — توزيع أرباح المساهمين</h3>
-            <div className="flex flex-wrap items-center gap-4 mb-4">
-              <label className="text-sm text-slate-600">نسبة المساهمين من الربح:</label>
-              <div className="flex items-center gap-1">
-                <input type="number" min="0" max="100" step="1"
-                  value={investorsPctOverride !== '' ? investorsPctOverride : (activeShipment?.shareholdersPercent ?? 40)}
-                  onChange={e => setInvestorsPctOverride(e.target.value ? Number(e.target.value) : '')}
-                  className="w-20 px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#14b8a6] outline-none" />
-                <span className="text-sm text-slate-500">%</span>
-              </div>
-              <span className="text-sm text-slate-500">حصة المساهمين بعد التقريب = {fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</span>
-            </div>
-            <p className="text-sm text-slate-500 mb-2">إجمالي رأس المال الكلي: <span className="font-bold text-slate-800">{fmtSAR(settlementCalc.totalCapitalSAR)}</span></p>
-            <div className="rounded-lg border border-slate-200 overflow-hidden">
-              {/* Mobile cards */}
-              <div className="md:hidden divide-y divide-slate-100">
-                {settlementCalc.investorShares.map(r => (
-                  <div key={r.partner.id} className="p-3 flex justify-between items-center text-sm">
-                    <span className="font-semibold text-slate-900">{r.partner.name}</span>
-                    <div className="text-right">
-                      <p className="font-mono text-xs text-slate-500">{fmtSAR(r.capital)} — {fmtPct(r.pct)}</p>
-                      <p className="font-mono font-bold text-[#134e4a]">{fmtSAR(r.profit)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-white bg-[#134e4a]">
-                    <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال</th><th className="px-3 py-2 text-left">معدل الربح</th><th className="px-3 py-2 text-left">النسبة%</th><th className="px-3 py-2 text-left">الربح (SAR)</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {settlementCalc.investorShares.map((r, i) => (
-                      <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
-                        <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
-                        <td className="px-3 py-2 text-left font-mono text-blue-600">{r.profitRate != null ? `${r.profitRate}%` : '—'}</td>
-                        <td className="px-3 py-2 text-left font-mono">{fmtPct(r.pct)}</td>
-                        <td className="px-3 py-2 text-left font-mono font-bold text-[#134e4a]">{fmtSAR(r.profit)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                    <tr><td className="px-3 py-2">الإجمالي</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalCapitalSAR)}</td><td className="px-3 py-2"></td><td className="px-3 py-2 text-left">100%</td><td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.totalRoundedInvestorProfits)}</td></tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-            <p className="mt-2 text-xs text-amber-700">* الأرباح مقربة لأقرب 10 ريال — الفرق ({fmtSAR(settlementCalc.investorRoundingRemainder)}) أضيف لحصة الشركاء</p>
-          </div>
-
-          {/* Section ج — Partners */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><CreditCard className="w-4 h-4" />ج — توزيع أرباح الشركاء</h3>
-            <div className="space-y-2 text-sm mb-4 bg-slate-50 p-3 rounded-lg">
-              <div className="flex justify-between"><span className="text-slate-600">نسبة الشركاء = 100% − {fmtPct(settlementCalc.investorsPct)}</span><span className="font-bold">{fmtPct(settlementCalc.partnersPct)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-600">حصة الشركاء</span><span className="font-semibold">{fmtSAR(settlementCalc.partnersShareSAR)}</span></div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-slate-600">نسبة الإدارة:</span>
-                <div className="flex items-center gap-1">
-                  <input type="number" min="0" max="100" step="1"
-                    value={mgmtFeePctOverride !== '' ? mgmtFeePctOverride : (activeShipment?.managementFeePercent ?? 20)}
-                    onChange={e => setMgmtFeePctOverride(e.target.value ? Number(e.target.value) : '')}
-                    className="w-20 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-[#14b8a6] outline-none" />
-                  <span className="text-slate-500">%</span>
-                </div>
-                <span className="text-slate-400">= {fmtSAR(settlementCalc.managementFeeSAR)}</span>
-              </div>
-              <div className="flex justify-between"><span className="text-slate-600">المتبقي للتوزيع</span><span className="font-semibold">{fmtSAR(settlementCalc.remainingForPartners)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-600">نصيب كل شريك</span><span className="font-semibold">{fmtSAR(settlementCalc.perPartnerSAR)}</span></div>
-            </div>
-            {/* Per-partner breakdown */}
-            <div className="space-y-4">
-              {settlementCalc.partnerSummaries.map(ps => (
-                <div key={ps.partner.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <h4 className="font-bold text-slate-800 mb-3 text-base">{ps.partner.name}</h4>
-                  <div className="space-y-1.5 text-sm">
-                    {ps.fee > 0 && <div className="flex justify-between"><span className="text-slate-600">نسبة الإدارة</span><span className="text-emerald-600 font-semibold">+ {fmtSAR(ps.fee)}</span></div>}
-                    <div className="flex justify-between"><span className="text-slate-600">نصيبه من أرباح الشركاء</span><span className="text-emerald-600 font-semibold">+ {fmtSAR(ps.partnerShare)}</span></div>
-                    {ps.investorProfit > 0 && <div className="flex justify-between"><span className="text-slate-600">نصيبه كمساهم</span><span className="text-emerald-600 font-semibold">+ {fmtSAR(ps.investorProfit)}</span></div>}
-                    {ps.capital > 0 && <div className="flex justify-between"><span className="text-slate-600">رأس ماله</span><span className="text-emerald-600 font-semibold">+ {fmtSAR(ps.capital)}</span></div>}
-                    {ps.drawings > 0 && <div className="flex justify-between"><span className="text-slate-600">− منصرفاته</span><span className="text-red-600 font-semibold">- {fmtSAR(ps.drawings)}</span></div>}
-                    <div className="border-t-2 border-[#134e4a] pt-2 mt-2 flex justify-between font-bold text-base">
-                      <span>= الإجمالي المستحق</span>
-                      <span className={ps.total >= 0 ? 'text-emerald-700' : 'text-red-700'}>{fmtSAR(ps.total)} ✅</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Section د — Regular investors summary */}
-          {settlementCalc.regularInvestors.length > 0 && (
+            {/* Drawings section */}
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <h3 className="text-sm font-bold text-[#134e4a] mb-4 flex items-center gap-2"><Building2 className="w-4 h-4" />د — ملخص المساهمين العاديين</h3>
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
-                {/* Mobile cards */}
-                <div className="md:hidden divide-y divide-slate-100">
-                  {settlementCalc.regularInvestors.map(r => (
-                    <div key={r.partner.id} className="p-3 flex justify-between items-center text-sm">
-                      <span className="font-semibold text-slate-900">{r.partner.name}</span>
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500">رأس مال: <span className="font-mono">{fmtSAR(r.capital)}</span></p>
-                        <p className="text-xs text-slate-500">أرباح: <span className="font-mono text-[#134e4a]">{fmtSAR(r.profit)}</span></p>
-                        <p className="font-mono font-bold">{fmtSAR(r.capital + r.profit)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="text-xs text-white bg-[#134e4a]">
-                      <tr><th className="px-3 py-2 text-right">المساهم</th><th className="px-3 py-2 text-left">رأس المال (SAR)</th><th className="px-3 py-2 text-left">الأرباح (SAR)</th><th className="px-3 py-2 text-left">الإجمالي المستحق (SAR)</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {settlementCalc.regularInvestors.map((r, i) => (
-                        <tr key={r.partner.id} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
-                          <td className="px-3 py-2 font-semibold">{r.partner.name}</td>
-                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(r.capital)}</td>
-                          <td className="px-3 py-2 text-left font-mono text-[#134e4a]">{fmtSAR(r.profit)}</td>
-                          <td className="px-3 py-2 text-left font-mono font-bold">{fmtSAR(r.capital + r.profit)}</td>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><CreditCard className="w-4 h-4" />منصرفات الشركاء</h3>
+                {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] text-xs font-semibold shadow-sm">
+                  <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
+                }
+              </div>
+              {drawingTransfers.length > 0 ? (
+                <div className="rounded-lg border border-slate-200 overflow-hidden">
+                  <div className="md:hidden divide-y divide-slate-100">
+                    {sortedDrawingTransfers.map((dt, idx) => (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className="p-3 space-y-1">
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
+                            <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-mono text-sm font-bold">{fmtSDG(dt.amountSDG)}</p>
+                            <p className="font-mono text-xs text-slate-500">{fmtSAR(dt.amountSAR)}</p>
+                          </div>
+                        </div>
+                        {dt.description && <p className="text-xs text-slate-400">{dt.description}</p>}
+                        {hasWriteAccess && (
+                          <div className="flex gap-2 pt-1">
+                            <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-xs text-white bg-[#134e4a]">
+                        <tr>
+                          <th className="px-3 py-2 text-right cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('date')}>التاريخ <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'date'}/></th>
+                          <th className="px-3 py-2 text-right">الشريك</th>
+                          <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSDG')}>المبلغ (SDG) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSDG'}/></th>
+                          <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSAR')}>المبلغ (SAR) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSAR'}/></th>
+                          <th className="px-3 py-2 text-right">الوصف</th>
+                          <th className="px-3 py-2 text-center">إجراء</th>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                      <tr>
-                      <td className="px-3 py-2">الإجمالي</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.regularInvestors.reduce((s,r)=>s+r.capital,0))}</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.regularInvestors.reduce((s,r)=>s+r.profit,0))}</td>
-                      <td className="px-3 py-2 text-left font-mono">{fmtSAR(settlementCalc.regularInvestors.reduce((s,r)=>s+r.capital+r.profit,0))}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-              </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {sortedDrawingTransfers.map((dt, idx) => (
+                          <motion.tr key={dt.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
+                            <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
+                            <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
+                            <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
+                            <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>
+                            <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
+                            <td className="px-3 py-2 text-center">
+                              <div className="flex justify-center gap-1">
+                                {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded"><Edit2 className="w-3.5 h-3.5" /></button>}
+                                {hasWriteAccess && <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded"><Trash2 className="w-3.5 h-3.5" /></button>}
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                        <tr>
+                          <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
+                          <td colSpan={2}></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 text-center py-4">لا توجد منصرفات مسجلة</p>
+              )}
             </div>
-          )}
-
-          {/* Save + Print */}
-          <div className="flex flex-wrap gap-3 justify-end">
-            <button onClick={printSettlement} className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-semibold text-sm">
-              <Printer className="w-4 h-4" />طباعة التصفية</button>
-            {hasWriteAccess && <button onClick={handleSaveSettlement} className="flex items-center gap-2 px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] font-semibold text-sm shadow-sm">
-              <Save className="w-4 h-4" />حفظ التصفية ✓</button>
-            }
           </div>
-          {savedSettlement && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-700">
-                <CheckCircle className="w-5 h-5" />
-                <span className="text-sm font-semibold">تم حفظ التصفية بتاريخ {format(new Date(savedSettlement.savedAt), 'dd/MM/yyyy HH:mm')}</span>
-              </div>
-              {hasWriteAccess && <button onClick={handleSaveSettlement} className="text-sm text-[#134e4a] hover:text-[#0c3531] font-semibold">إعادة الحساب</button>}
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* ═══════════ TAB 3: التحقق من الرسالة ═══════════ */}
       {activeTab === 'verification' && verification && (
