@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeExpenseDeduction } from '../../pages/Settings';
+import { computeExpenseDeduction } from '../profitDistribution';
 
 describe('computeExpenseDeduction', () => {
   // ── null profit (profit not assigned) ────────────────────────────

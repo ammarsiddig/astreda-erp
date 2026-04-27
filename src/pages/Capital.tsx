@@ -17,7 +17,7 @@ import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
 import { canWrite } from '../lib/permissions';
 import { upsertRecord } from '../lib/syncEngine';
-import { computeExpenseDeduction } from './Settings';
+import { computeExpenseDeduction } from '../lib/profitDistribution';
 
 type Tab = 'investors' | 'distribution' | 'verification';
 
