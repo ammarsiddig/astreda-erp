@@ -82,6 +82,28 @@ export function generateId(prefix: string, _items: { id: string }[] = [], offset
   return `${prefix}${timePart}${counterPart}${getRandomIdChunk()}`;
 }
 
+// Matches the new INV-YYMM-<seq> format only; old legacy IDs are ignored.
+const NEW_INV_RE = /^INV-\d{4}-(\d+)$/;
+
+/**
+ * Generate a new invoice ID in the format INV-YYMM-<globalSequence>.
+ * - YYMM: 2-digit year + 2-digit month extracted from `date` (YYYY-MM-DD).
+ * - globalSequence: max existing new-format sequence + 1, padded to 4 digits.
+ *   Old-format invoice IDs are ignored so old data is never affected.
+ */
+export function generateInvoiceId(date: string, allInvoices: { id: string }[]): string {
+  const yy = date.slice(2, 4);
+  const mm = date.slice(5, 7);
+  const maxSeq = allInvoices.reduce((max, inv) => {
+    const m = NEW_INV_RE.exec(inv.id);
+    if (!m) return max;
+    const n = parseInt(m[1], 10);
+    return n > max ? n : max;
+  }, 0);
+  const nextSeq = String(maxSeq + 1).padStart(4, '0');
+  return `INV-${yy}${mm}-${nextSeq}`;
+}
+
 export function buildLedgerEntryId(sourceModule: string, linkedId: string, index = 0, shipmentId?: string) {
   const normalizedSource = sourceModule.replace(/[^a-z0-9]/gi, '').toUpperCase();
   const normalizedLinked = linkedId.replace(/[^a-z0-9]/gi, '').toUpperCase();

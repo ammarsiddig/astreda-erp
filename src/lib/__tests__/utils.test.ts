@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildLedgerEntryId, computeBankBalance, formatCurrency, formatDate, generateId } from '../utils';
+import { buildLedgerEntryId, computeBankBalance, formatCurrency, formatDate, generateId, generateInvoiceId } from '../utils';
 import type { LedgerEntry } from '../../types';
 
 // ─── formatCurrency ───────────────────────────────────────────────
@@ -62,6 +62,35 @@ describe('generateId', () => {
     const first = generateId('PM', [], 0);
     const second = generateId('PM', [], 0);
     expect(first).not.toBe(second);
+  });
+});
+
+// ─── generateInvoiceId ──────────────────────────────────────────
+
+describe('generateInvoiceId', () => {
+  it('produces INV-YYMM-0001 when there are no existing new-format invoices', () => {
+    const id = generateInvoiceId('2026-04-27', []);
+    expect(id).toBe('INV-2604-0001');
+  });
+
+  it('increments the global sequence above all existing new-format invoices', () => {
+    const existing = [
+      { id: 'INV-2604-0001' },
+      { id: 'INV-2604-0003' },
+      { id: 'INVLEGACYID001' }, // old format — must be ignored
+    ];
+    const id = generateInvoiceId('2026-05-01', existing);
+    expect(id).toBe('INV-2605-0004');
+  });
+
+  it('pads the sequence to 4 digits', () => {
+    const id = generateInvoiceId('2026-04-27', []);
+    expect(id).toMatch(/^INV-\d{4}-\d{4}$/);
+  });
+
+  it('uses YYMM from the supplied date, not today', () => {
+    const id = generateInvoiceId('2025-12-03', []);
+    expect(id.startsWith('INV-2512-')).toBe(true);
   });
 });
 
