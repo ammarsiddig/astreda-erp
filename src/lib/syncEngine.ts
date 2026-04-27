@@ -89,7 +89,15 @@ export const TABLE_MAPPINGS: TableMapping[] = [
       return obj
     },
   },
-  { table: 'employees', stateKey: 'employees', toRow: objectToSnake, fromRow: objectToCamel },
+  { table: 'employees', stateKey: 'employees',
+    toRow: (item) => {
+      const row = objectToSnake(item)
+      // 'job_title' column does not yet exist in the production DB schema.
+      // Strip it from write payloads to prevent schema-cache errors.
+      delete row.job_title
+      return row
+    },
+    fromRow: objectToCamel },
   { table: 'partners', stateKey: 'partners', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'expense_categories', stateKey: 'expenseCategories', toRow: objectToSnake, fromRow: objectToCamel },
   {
@@ -360,7 +368,14 @@ export async function flushQueue(): Promise<void> {
       const mapping = TABLE_MAPPINGS.find(m => m.table === entry.table)
       const pkCol = mapping?.pkField ?? 'id'
       if (entry.op === 'UPSERT') {
-        const { error } = await supabase!.from(entry.table).upsert(entry.data, { onConflict: pkCol })
+        // Strip fields that don't exist in the production DB from stale WAL entries.
+        // (e.g. employees rows queued before the toRow fix still carry job_title)
+        let data = entry.data
+        if (entry.table === 'employees' && 'job_title' in data) {
+          data = { ...data }
+          delete data.job_title
+        }
+        const { error } = await supabase!.from(entry.table).upsert(data, { onConflict: pkCol })
         if (error) throw error
       } else {
         const { error } = await supabase!.from(entry.table).delete().eq(pkCol, entry.pk)
