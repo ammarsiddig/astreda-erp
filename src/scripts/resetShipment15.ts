@@ -206,14 +206,14 @@ async function resetShipment15({ dryRun = true }: { dryRun?: boolean } = {}): Pr
     }
   }
 
-  // Tables with direct shipment_id column
-  await deleteFromSupabase('invoices',                'shipment_id', invoicesToDel.map(x => x.id),    'invoices')
-  await deleteFromSupabase('payments',                'shipment_id', paymentsToDel.map(x => x.id),    'payments')
-  await deleteFromSupabase('expenses',                'shipment_id', expensesToDel.map(x => x.id),    'expenses')
-  await deleteFromSupabase('salaries',                'shipment_id', salariesToDel.map(x => x.id),    'salaries')
-  await deleteFromSupabase('inventory_transactions',  'shipment_id', invTxnsToDel.map(x => x.id),     'inventory_transactions')
-  await deleteFromSupabase('general_transfers',       'shipment_id', transfersToDel.map(x => x.id),   'general_transfers')
-  await deleteFromSupabase('capital_contributions',   'shipment_id', contribsToDel.map(x => x.id),    'capital_contributions')
+  // Delete by record id (records were pre-filtered to shipmentId === '4' from local state)
+  await deleteFromSupabase('invoices',                'id', invoicesToDel.map(x => x.id),    'invoices')
+  await deleteFromSupabase('payments',                'id', paymentsToDel.map(x => x.id),    'payments')
+  await deleteFromSupabase('expenses',                'id', expensesToDel.map(x => x.id),    'expenses')
+  await deleteFromSupabase('salaries',                'id', salariesToDel.map(x => x.id),    'salaries')
+  await deleteFromSupabase('inventory_transactions',  'id', invTxnsToDel.map(x => x.id),     'inventory_transactions')
+  await deleteFromSupabase('general_transfers',       'id', transfersToDel.map(x => x.id),   'general_transfers')
+  await deleteFromSupabase('capital_contributions',   'id', contribsToDel.map(x => x.id),    'capital_contributions')
 
   // manual_profit_distributions PK is shipment_id
   if (profitDistToDel.length > 0) {
