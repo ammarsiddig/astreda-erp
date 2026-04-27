@@ -52,6 +52,8 @@ CREATE TABLE shipments (
 CREATE TABLE employees (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  phone TEXT,
+  job_title TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
