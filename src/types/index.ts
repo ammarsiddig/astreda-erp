@@ -157,6 +157,7 @@ export interface Expense {
   notes: string;
   settled?: boolean;
   settledDate?: string;
+  partnerId?: string; // optional: partner to whom this expense is attributed for profit distribution
 }
 
 export interface Salary {

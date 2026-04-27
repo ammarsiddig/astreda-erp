@@ -1,3 +1,5 @@
+import type { Expense } from '../types';
+
 /**
  * Shared profit-distribution business logic.
  *
@@ -22,4 +24,19 @@ export function computeExpenseDeduction(
     fromProfit,
     fromCapital,
   };
+}
+
+/**
+ * Sum all expenses attributed to a specific partner for a specific shipment.
+ * Only expenses that explicitly carry `partnerId` are counted.
+ * Unattributed expenses (no partnerId) are never mixed into any partner's total.
+ */
+export function computePartnerExpenses(
+  expenses: Expense[],
+  shipmentId: string,
+  partnerId: string
+): number {
+  return expenses
+    .filter(e => e.shipmentId === shipmentId && e.partnerId === partnerId)
+    .reduce((sum, e) => sum + e.amount, 0);
 }

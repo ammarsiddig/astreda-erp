@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeExpenseDeduction } from '../profitDistribution';
+import { computeExpenseDeduction, computePartnerExpenses } from '../profitDistribution';
+import type { Expense } from '../../types';
 
 describe('computeExpenseDeduction', () => {
   // ── null profit (profit not assigned) ────────────────────────────
@@ -86,5 +87,50 @@ describe('computeExpenseDeduction', () => {
     expect(result.netCapitalReturn).toBe(0);
     expect(result.netProfit).toBeNull();
     expect(result.fromCapital).toBe(0);
+  });
+});
+
+// ─── Helper factory ───────────────────────────────────────────────────────────
+function makeExpense(overrides: Partial<Expense> = {}): Expense {
+  return {
+    id: 'EX1', date: '2024-01-01', categoryId: 'cat1', description: '',
+    amount: 100, bankAccountId: 'bank1', shipmentId: 'ship1', notes: '',
+    ...overrides,
+  };
+}
+
+describe('computePartnerExpenses', () => {
+  it('sums expenses attributed to the matching partner + shipment', () => {
+    const expenses: Expense[] = [
+      makeExpense({ id: 'EX1', shipmentId: 'S1', partnerId: 'P1', amount: 500 }),
+      makeExpense({ id: 'EX2', shipmentId: 'S1', partnerId: 'P1', amount: 300 }),
+    ];
+    expect(computePartnerExpenses(expenses, 'S1', 'P1')).toBe(800);
+  });
+
+  it('returns 0 when no expenses are attributed to that partner', () => {
+    const expenses: Expense[] = [
+      makeExpense({ id: 'EX1', shipmentId: 'S1', partnerId: 'P2', amount: 500 }),
+    ];
+    expect(computePartnerExpenses(expenses, 'S1', 'P1')).toBe(0);
+  });
+
+  it('does not count expenses from a different shipment', () => {
+    const expenses: Expense[] = [
+      makeExpense({ id: 'EX1', shipmentId: 'S2', partnerId: 'P1', amount: 500 }),
+    ];
+    expect(computePartnerExpenses(expenses, 'S1', 'P1')).toBe(0);
+  });
+
+  it('ignores unattributed expenses (no partnerId)', () => {
+    const expenses: Expense[] = [
+      makeExpense({ id: 'EX1', shipmentId: 'S1', partnerId: undefined, amount: 1000 }),
+      makeExpense({ id: 'EX2', shipmentId: 'S1', partnerId: 'P1', amount: 200 }),
+    ];
+    expect(computePartnerExpenses(expenses, 'S1', 'P1')).toBe(200);
+  });
+
+  it('returns 0 for empty array', () => {
+    expect(computePartnerExpenses([], 'S1', 'P1')).toBe(0);
   });
 });

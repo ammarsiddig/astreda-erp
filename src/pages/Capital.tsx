@@ -28,9 +28,7 @@ const fmtSDG = (v: number) =>
 function getPartnerContributionStats(contributions: CapitalContribution[], partnerId: string) {
   const partnerContributions = contributions.filter(c => c.partnerId === partnerId);
   const capital = partnerContributions.reduce((sum, c) => sum + c.amountSAR, 0);
-  const rateEntry = partnerContributions.filter(c => c.profitRate != null).slice(-1)[0];
-  const profitRate = rateEntry?.profitRate ?? null;
-  return { capital, profitRate };
+  return { capital };
 }
 
 export default function Capital() {
@@ -46,7 +44,6 @@ export default function Capital() {
   const [contribAmountSAR, setContribAmountSAR] = useState<number | ''>('');
   const [contribDate, setContribDate] = useState(getCurrentDateInputValue());
   const [contribNotes, setContribNotes] = useState('');
-  const [contribProfitRate, setContribProfitRate] = useState<number | ''>('');
   const [capitalView, setCapitalView] = useState<'cards' | 'table'>('cards');
   const [expandedPartnerIds, setExpandedPartnerIds] = useState<Set<string>>(new Set());
   const toggleExpanded = (id: string) => {
@@ -63,7 +60,7 @@ export default function Capital() {
   const [drawSplits, setDrawSplits] = useState<{ bankAccountId: string; amount: number }[]>([{ bankAccountId: '', amount: 0 }]);
 
   // ─── Profit distribution state ────────────────────────────────
-  const [profitDraft, setProfitDraft] = useState<Record<string, { profit: string; expenses: string }>>({});
+  const [profitDraft, setProfitDraft] = useState<Record<string, { profit: string }>>({});
   const [distAddPartnerId, setDistAddPartnerId] = useState('');
 
   const activeShipment = state.shipments.find(s => s.id === activeShipmentId);
@@ -100,14 +97,28 @@ export default function Capital() {
     [state.manualProfitDistributions, activeShipmentId]
   );
 
+  // Auto-calculated expenses per partner from real expense records for the active shipment.
+  // Only expenses that explicitly carry a partnerId are counted — no silent attribution.
+  const expensesByPartner = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (!activeShipmentId) return map;
+    state.expenses.forEach(e => {
+      if (e.shipmentId === activeShipmentId && e.partnerId) {
+        map[e.partnerId] = (map[e.partnerId] ?? 0) + e.amount;
+      }
+    });
+    return map;
+  }, [state.expenses, activeShipmentId]);
+
   // Which partners to show in the distribution editor
   const distDisplayPartnerIds = useMemo(() => {
     const ids = new Set<string>();
     state.partners.filter(p => (capitalReturnByPartner[p.id] ?? 0) > 0).forEach(p => ids.add(p.id));
+    state.partners.filter(p => (expensesByPartner[p.id] ?? 0) > 0).forEach(p => ids.add(p.id));
     (savedDist?.entries || []).forEach(e => ids.add(e.partnerId));
     Object.keys(profitDraft).forEach(id => ids.add(id));
     return ids;
-  }, [state.partners, capitalReturnByPartner, savedDist, profitDraft]);
+  }, [state.partners, capitalReturnByPartner, expensesByPartner, savedDist, profitDraft]);
 
   const finalDistPartners = useMemo(() =>
     state.partners.filter(p => distDisplayPartnerIds.has(p.id)),
@@ -126,7 +137,7 @@ export default function Capital() {
       partner,
       ...getPartnerContributionStats(contributions, partner.id),
     }));
-    return partnerList.map(({ partner, capital, profitRate }) => {
+    return partnerList.map(({ partner, capital }) => {
       const returned = capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).reduce((s, t) => s + t.amountSAR, 0);
       const remainingCapital = Math.max(0, capital - returned);
       const capitalStatus: 'returned' | 'pending' = remainingCapital === 0 ? 'returned' : 'pending';
@@ -134,7 +145,7 @@ export default function Capital() {
         ...contributions.filter(c => c.partnerId === partner.id).map(c => ({ id: c.id, date: c.date, type: 'مساهمة' as const, sar: c.amountSAR, sdg: 0, desc: c.notes || 'مساهمة رأس مال', original: c })),
         ...capitalReturns.filter(t => t.beneficiaryPartnerId === partner.id).map(t => ({ id: t.id, date: t.date, type: 'إرجاع' as const, sar: -t.amountSAR, sdg: t.amountSDG, desc: t.description || '-', original: undefined })),
       ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      return { partner, capital, profitRate, returned, remainingCapital, capitalStatus, transactions };
+      return { partner, capital, returned, remainingCapital, capitalStatus, transactions };
     });
   }, [activeShipmentId, contributions, capitalReturns, state.partners]);
 
@@ -169,7 +180,6 @@ export default function Capital() {
     setContribAmountSAR('');
     setContribDate(getCurrentDateInputValue());
     setContribNotes('');
-    setContribProfitRate('');
     setEditingContribId(null);
   };
   const handleSaveContribution = (e: React.FormEvent) => {
@@ -180,7 +190,7 @@ export default function Capital() {
       updateState({
         capitalContributions: (state.capitalContributions || []).map(c => 
           c.id === editingContribId
-            ? { ...c, partnerId: contribPartnerId, amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined, profitRate: contribProfitRate !== '' ? Number(contribProfitRate) : undefined }
+            ? { ...c, partnerId: contribPartnerId, amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined }
             : c
         )
       });
@@ -189,7 +199,6 @@ export default function Capital() {
         id: generateId('CC', state.capitalContributions || []),
         partnerId: contribPartnerId, shipmentId: activeShipmentId,
         amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined,
-        profitRate: contribProfitRate !== '' ? Number(contribProfitRate) : undefined,
       };
       updateState({ capitalContributions: [...(state.capitalContributions || []), newContrib] });
     }
@@ -202,7 +211,6 @@ export default function Capital() {
     setContribAmountSAR(c.amountSAR);
     setContribDate(c.date);
     setContribNotes(c.notes || '');
-    setContribProfitRate(c.profitRate ?? '');
     setShowContribModal(true);
   };
 
@@ -302,22 +310,21 @@ export default function Capital() {
     const draft = profitDraft[partnerId];
     return {
       profit: draft?.profit !== undefined ? draft.profit : (saved?.profit != null ? String(saved.profit) : ''),
-      expenses: draft?.expenses !== undefined ? draft.expenses : (saved?.expenses != null ? String(saved.expenses) : '0'),
     };
   };
 
-  const handleDistDraftChange = (partnerId: string, field: 'profit' | 'expenses', value: string) => {
+  const handleDistDraftChange = (partnerId: string, value: string) => {
     if (!hasWriteAccess) return;
     setProfitDraft(prev => ({
       ...prev,
-      [partnerId]: { ...{ profit: '', expenses: '0', ...prev[partnerId] }, [field]: value },
+      [partnerId]: { profit: value },
     }));
   };
 
   const handleAddDistPartner = () => {
     if (!distAddPartnerId) return;
     if (!profitDraft[distAddPartnerId]) {
-      setProfitDraft(prev => ({ ...prev, [distAddPartnerId]: { profit: '', expenses: '0' } }));
+      setProfitDraft(prev => ({ ...prev, [distAddPartnerId]: { profit: '' } }));
     }
     setDistAddPartnerId('');
   };
@@ -328,11 +335,12 @@ export default function Capital() {
       ...(savedDist?.entries.map(e => e.partnerId) ?? []),
       ...Object.keys(profitDraft),
       ...state.partners.filter(p => (capitalReturnByPartner[p.id] ?? 0) > 0).map(p => p.id),
+      ...state.partners.filter(p => (expensesByPartner[p.id] ?? 0) > 0).map(p => p.id),
     ]);
     const entries: ManualProfitEntry[] = Array.from(partnerIds).map(pid => {
       const d = getDistEntryDraft(pid);
       const profitVal = d.profit.trim() === '' ? null : Number(d.profit);
-      const expensesVal = Number(d.expenses) || 0;
+      const expensesVal = expensesByPartner[pid] ?? 0;
       const capReturn = capitalReturnByPartner[pid] ?? 0;
       return { partnerId: pid, capitalReturn: capReturn, expenses: expensesVal, profit: profitVal };
     }).filter(e => e.capitalReturn > 0 || e.profit != null || e.expenses > 0);
@@ -467,7 +475,6 @@ export default function Capital() {
                     <div className="px-4 py-3 space-y-3 text-sm">
                       <div className="space-y-1.5">
                         <div className="flex justify-between"><span className="text-slate-500">رأس المال</span><span className="font-semibold">{fmtSAR(d.capital)}</span></div>
-                        {d.profitRate != null && <div className="flex justify-between"><span className="text-slate-500">معدل الربح</span><span className="font-semibold text-blue-600">{d.profitRate}%</span></div>}
                         <div className="flex justify-between"><span className="text-slate-500">المُرجَع</span><span className="font-semibold">{fmtSAR(d.returned)}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">متبقي رأس المال</span>
                           <span className={`font-bold ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{fmtSAR(d.remainingCapital)}</span></div>
@@ -641,7 +648,7 @@ export default function Capital() {
                   const d = getDistEntryDraft(partner.id);
                   const capReturn = capitalReturnByPartner[partner.id] ?? 0;
                   const profitNum = d.profit.trim() === '' ? null : Number(d.profit);
-                  const expensesNum = Number(d.expenses) || 0;
+                  const expensesNum = expensesByPartner[partner.id] ?? 0;
                   const calc = computeExpenseDeduction(capReturn, profitNum, expensesNum);
                   return (
                     <div key={partner.id} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
@@ -656,7 +663,7 @@ export default function Capital() {
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">الربح (SAR)</label>
                           <input type="number" min="0" step="0.01" value={d.profit}
-                            onChange={e => handleDistDraftChange(partner.id, 'profit', e.target.value)}
+                            onChange={e => handleDistDraftChange(partner.id, e.target.value)}
                             placeholder="اتركه فارغاً إن لم يُحدَّد"
                             disabled={!hasWriteAccess}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-sm outline-none disabled:bg-slate-100 disabled:cursor-not-allowed" />
@@ -664,10 +671,9 @@ export default function Capital() {
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">المصاريف (SAR)</label>
-                          <input type="number" min="0" step="0.01" value={d.expenses}
-                            onChange={e => handleDistDraftChange(partner.id, 'expenses', e.target.value)}
-                            disabled={!hasWriteAccess}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-sm outline-none disabled:bg-slate-100 disabled:cursor-not-allowed" />
+                          <input type="number" readOnly value={expensesByPartner[partner.id] ?? 0}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-500 cursor-not-allowed text-sm outline-none" />
+                          <p className="text-xs text-slate-400 mt-0.5">من سجل المصروفات</p>
                         </div>
                       </div>
                       <div className={`rounded-lg p-3 text-xs space-y-1.5 border ${calc.fromCapital > 0 ? 'bg-amber-50 border-amber-200' : 'bg-[#f0fdfa] border-[#99f6e4]'}`}>
@@ -886,21 +892,6 @@ export default function Capital() {
             <label className="block text-sm font-medium text-slate-700 mb-1">ملاحظات</label>
             <input type="text" value={contribNotes} onChange={e => setContribNotes(e.target.value)}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] outline-none" placeholder="اختياري" />
-          </div>
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
-            <div className="flex items-center gap-2">
-              <label className="block text-sm font-semibold text-blue-800">نسبة الربح الخاصة (%)</label>
-              <span className="text-xs text-blue-600">اختياري — لتحديد معدل ربح مختلف عن نسبة رأس ماله</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="number" min="0" max="100" step="0.01" value={contribProfitRate}
-                onChange={e => setContribProfitRate(e.target.value ? Number(e.target.value) : '')}
-                className="w-28 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-                placeholder="مثال: 3" />
-              <span className="text-sm text-blue-700">%</span>
-              {contribProfitRate !== '' && <span className="text-xs text-blue-600">→ الربح = رأس مال × {contribProfitRate}%</span>}
-            </div>
-            <p className="text-xs text-blue-500">إذا تركت فارغاً سيتم توزيع الأرباح حسب نسبة رأس المال (الطريقة الافتراضية)</p>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => { setShowContribModal(false); resetContribForm(); }}

@@ -37,6 +37,7 @@ export default function Expenses() {
   const [amount, setAmount] = useState<number | ''>('');
   const [bankAccountId, setBankAccountId] = useState('');
   const [notes, setNotes] = useState('');
+  const [expensePartnerId, setExpensePartnerId] = useState('');
 
   const filteredExpenses = useMemo(() => {
     return state.expenses.filter(e => {
@@ -67,6 +68,7 @@ export default function Expenses() {
       bankAccountId,
       shipmentId: activeShipmentId,
       notes,
+      ...(expensePartnerId ? { partnerId: expensePartnerId } : {}),
     };
 
     let newLedger = [...state.ledger];
@@ -110,6 +112,7 @@ export default function Expenses() {
     setBankAccountId('');
     setNotes('');
     setDate(getCurrentDateInputValue());
+    setExpensePartnerId('');
   };
 
   const openEditModal = (expense: Expense) => {
@@ -118,6 +121,7 @@ export default function Expenses() {
     setAmount(expense.amount);
     setBankAccountId(expense.bankAccountId);
     setNotes(expense.notes || '');
+    setExpensePartnerId(expense.partnerId || '');
     setShowEditModal(expense);
   };
 
@@ -369,6 +373,15 @@ export default function Expenses() {
               />
             </div>
             <div className="col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1">الشريك المسؤول <span className="text-slate-400 font-normal">(اختياري — لتوزيع الأرباح)</span></label>
+              <SearchableSelect
+                value={expensePartnerId}
+                onChange={setExpensePartnerId}
+                options={[{ value: '', label: 'غير مُحدَّد' }, ...state.partners.map(p => ({ value: p.id, label: p.name }))]}
+                placeholder="اختر شريكاً..."
+              />
+            </div>
+            <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none resize-none h-20"
@@ -414,6 +427,12 @@ export default function Expenses() {
                 <label className="block text-xs font-medium text-slate-500">{t('bankAccount')}</label>
                 <p className="font-medium">{state.bankAccounts.find(b => b.id === showViewModal.bankAccountId)?.name}</p>
               </div>
+              {showViewModal.partnerId && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-500">الشريك المسؤول</label>
+                  <p className="font-medium">{state.partners.find(p => p.id === showViewModal.partnerId)?.name || '-'}</p>
+                </div>
+              )}
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500">{t('notes')}</label>
                 <p className="font-medium">{showViewModal.notes || '-'}</p>
