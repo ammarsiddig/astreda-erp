@@ -7,9 +7,11 @@ import { setWaitingRegistration } from './lib/appUpdate';
 const BUILD_VERSION = '2026-04-14-hard-refresh-1';
 const BUILD_VERSION_STORAGE_KEY = 'astreda_build_version';
 
-// Lazy-load migration script â€” only needed when called from console
+// Lazy-load migration script — only needed when called from console
 if (typeof window !== 'undefined') {
   (window as any).__loadMigration = () => import('./scripts/migrateToSupabase');
+  // One-time Shipment15 reset — use from DevTools: window.resetShipment15({ dryRun: true })
+  (window as any).__loadResetShipment15 = () => import('./scripts/resetShipment15');
 }
 
 async function enforceLatestBuild(): Promise<void> {
