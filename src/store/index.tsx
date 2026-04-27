@@ -293,20 +293,29 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
   const deletedIds: string[] = [];
   const changedFields = new Set<string>();
 
+  let firstBefore: Record<string, unknown> | undefined;
+  let firstAfter: Record<string, unknown> | undefined;
+
   for (const [id, nextItem] of nextMap) {
     const previousItem = previousMap.get(id);
     if (!previousItem) {
       addedIds.push(id);
+      if (!firstAfter) firstAfter = nextItem as Record<string, unknown>;
       continue;
     }
     if (JSON.stringify(previousItem) !== JSON.stringify(nextItem)) {
       updatedIds.push(id);
       collectChangedFields(previousItem, nextItem).forEach((field) => changedFields.add(field));
+      if (!firstBefore) firstBefore = previousItem as Record<string, unknown>;
+      if (!firstAfter) firstAfter = nextItem as Record<string, unknown>;
     }
   }
 
   for (const id of previousMap.keys()) {
-    if (!nextMap.has(id)) deletedIds.push(id);
+    if (!nextMap.has(id)) {
+      deletedIds.push(id);
+      if (!firstBefore) firstBefore = previousMap.get(id) as Record<string, unknown>;
+    }
   }
 
   if (addedIds.length === 0 && updatedIds.length === 0 && deletedIds.length === 0) return null;
@@ -317,6 +326,8 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
     updatedIds: updatedIds.slice(0, AUDIT_ID_LIMIT),
     deletedIds: deletedIds.slice(0, AUDIT_ID_LIMIT),
     changedFields: Array.from(changedFields),
+    before: firstBefore,
+    after: firstAfter,
   };
 }
 

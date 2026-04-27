@@ -268,6 +268,10 @@ export interface AuditLogDetail {
   updatedIds: string[];
   deletedIds: string[];
   changedFields: string[];
+  /** Snapshot of the first affected record before the change (update/delete). Optional for backward-compat. */
+  before?: Record<string, unknown>;
+  /** Snapshot of the first affected record after the change (create/update). Optional for backward-compat. */
+  after?: Record<string, unknown>;
 }
 
 export interface AuditLogEntry {
