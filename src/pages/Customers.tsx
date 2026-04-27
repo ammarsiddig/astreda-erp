@@ -32,6 +32,8 @@ export default function Customers() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterCity, setFilterCity] = useState('');
+  const [filterSalesperson, setFilterSalesperson] = useState('');
 
   // Form State
   const [name, setName] = useState('');
@@ -65,10 +67,11 @@ export default function Customers() {
         salespersonName
       };
     }).filter(c =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phone.includes(searchQuery)
+      (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.phone.includes(searchQuery)) &&
+      (!filterCity || c.cityId === filterCity) &&
+      (!filterSalesperson || c.salespersonId === filterSalesperson)
     );
-  }, [state.customers, searchQuery, isSpRole, currentUser, state.invoices, state.payments, state.cities, state.salespeople, activeShipmentId]);
+  }, [state.customers, searchQuery, filterCity, filterSalesperson, isSpRole, currentUser, state.invoices, state.payments, state.cities, state.salespeople, activeShipmentId]);
 
   const { items: sortedCustomers, requestSort, sortConfig } = useSortableData(customersWithStats, { key: 'name', direction: 'asc' });
 
@@ -167,7 +170,7 @@ export default function Customers() {
         </button>}
       </div>
 
-      {/* Search & Sort Toolbar */}
+      {/* Search & Filter Toolbar */}
       <div className="bg-white p-4 rounded-xl shadow-modern glass border-slate-200 flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative max-w-md flex-1">
           <Search className="absolute top-1/2 -translate-y-1/2 left-3 rtl:right-3 rtl:left-auto w-5 h-5 text-slate-400"/>
@@ -189,7 +192,29 @@ export default function Customers() {
           </select>
         </div>
       </div>
-
+      {/* City & Salesperson Filters */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">{t('city')}</label>
+          <SearchableSelect
+            value={filterCity}
+            onChange={(val) => setFilterCity(val)}
+            options={[{ value: '', label: t('all') }, ...state.cities.map(c => ({ value: c.id, label: c.name }))]}
+            placeholder={t('all')}
+          />
+        </div>
+        {!isSpRole && (
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t('salesperson')}</label>
+            <SearchableSelect
+              value={filterSalesperson}
+              onChange={(val) => setFilterSalesperson(val)}
+              options={[{ value: '', label: t('all') }, ...state.salespeople.map(s => ({ value: s.id, label: s.name }))]}
+              placeholder={t('all')}
+            />
+          </div>
+        )}
+      </div>
       {/* Bulk-selection toolbar */}
       {hasWriteAccess && selectedIds.size > 0 && (
         <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">

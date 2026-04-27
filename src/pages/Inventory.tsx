@@ -35,6 +35,8 @@ export default function Inventory() {
   const [selectedStockRowId, setSelectedStockRowId] = useState<string | null>(null);
   const [selectedLogRowId, setSelectedLogRowId] = useState<string | null>(null);
   const [selectedLogIds, setSelectedLogIds] = useState<Set<string>>(new Set());
+  const [filterLogProduct, setFilterLogProduct] = useState('');
+  const [filterLogType, setFilterLogType] = useState('');
   const [showBulkDeleteLogConfirm, setShowBulkDeleteLogConfirm] = useState(false);
 
   // Receive Stock State
@@ -247,10 +249,22 @@ export default function Inventory() {
     setShowDeleteConfirm(null);
   };
 
+  const filteredLogs = useMemo(() =>
+    state.inventoryTransactions
+      .filter(t => {
+        if (t.shipmentId !== activeShipmentId) return false;
+        if (filterLogProduct && t.productId !== filterLogProduct) return false;
+        if (filterLogType && t.type !== filterLogType) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [state.inventoryTransactions, activeShipmentId, filterLogProduct, filterLogType]
+  );
+
   const toggleSelectLog = (id: string) => {
     setSelectedLogIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
-  const visibleLogIds = state.inventoryTransactions.filter(t => t.shipmentId === activeShipmentId).map(t => t.id);
+  const visibleLogIds = filteredLogs.map(t => t.id);
   const allLogsSelected = visibleLogIds.length > 0 && visibleLogIds.every(id => selectedLogIds.has(id));
   const toggleSelectAllLogs = () => {
     if (allLogsSelected) setSelectedLogIds(new Set());
@@ -627,7 +641,7 @@ export default function Inventory() {
       {/* Transfer Log */}
       <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-hidden mt-8">
         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <h2 className="text-lg font-semibold text-slate-800">سجل التحويلات / Transfer Log</h2>
             {hasWriteAccess && selectedLogIds.size > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
@@ -638,13 +652,35 @@ export default function Inventory() {
               </div>
             )}
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('product')}</label>
+              <SearchableSelect
+                value={filterLogProduct}
+                onChange={(val) => setFilterLogProduct(val)}
+                options={[{ value: '', label: t('all') }, ...state.products.map(p => ({ value: p.id, label: p.name }))]}
+                placeholder={t('all')}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">نوع العملية</label>
+              <select value={filterLogType} onChange={(e) => setFilterLogType(e.target.value)}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
+              >
+                <option value="">{t('all')}</option>
+                <option value="receive">استلام بضاعة</option>
+                <option value="load">تحميل على سيارة</option>
+                <option value="transfer">نقل بين سيارات</option>
+                <option value="return">إرجاع</option>
+                <option value="sell">بيع</option>
+                <option value="shipment_transfer">نقل بين شحنات</option>
+              </select>
+            </div>
+          </div>
         </div>
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
-          {state.inventoryTransactions
-            .filter(t => t.shipmentId === activeShipmentId)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .map(log => (
+          {filteredLogs.map(log => (
               <div key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedLogIds.has(log.id) ? 'bg-red-50' : selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                 {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedLogIds.has(log.id)} onChange={() => toggleSelectLog(log.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
                 <div className="flex justify-between items-start gap-2">
@@ -684,7 +720,7 @@ export default function Inventory() {
                 </div>
               </div>
             ))}
-          {state.inventoryTransactions.filter(t => t.shipmentId === activeShipmentId).length === 0 && (
+          {filteredLogs.length === 0 && (
             <p className="px-4 py-8 text-center text-slate-400 text-sm">{t('noData')}</p>
           )}
         </div>
@@ -704,10 +740,7 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {state.inventoryTransactions
-                .filter(t => t.shipmentId === activeShipmentId)
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map(log => (
+              {filteredLogs.map(log => (
                   <tr key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`transition-colors cursor-pointer ${selectedLogIds.has(log.id) ? 'bg-red-50' : selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
                     {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedLogIds.has(log.id)} onChange={() => toggleSelectLog(log.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy HH:mm')}</td>
