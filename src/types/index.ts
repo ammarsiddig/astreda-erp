@@ -239,6 +239,27 @@ export interface SettlementResult {
   investorProfits: { partnerId: string; profit: number }[];
 }
 
+// ─── Manual Profit Distribution ──────────────────────────────────
+/**
+ * A single person's manual profit distribution entry for a shipment.
+ * `profit` is null/undefined when the user has not assigned any profit.
+ */
+export interface ManualProfitEntry {
+  partnerId: string;
+  capitalReturn: number;   // SAR — from capital-return transactions
+  expenses: number;        // SAR — expenses attributed to this person
+  profit: number | null;   // SAR — manually entered; null = not assigned
+}
+
+/**
+ * The full manual profit distribution record for one shipment.
+ */
+export interface ManualProfitDistribution {
+  shipmentId: string;
+  savedAt: string;
+  entries: ManualProfitEntry[];
+}
+
 export interface ShipmentTransferLine {
   productId: string;
   qty: number;
@@ -300,6 +321,7 @@ export interface AppState {
   savedSettlements: SavedSettlement[];
   capitalContributions: CapitalContribution[];
   settlementResults: { [shipmentId: string]: SettlementResult };
+  manualProfitDistributions: ManualProfitDistribution[];
   shipmentTransfers: ShipmentTransfer[];
   auditLogs: AuditLogEntry[];
   roles: Role[];

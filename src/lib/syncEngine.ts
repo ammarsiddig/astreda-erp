@@ -206,6 +206,17 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     }),
   },
   {
+    table: 'manual_profit_distributions', stateKey: 'manualProfitDistributions', pkField: 'shipment_id',
+    toRow: (d) => ({
+      shipment_id: d.shipmentId, saved_at: d.savedAt,
+      entries: JSON.stringify(d.entries),
+    }),
+    fromRow: (row) => ({
+      shipmentId: row.shipment_id, savedAt: row.saved_at,
+      entries: typeof row.entries === 'string' ? JSON.parse(row.entries) : (row.entries ?? []),
+    }),
+  },
+  {
     table: 'audit_logs', stateKey: 'auditLogs',
     toRow: (entry) => ({
       id: entry.id,

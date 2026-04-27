@@ -230,6 +230,7 @@ const initialState: AppState = {
   savedSettlements: [],
   capitalContributions: [],
   settlementResults: {},
+  manualProfitDistributions: [],
   shipmentTransfers: [],
   auditLogs: [],
   roles: DEFAULT_ROLES,
@@ -270,7 +271,7 @@ const NON_AUDITABLE_KEYS = new Set<keyof AppState>(['currentUser', 'auditLogs', 
 const AUDIT_ID_LIMIT = 10;
 
 function getAuditPk(key: keyof AppState, item: any): string {
-  if (key === 'savedSettlements') return String(item.shipmentId);
+  if (key === 'savedSettlements' || key === 'manualProfitDistributions') return String(item.shipmentId);
   return String(item.id ?? item.shipmentId ?? JSON.stringify(item));
 }
 
