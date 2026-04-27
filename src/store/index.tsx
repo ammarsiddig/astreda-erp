@@ -278,10 +278,10 @@ function collectChangedFields(previousValue: any, nextValue: any): string[] {
     ...Object.keys(previousValue ?? {}),
     ...Object.keys(nextValue ?? {}),
   ]);
-  const changed = Array.from(keys).filter((key) =>
+  // No cap — we want all changed fields so snapshots render complete diffs
+  return Array.from(keys).filter((key) =>
     JSON.stringify(previousValue?.[key]) !== JSON.stringify(nextValue?.[key])
   );
-  return changed.slice(0, AUDIT_ID_LIMIT);
 }
 
 function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextValue: any[]): AuditLogDetail | null {
@@ -292,33 +292,57 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
   const updatedIds: string[] = [];
   const deletedIds: string[] = [];
   const changedFields = new Set<string>();
-
-  let firstBefore: Record<string, unknown> | undefined;
-  let firstAfter: Record<string, unknown> | undefined;
+  const snapshots: Record<string, { before?: Record<string, unknown>; after?: Record<string, unknown> }> = {};
 
   for (const [id, nextItem] of nextMap) {
     const previousItem = previousMap.get(id);
     if (!previousItem) {
       addedIds.push(id);
-      if (!firstAfter) firstAfter = nextItem as Record<string, unknown>;
+      // Store snapshot for every added record up to the limit
+      if (addedIds.length <= AUDIT_ID_LIMIT) {
+        snapshots[id] = { after: nextItem as Record<string, unknown> };
+      }
       continue;
     }
     if (JSON.stringify(previousItem) !== JSON.stringify(nextItem)) {
       updatedIds.push(id);
       collectChangedFields(previousItem, nextItem).forEach((field) => changedFields.add(field));
-      if (!firstBefore) firstBefore = previousItem as Record<string, unknown>;
-      if (!firstAfter) firstAfter = nextItem as Record<string, unknown>;
+      // Store full before+after snapshot for every updated record up to the limit
+      if (updatedIds.length <= AUDIT_ID_LIMIT) {
+        snapshots[id] = {
+          before: previousItem as Record<string, unknown>,
+          after: nextItem as Record<string, unknown>,
+        };
+      }
     }
   }
 
   for (const id of previousMap.keys()) {
     if (!nextMap.has(id)) {
       deletedIds.push(id);
-      if (!firstBefore) firstBefore = previousMap.get(id) as Record<string, unknown>;
+      // Store full before snapshot for every deleted record up to the limit
+      if (deletedIds.length <= AUDIT_ID_LIMIT) {
+        snapshots[id] = { before: previousMap.get(id) as Record<string, unknown> };
+      }
     }
   }
 
   if (addedIds.length === 0 && updatedIds.length === 0 && deletedIds.length === 0) return null;
+
+  // Derive first before/after for legacy UI compat
+  const firstUpdateId = updatedIds[0];
+  const firstDeleteId = deletedIds[0];
+  const firstAddId = addedIds[0];
+  const firstBefore = firstUpdateId
+    ? snapshots[firstUpdateId]?.before
+    : firstDeleteId
+    ? snapshots[firstDeleteId]?.before
+    : undefined;
+  const firstAfter = firstUpdateId
+    ? snapshots[firstUpdateId]?.after
+    : firstAddId
+    ? snapshots[firstAddId]?.after
+    : undefined;
 
   return {
     stateKey: String(key),
@@ -326,6 +350,7 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
     updatedIds: updatedIds.slice(0, AUDIT_ID_LIMIT),
     deletedIds: deletedIds.slice(0, AUDIT_ID_LIMIT),
     changedFields: Array.from(changedFields),
+    snapshots,
     before: firstBefore,
     after: firstAfter,
   };
@@ -367,12 +392,18 @@ function buildObjectAuditDetail(key: keyof AppState, previousValue: Record<strin
 
 function buildScalarAuditDetail(key: keyof AppState, previousValue: unknown, nextValue: unknown): AuditLogDetail | null {
   if (JSON.stringify(previousValue) === JSON.stringify(nextValue)) return null;
+  const before: Record<string, unknown> = { [String(key)]: previousValue };
+  const after: Record<string, unknown> = { [String(key)]: nextValue };
   return {
     stateKey: String(key),
     addedIds: [],
     updatedIds: [],
     deletedIds: [],
     changedFields: [String(key)],
+    before,
+    after,
+    // '_' is the conventional key for scalar (non-array) changes
+    snapshots: { _: { before, after } },
   };
 }
 

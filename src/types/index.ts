@@ -268,9 +268,15 @@ export interface AuditLogDetail {
   updatedIds: string[];
   deletedIds: string[];
   changedFields: string[];
-  /** Snapshot of the first affected record before the change (update/delete). Optional for backward-compat. */
+  /**
+   * Full per-record snapshots keyed by record ID.
+   * Only present on entries created after full-snapshot support was added.
+   * Key '_' is used for scalar (non-array) state changes.
+   */
+  snapshots?: Record<string, { before?: Record<string, unknown>; after?: Record<string, unknown> }>;
+  /** Legacy compat: snapshot of first affected record before change. */
   before?: Record<string, unknown>;
-  /** Snapshot of the first affected record after the change (create/update). Optional for backward-compat. */
+  /** Legacy compat: snapshot of first affected record after change. */
   after?: Record<string, unknown>;
 }
 

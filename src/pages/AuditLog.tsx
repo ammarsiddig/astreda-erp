@@ -109,134 +109,223 @@ export default function AuditLog() {
     </div>
   );
 
+  const renderFieldValue = (value: unknown): React.ReactNode => {
+    if (value === null || value === undefined)
+      return <span className="text-slate-400 italic">—</span>;
+    if (typeof value === 'boolean')
+      return <span className={value ? 'text-emerald-700' : 'text-rose-700'}>{value ? 'نعم' : 'لا'}</span>;
+    if (typeof value === 'object')
+      return (
+        <pre className="text-xs font-mono whitespace-pre-wrap break-all text-slate-600 bg-slate-100 rounded p-1.5 max-h-24 overflow-auto leading-relaxed">
+          {JSON.stringify(value, null, 2)}
+        </pre>
+      );
+    return <span className="break-all">{String(value)}</span>;
+  };
+
+  const renderRecordTable = (record: Record<string, unknown>, headerBg: string, headerColor: string) => (
+    <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className={headerBg}>
+            <th className="text-right px-3 py-2 font-semibold text-slate-600 w-2/5 border-b border-slate-200">{t('fieldName')}</th>
+            <th className={`text-right px-3 py-2 font-semibold ${headerColor} w-3/5 border-b border-slate-200`}>{t('value')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(record).map(([field, val]) => (
+            <tr key={field} className="odd:bg-white even:bg-slate-50/50">
+              <td className="px-3 py-2 font-mono text-xs text-slate-600 border-b border-slate-100 align-top">{field}</td>
+              <td className="px-3 py-2 border-b border-slate-100 align-top">{renderFieldValue(val)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderDiffTable = (before: Record<string, unknown>, after: Record<string, unknown>): React.ReactNode => {
+    const allKeys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+    const changedKeys = allKeys.filter(k => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+    if (changedKeys.length === 0)
+      return <p className="text-xs text-slate-400 italic">{t('noDetails')}</p>;
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="bg-slate-50">
+              <th className="text-right px-3 py-2 font-semibold text-slate-600 w-1/4 border-b border-slate-200">{t('fieldName')}</th>
+              <th className="text-right px-3 py-2 font-semibold text-rose-600 w-[37.5%] border-b border-slate-200">{t('oldValue')}</th>
+              <th className="text-right px-3 py-2 font-semibold text-emerald-600 w-[37.5%] border-b border-slate-200">{t('newValue')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {changedKeys.map(field => (
+              <tr key={field} className="odd:bg-white even:bg-slate-50/50">
+                <td className="px-3 py-2 font-mono text-xs font-bold text-slate-800 border-b border-slate-100 align-top">{field}</td>
+                <td className="px-3 py-2 text-rose-700 border-b border-slate-100 align-top">{renderFieldValue(before[field])}</td>
+                <td className="px-3 py-2 text-emerald-700 border-b border-slate-100 align-top">{renderFieldValue(after[field])}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const renderDetailSection = (detail: AuditLogDetail) => {
     const moduleLabel = getModuleLabel(detail.stateKey);
-    const hasBefore = !!detail.before;
-    const hasAfter = !!detail.after;
-    const isUpdate = (detail.updatedIds.length > 0) && hasBefore && hasAfter;
-    const isCreate = (detail.addedIds.length > 0) && hasAfter && !hasBefore;
-    const isDelete = (detail.deletedIds.length > 0) && hasBefore && !hasAfter;
-
-    const allIds = [
-      ...detail.addedIds.map(id => ({ id, op: 'add' as const })),
-      ...detail.updatedIds.map(id => ({ id, op: 'edit' as const })),
-      ...detail.deletedIds.map(id => ({ id, op: 'delete' as const })),
-    ];
+    const hasSnapshots = !!detail.snapshots && Object.keys(detail.snapshots).length > 0;
+    const hasLegacyData = !!detail.before || !!detail.after;
+    const updatedSet = new Set(detail.updatedIds);
+    const addedSet = new Set(detail.addedIds);
+    const deletedSet = new Set(detail.deletedIds);
 
     return (
       <div key={detail.stateKey} className="border border-slate-200 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200">
+        {/* Section header */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
           <span className="font-semibold text-slate-800 text-sm">{moduleLabel}</span>
-          <div className="flex items-center gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs">
             {detail.addedIds.length > 0 && (
-              <span className="text-emerald-700">{t('add')} {detail.addedIds.length}</span>
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">{t('add')} {detail.addedIds.length}</span>
             )}
             {detail.updatedIds.length > 0 && (
-              <span className="text-amber-700">{t('edit')} {detail.updatedIds.length}</span>
+              <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{t('edit')} {detail.updatedIds.length}</span>
             )}
             {detail.deletedIds.length > 0 && (
-              <span className="text-rose-700">{t('delete')} {detail.deletedIds.length}</span>
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full">{t('delete')} {detail.deletedIds.length}</span>
             )}
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
-          {isUpdate && (
-            <div>
-              <div className="text-xs font-bold text-slate-500 mb-2">{t('changedFields')}</div>
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-slate-50">
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-slate-600 w-1/3">{t('fieldName')}</th>
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-rose-600 w-1/3">{t('before')}</th>
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-emerald-600 w-1/3">{t('after')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detail.changedFields.map(field => (
-                    <tr key={field} className="odd:bg-white even:bg-slate-50">
-                      <td className="border border-slate-200 px-3 py-2 font-mono text-xs text-slate-700">{field}</td>
-                      <td className="border border-slate-200 px-3 py-2 text-rose-700 break-all">
-                        {detail.before?.[field] !== undefined ? String(detail.before[field]) : '—'}
-                      </td>
-                      <td className="border border-slate-200 px-3 py-2 text-emerald-700 break-all">
-                        {detail.after?.[field] !== undefined ? String(detail.after[field]) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="p-4">
+          {hasSnapshots ? (
+            // ── New entries: full per-record snapshots ──────────────────────
+            <div className="space-y-6">
+              {Object.entries(detail.snapshots!).map(([id, snap], idx) => {
+                const isUpdate = updatedSet.has(id) || id === '_';
+                const isCreate = addedSet.has(id);
+                const isDelete = deletedSet.has(id);
+                return (
+                  <div key={id} className={idx > 0 ? 'pt-5 border-t border-slate-100' : ''}>
+                    {id !== '_' && (
+                      <div className="text-xs text-slate-400 font-mono mb-3">{t('recordId')}: {id}</div>
+                    )}
 
-          {isCreate && (
-            <div>
-              <div className="text-xs font-bold text-emerald-600 mb-2">{t('after')}</div>
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-emerald-50">
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-slate-600 w-1/2">{t('fieldName')}</th>
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-emerald-600 w-1/2">{t('newValue')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(detail.after!).map(([field, value]) => (
-                    <tr key={field} className="odd:bg-white even:bg-slate-50">
-                      <td className="border border-slate-200 px-3 py-2 font-mono text-xs text-slate-700">{field}</td>
-                      <td className="border border-slate-200 px-3 py-2 text-emerald-700 break-all">{String(value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                    {/* UPDATE: old data → new data → diff */}
+                    {isUpdate && snap.before && snap.after && (
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                            {t('oldData')}
+                          </div>
+                          {renderRecordTable(snap.before, 'bg-rose-50', 'text-rose-600')}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                            {t('newData')}
+                          </div>
+                          {renderRecordTable(snap.after, 'bg-emerald-50', 'text-emerald-600')}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                            {t('changedFields')}
+                          </div>
+                          {renderDiffTable(snap.before, snap.after)}
+                        </div>
+                      </div>
+                    )}
 
-          {isDelete && (
-            <div>
-              <div className="text-xs font-bold text-rose-600 mb-2">{t('before')}</div>
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-rose-50">
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-slate-600 w-1/2">{t('fieldName')}</th>
-                    <th className="text-right border border-slate-200 px-3 py-2 font-semibold text-rose-600 w-1/2">{t('oldValue')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(detail.before!).map(([field, value]) => (
-                    <tr key={field} className="odd:bg-white even:bg-slate-50">
-                      <td className="border border-slate-200 px-3 py-2 font-mono text-xs text-slate-700">{field}</td>
-                      <td className="border border-slate-200 px-3 py-2 text-rose-700 break-all">{String(value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                    {/* CREATE: new data only */}
+                    {isCreate && snap.after && (
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 mb-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                          {t('newData')}
+                        </div>
+                        {renderRecordTable(snap.after, 'bg-emerald-50', 'text-emerald-600')}
+                      </div>
+                    )}
 
-          {!isUpdate && !isCreate && !isDelete && (
-            <div className="space-y-2">
-              {allIds.length > 0 ? (
-                <div>
-                  <div className="text-xs font-bold text-slate-500 mb-2">{t('affectedRecords')}</div>
-                  <div className="flex flex-wrap gap-2">
-                    {allIds.map(({ id, op }) => (
-                      <span key={id} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-mono border ${
-                        op === 'add' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        op === 'delete' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                        'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>
-                        {id}
-                      </span>
-                    ))}
+                    {/* DELETE: old data only */}
+                    {isDelete && snap.before && (
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 mb-2">
+                          <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                          {t('oldData')}
+                        </div>
+                        {renderRecordTable(snap.before, 'bg-rose-50', 'text-rose-600')}
+                      </div>
+                    )}
                   </div>
+                );
+              })}
+            </div>
+          ) : hasLegacyData ? (
+            // ── Previous-session entries: first-record only, partial coverage ──
+            <div className="space-y-4">
+              <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                {t('legacyEntry')}
+              </div>
+              {detail.before && (
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                    {t('oldData')}
+                  </div>
+                  {renderRecordTable(detail.before, 'bg-rose-50', 'text-rose-600')}
                 </div>
-              ) : detail.changedFields.length > 0 ? (
-                <div className="text-sm text-slate-600">
+              )}
+              {detail.after && (
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    {t('newData')}
+                  </div>
+                  {renderRecordTable(detail.after, 'bg-emerald-50', 'text-emerald-600')}
+                </div>
+              )}
+              {detail.before && detail.after && (
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                    {t('changedFields')}
+                  </div>
+                  {renderDiffTable(detail.before, detail.after)}
+                </div>
+              )}
+            </div>
+          ) : (
+            // ── Very old entries: no snapshot data at all ──────────────────
+            <div className="space-y-3">
+              <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                {t('legacyEntry')}
+              </div>
+              {[
+                { ids: detail.addedIds, label: t('add'), cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                { ids: detail.updatedIds, label: t('edit'), cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+                { ids: detail.deletedIds, label: t('delete'), cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+              ]
+                .filter(({ ids }) => ids.length > 0)
+                .map(({ ids, label, cls }) => (
+                  <div key={label}>
+                    <div className="text-xs font-bold text-slate-600 mb-1.5">{label}</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ids.map(id => (
+                        <span key={id} className={`inline-flex px-2 py-1 rounded-full text-xs font-mono border ${cls}`}>{id}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              {detail.changedFields.length > 0 && (
+                <div className="text-xs text-slate-600">
                   <span className="font-semibold">{t('changedFields')}: </span>
                   {detail.changedFields.join(', ')}
                 </div>
-              ) : (
-                <div className="text-sm text-slate-400 italic">{t('noDetails')}</div>
               )}
             </div>
           )}
