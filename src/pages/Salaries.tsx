@@ -111,6 +111,10 @@ export default function Salaries() {
   const [showAdvViewModal, setShowAdvViewModal] = useState<Expense | null>(null);
   const [showAdvEditModal, setShowAdvEditModal] = useState<Expense | null>(null);
   const [showAdvDeleteConfirm, setShowAdvDeleteConfirm] = useState<Expense | null>(null);
+  const [selectedSalaryIds, setSelectedSalaryIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteSalaryConfirm, setShowBulkDeleteSalaryConfirm] = useState(false);
+  const [selectedAdvanceIds, setSelectedAdvanceIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteAdvanceConfirm, setShowBulkDeleteAdvanceConfirm] = useState(false);
 
   // New/Edit advance form state
   const [advDate, setAdvDate] = useState(getCurrentDateInputValue());
@@ -288,6 +292,24 @@ export default function Salaries() {
     setShowDeleteConfirm(null);
   };
 
+  const toggleSelectSalary = (id: string) => {
+    setSelectedSalaryIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const allSalariesSelected = sortedSalaries.length > 0 && sortedSalaries.every(s => selectedSalaryIds.has(s.id));
+  const toggleSelectAllSalaries = () => {
+    if (allSalariesSelected) setSelectedSalaryIds(new Set());
+    else setSelectedSalaryIds(new Set(sortedSalaries.map(s => s.id)));
+  };
+  const handleBulkDeleteSalaries = () => {
+    const idsToDelete = selectedSalaryIds;
+    updateState({
+      salaries: state.salaries.filter(s => !idsToDelete.has(s.id)),
+      ledger: state.ledger.filter(l => !idsToDelete.has(l.linkedId)),
+    });
+    setSelectedSalaryIds(new Set());
+    setShowBulkDeleteSalaryConfirm(false);
+  };
+
   // === Advance handlers ===
   const handleSettleAdvance = () => {
     if (!showSettleConfirm) return;
@@ -378,6 +400,24 @@ export default function Salaries() {
       ledger: state.ledger.filter(l => l.linkedId !== showAdvDeleteConfirm.id),
     });
     setShowAdvDeleteConfirm(null);
+  };
+
+  const toggleSelectAdvance = (id: string) => {
+    setSelectedAdvanceIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const allAdvancesSelected = sortedAdvances.length > 0 && sortedAdvances.every(a => selectedAdvanceIds.has(a.id));
+  const toggleSelectAllAdvances = () => {
+    if (allAdvancesSelected) setSelectedAdvanceIds(new Set());
+    else setSelectedAdvanceIds(new Set(sortedAdvances.map(a => a.id)));
+  };
+  const handleBulkDeleteAdvances = () => {
+    const idsToDelete = selectedAdvanceIds;
+    updateState({
+      expenses: state.expenses.filter(e => !idsToDelete.has(e.id)),
+      ledger: state.ledger.filter(l => !idsToDelete.has(l.linkedId)),
+    });
+    setSelectedAdvanceIds(new Set());
+    setShowBulkDeleteAdvanceConfirm(false);
   };
 
   const printOpenAdvances = () => {
@@ -728,6 +768,16 @@ export default function Salaries() {
             </div>
           </div>
 
+          {/* Bulk-selection toolbar */}
+          {hasWriteAccess && selectedSalaryIds.size > 0 && (
+            <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+              <span className="text-sm font-medium text-red-700">{selectedSalaryIds.size} {t('selected')}</span>
+              <button onClick={() => setShowBulkDeleteSalaryConfirm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors">
+                <Trash2 className="w-4 h-4" />{t('deleteSelected')}
+              </button>
+            </div>
+          )}
+
           {/* Salaries Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
           {/* Search & Sort Toolbar for Mobile */}
@@ -750,7 +800,8 @@ export default function Salaries() {
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-slate-100">
               {sortedSalaries.length > 0 ? sortedSalaries.map((salary, idx) => (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedSalaryIds.has(salary.id) ? 'bg-red-50' : selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedSalaryIds.has(salary.id)} onChange={() => toggleSelectSalary(salary.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{state.employees.find(e => e.id === salary.employeeId)?.name}</p>
@@ -778,6 +829,7 @@ export default function Salaries() {
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
+                    {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allSalariesSelected} onChange={toggleSelectAllSalaries} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('id')}><div className="flex items-center gap-1">{t('receiptNumber')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'id'}/></div></th>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('date')}><div className="flex items-center gap-1">{t('date')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'date'}/></div></th>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortSalaries('employeeId')}><div className="flex items-center gap-1">{t('employee')} <SortIcon direction={salSortConfig?.direction!} active={salSortConfig?.key === 'employeeId'}/></div></th>
@@ -791,7 +843,8 @@ export default function Salaries() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {sortedSalaries.length > 0 ? sortedSalaries.map((salary, idx) => (
-                    <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`transition-colors cursor-pointer ${selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                    <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={salary.id} onClick={() => { setSelectedSalaryRowId(salary.id); setShowViewModal(salary); }} className={`transition-colors cursor-pointer ${selectedSalaryIds.has(salary.id) ? 'bg-red-50' : selectedSalaryRowId === salary.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                      {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedSalaryIds.has(salary.id)} onChange={() => toggleSelectSalary(salary.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                       <td className="px-4 py-3 font-medium text-slate-900">{salary.id}</td>
                       <td className="px-4 py-3">{format(new Date(salary.date), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-4 py-3">{state.employees.find(e => e.id === salary.employeeId)?.name}</td>
@@ -830,7 +883,7 @@ export default function Salaries() {
                     </motion.tr>
                   )) : (
                     <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
+                      <td colSpan={hasWriteAccess ? 10 : 9} className="px-4 py-8 text-center text-slate-400">{t('noData')}</td>
                     </tr>
                   )}
                 </tbody>
@@ -906,6 +959,16 @@ export default function Salaries() {
           </div>
           </div>
 
+          {/* Bulk-selection toolbar */}
+          {hasWriteAccess && selectedAdvanceIds.size > 0 && (
+            <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+              <span className="text-sm font-medium text-red-700">{selectedAdvanceIds.size} {t('selected')}</span>
+              <button onClick={() => setShowBulkDeleteAdvanceConfirm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors">
+                <Trash2 className="w-4 h-4" />{t('deleteSelected')}
+              </button>
+            </div>
+          )}
+
           {/* Advances Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
           {/* Search & Sort Toolbar for Mobile */}
@@ -935,7 +998,8 @@ export default function Salaries() {
                     ? 'bg-green-50 hover:bg-green-100'
                     : 'hover:bg-amber-50';
                 return (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={adv.id} onClick={() => { setSelectedAdvanceRowId(adv.id); setShowAdvViewModal(adv); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${advCardClass}`}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={adv.id} onClick={() => { setSelectedAdvanceRowId(adv.id); setShowAdvViewModal(adv); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedAdvanceIds.has(adv.id) ? 'bg-red-50' : advCardClass}`}>
+                  {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedAdvanceIds.has(adv.id)} onChange={() => toggleSelectAdvance(adv.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 text-sm">{adv.description}</p>
@@ -976,6 +1040,7 @@ export default function Salaries() {
               <table className="w-full text-sm text-left rtl:text-right text-slate-600">
                 <thead className="text-xs text-white uppercase bg-[#1E293B] sticky top-0 z-10">
                   <tr>
+                    {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allAdvancesSelected} onChange={toggleSelectAllAdvances} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('date')}><div className="flex items-center gap-1">التاريخ <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'date'}/></div></th>
                     <th className="px-4 py-3 cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('description')}><div className="flex items-center gap-1">الموظف <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'description'}/></div></th>
                     <th className="px-4 py-3 text-right rtl:text-left cursor-pointer group hover:bg-[#0c3531] transition-colors" onClick={() => sortAdvances('amount')}><div className="flex items-center justify-end rtl:justify-start gap-1">المبلغ <SortIcon direction={advSortConfig?.direction!} active={advSortConfig?.key === 'amount'}/></div></th>
@@ -994,7 +1059,8 @@ export default function Salaries() {
                         ? 'bg-green-50 hover:bg-green-100'
                         : 'hover:bg-amber-50';
                     return (
-                    <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`transition-colors cursor-pointer ${advRowClass}`}>
+                    <motion.tr initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={adv.id} onClick={() => setSelectedAdvanceRowId(adv.id)} className={`transition-colors cursor-pointer ${selectedAdvanceIds.has(adv.id) ? 'bg-red-50' : advRowClass}`}>
+                      {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedAdvanceIds.has(adv.id)} onChange={() => toggleSelectAdvance(adv.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                       <td className="px-4 py-3">{format(new Date(adv.date), 'dd/MM/yyyy HH:mm')}</td>
                       <td className="px-4 py-3 font-medium text-slate-900">{adv.description}</td>
                       <td className="px-4 py-3 font-bold text-red-600 text-right rtl:text-left">
@@ -1055,7 +1121,7 @@ export default function Salaries() {
                     );
                   }) : (
                     <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-slate-400">لا توجد بيانات</td>
+                      <td colSpan={hasWriteAccess ? 9 : 8} className="px-4 py-8 text-center text-slate-400">لا توجد بيانات</td>
                     </tr>
                   )}
                 </tbody>
@@ -1573,6 +1639,28 @@ export default function Salaries() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Bulk Delete Salaries Confirm */}
+      <Modal isOpen={showBulkDeleteSalaryConfirm} onClose={() => setShowBulkDeleteSalaryConfirm(false)} title={t('confirmDelete')} size="sm">
+        <div className="space-y-4">
+          <p className="text-slate-600">هل أنت متأكد من حذف {selectedSalaryIds.size} راتب/بدل؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowBulkDeleteSalaryConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDeleteSalaries} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Advances Confirm */}
+      <Modal isOpen={showBulkDeleteAdvanceConfirm} onClose={() => setShowBulkDeleteAdvanceConfirm(false)} title={t('confirmDelete')} size="sm">
+        <div className="space-y-4">
+          <p className="text-slate-600">هل أنت متأكد من حذف {selectedAdvanceIds.size} سلفية؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowBulkDeleteAdvanceConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDeleteAdvances} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
       </Modal>
     </motion.div>
   );

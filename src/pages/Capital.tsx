@@ -52,6 +52,8 @@ export default function Capital() {
 
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [showDeleteDrawingId, setShowDeleteDrawingId] = useState<string | null>(null);
+  const [selectedDrawIds, setSelectedDrawIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDrawConfirm, setShowBulkDeleteDrawConfirm] = useState(false);
   const [editingDrawId, setEditingDrawId] = useState<string | null>(null);
   const [drawPartnerId, setDrawPartnerId] = useState('');
   const [drawDate, setDrawDate] = useState(getCurrentDateInputValue());
@@ -302,6 +304,24 @@ export default function Capital() {
       ledger: state.ledger.filter(l => l.linkedId !== showDeleteDrawingId),
     });
     setShowDeleteDrawingId(null);
+  };
+
+  const toggleSelectDraw = (id: string) => {
+    setSelectedDrawIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const allDrawingsSelected = sortedDrawingTransfers.length > 0 && sortedDrawingTransfers.every(d => selectedDrawIds.has(d.id));
+  const toggleSelectAllDrawings = () => {
+    if (allDrawingsSelected) setSelectedDrawIds(new Set());
+    else setSelectedDrawIds(new Set(sortedDrawingTransfers.map(d => d.id)));
+  };
+  const handleBulkDeleteDrawings = () => {
+    const idsToDelete = selectedDrawIds;
+    updateState({
+      generalTransfers: state.generalTransfers.filter(t => !idsToDelete.has(t.id)),
+      ledger: state.ledger.filter(l => !idsToDelete.has(l.linkedId)),
+    });
+    setSelectedDrawIds(new Set());
+    setShowBulkDeleteDrawConfirm(false);
   };
 
   // === PROFIT DISTRIBUTION HANDLERS ===
@@ -727,16 +747,27 @@ export default function Capital() {
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><CreditCard className="w-4 h-4" />منصرفات الشركاء</h3>
-              {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] text-xs font-semibold shadow-sm">
-                <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
-              }
+              <div className="flex items-center gap-2">
+                {hasWriteAccess && selectedDrawIds.size > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+                    <span className="text-xs font-medium text-red-700">{selectedDrawIds.size} محدد</span>
+                    <button onClick={() => setShowBulkDeleteDrawConfirm(true)} className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 transition-colors">
+                      <Trash2 className="w-3 h-3" />{t('deleteSelected')}
+                    </button>
+                  </div>
+                )}
+                {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] text-xs font-semibold shadow-sm">
+                  <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
+                }
+              </div>
             </div>
             {drawingTransfers.length > 0 ? (
               <div className="rounded-lg border border-slate-200 overflow-hidden">
                 <div className="md:hidden divide-y divide-slate-100">
                   {sortedDrawingTransfers.map((dt, idx) => (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className="p-3 space-y-1">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className={`p-3 space-y-1 ${selectedDrawIds.has(dt.id) ? 'bg-red-50' : ''}`}>
+                      {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedDrawIds.has(dt.id)} onChange={() => toggleSelectDraw(dt.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
                       <div className="flex justify-between items-start gap-2">
                         <div>
                           <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
@@ -761,6 +792,7 @@ export default function Capital() {
                   <table className="w-full text-sm">
                     <thead className="text-xs text-white bg-[#134e4a]">
                       <tr>
+                        {hasWriteAccess && <th className="px-3 py-2 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allDrawingsSelected} onChange={toggleSelectAllDrawings} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                         <th className="px-3 py-2 text-right cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('date')}>التاريخ <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'date'}/></th>
                         <th className="px-3 py-2 text-right">الشريك</th>
                         <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSDG')}>المبلغ (SDG) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSDG'}/></th>
@@ -771,7 +803,8 @@ export default function Capital() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {sortedDrawingTransfers.map((dt, idx) => (
-                        <motion.tr key={dt.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
+                        <motion.tr key={dt.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} className={`${selectedDrawIds.has(dt.id) ? 'bg-red-50' : idx % 2 === 1 ? 'bg-slate-50' : ''}`}>
+                          {hasWriteAccess && <td className="px-3 py-2 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedDrawIds.has(dt.id)} onChange={() => toggleSelectDraw(dt.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                           <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
                           <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
                           <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
@@ -788,6 +821,7 @@ export default function Capital() {
                     </tbody>
                     <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
                       <tr>
+                        {hasWriteAccess && <td className="px-3 py-2"></td>}
                         <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
                         <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
                         <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
@@ -983,6 +1017,17 @@ export default function Capital() {
           <div className="flex justify-end gap-3">
             <button onClick={() => setShowDeleteDrawingId(null)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
             <button onClick={handleDeleteDrawing} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Drawings Confirm */}
+      <Modal isOpen={showBulkDeleteDrawConfirm} onClose={() => setShowBulkDeleteDrawConfirm(false)} title={t('confirmDelete')} size="sm">
+        <div className="space-y-4">
+          <p className="text-slate-600">هل أنت متأكد من حذف {selectedDrawIds.size} منصرف؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowBulkDeleteDrawConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDeleteDrawings} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
           </div>
         </div>
       </Modal>

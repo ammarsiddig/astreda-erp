@@ -34,6 +34,8 @@ export default function Inventory() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<InventoryTransaction | null>(null);
   const [selectedStockRowId, setSelectedStockRowId] = useState<string | null>(null);
   const [selectedLogRowId, setSelectedLogRowId] = useState<string | null>(null);
+  const [selectedLogIds, setSelectedLogIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteLogConfirm, setShowBulkDeleteLogConfirm] = useState(false);
 
   // Receive Stock State
   const [receiveDate, setReceiveDate] = useState(getCurrentDateInputValue());
@@ -243,6 +245,24 @@ export default function Inventory() {
       inventoryTransactions: state.inventoryTransactions.filter(t => t.id !== showDeleteConfirm.id)
     });
     setShowDeleteConfirm(null);
+  };
+
+  const toggleSelectLog = (id: string) => {
+    setSelectedLogIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const visibleLogIds = state.inventoryTransactions.filter(t => t.shipmentId === activeShipmentId).map(t => t.id);
+  const allLogsSelected = visibleLogIds.length > 0 && visibleLogIds.every(id => selectedLogIds.has(id));
+  const toggleSelectAllLogs = () => {
+    if (allLogsSelected) setSelectedLogIds(new Set());
+    else setSelectedLogIds(new Set(visibleLogIds));
+  };
+  const handleBulkDeleteLogs = () => {
+    const idsToDelete = selectedLogIds;
+    updateState({
+      inventoryTransactions: state.inventoryTransactions.filter(t => !idsToDelete.has(t.id)),
+    });
+    setSelectedLogIds(new Set());
+    setShowBulkDeleteLogConfirm(false);
   };
 
   const handleCarTransfer = (e: React.FormEvent) => {
@@ -607,7 +627,17 @@ export default function Inventory() {
       {/* Transfer Log */}
       <div className="bg-white rounded-xl shadow-modern glass border border-slate-200 overflow-hidden mt-8">
         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-          <h2 className="text-lg font-semibold text-slate-800">سجل التحويلات / Transfer Log</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-800">سجل التحويلات / Transfer Log</h2>
+            {hasWriteAccess && selectedLogIds.size > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+                <span className="text-xs font-medium text-red-700">{selectedLogIds.size} {t('selected')}</span>
+                <button onClick={() => setShowBulkDeleteLogConfirm(true)} className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 transition-colors">
+                  <Trash2 className="w-3 h-3" />{t('deleteSelected')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {/* Mobile card list */}
         <div className="md:hidden divide-y divide-slate-100">
@@ -615,7 +645,8 @@ export default function Inventory() {
             .filter(t => t.shipmentId === activeShipmentId)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .map(log => (
-              <div key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+              <div key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`p-4 space-y-2 cursor-pointer transition-colors ${selectedLogIds.has(log.id) ? 'bg-red-50' : selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                {hasWriteAccess && <span onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedLogIds.has(log.id)} onChange={() => toggleSelectLog(log.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></span>}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 text-sm">{state.products.find(p => p.id === log.productId)?.name}</p>
@@ -662,6 +693,7 @@ export default function Inventory() {
           <table className="w-full text-sm text-left rtl:text-right text-slate-600">
             <thead className="text-xs text-white uppercase bg-[#134e4a]">
               <tr>
+                {hasWriteAccess && <th className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={allLogsSelected} onChange={toggleSelectAllLogs} className="w-4 h-4 rounded border-slate-500 text-[#14b8a6] focus:ring-[#14b8a6]" /></th>}
                 <th className="px-4 py-3">{t('date')}</th>
                 <th className="px-4 py-3">{t('transferId')}</th>
                 <th className="px-4 py-3">{t('product')}</th>
@@ -676,7 +708,8 @@ export default function Inventory() {
                 .filter(t => t.shipmentId === activeShipmentId)
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(log => (
-                  <tr key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`transition-colors cursor-pointer ${selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                  <tr key={log.id} onClick={() => { setSelectedLogRowId(log.id); setShowViewModal(log); }} className={`transition-colors cursor-pointer ${selectedLogIds.has(log.id) ? 'bg-red-50' : selectedLogRowId === log.id ? 'bg-teal-50' : 'hover:bg-[#f0fdfa]'}`}>
+                    {hasWriteAccess && <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedLogIds.has(log.id)} onChange={() => toggleSelectLog(log.id)} className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]" /></td>}
                     <td className="px-4 py-3 whitespace-nowrap">{format(new Date(log.date), 'dd/MM/yyyy HH:mm')}</td>
                     <td className="px-4 py-3 font-medium text-slate-500">{log.referenceId || '-'}</td>
                     <td className="px-4 py-3 font-medium">{state.products.find(p => p.id === log.productId)?.name}</td>
@@ -1123,6 +1156,17 @@ export default function Inventory() {
             >
               {t('yes')}
             </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Log Confirm */}
+      <Modal isOpen={showBulkDeleteLogConfirm} onClose={() => setShowBulkDeleteLogConfirm(false)} title={t('confirmDelete')} size="sm">
+        <div className="space-y-4">
+          <p className="text-slate-600">هل أنت متأكد من حذف {selectedLogIds.size} سجل تحويل؟ لا يمكن التراجع عن هذا الإجراء.</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowBulkDeleteLogConfirm(false)} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors">{t('no')}</button>
+            <button onClick={handleBulkDeleteLogs} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm transition-colors">{t('yes')}</button>
           </div>
         </div>
       </Modal>
