@@ -109,7 +109,27 @@ export default function AuditLog() {
     </div>
   );
 
-  const renderFieldValue = (value: unknown): React.ReactNode => {
+  const resolveValue = (fieldName: string, value: unknown): string | null => {
+    if (typeof value !== 'string' || !value) return null;
+    type LookupEntry = { arr: { id: string; name: string }[] };
+    const FIELD_LOOKUPS: Record<string, LookupEntry> = {
+      salespersonId: { arr: state.salespeople },
+      customerId:    { arr: state.customers },
+      bankAccountId: { arr: state.bankAccounts },
+      shipmentId:    { arr: state.shipments },
+      cityId:        { arr: state.cities },
+      partnerId:     { arr: state.partners },
+      carId:         { arr: state.cars },
+      categoryId:    { arr: state.expenseCategories },
+      employeeId:    { arr: state.employees },
+    };
+    const lookup = FIELD_LOOKUPS[fieldName];
+    if (!lookup) return null;
+    const entity = lookup.arr.find(item => item.id === value);
+    return entity ? `${entity.name} (ID: ${value})` : null;
+  };
+
+  const renderFieldValue = (value: unknown, fieldName?: string): React.ReactNode => {
     if (value === null || value === undefined)
       return <span className="text-slate-400 italic">—</span>;
     if (typeof value === 'boolean')
@@ -120,6 +140,10 @@ export default function AuditLog() {
           {JSON.stringify(value, null, 2)}
         </pre>
       );
+    if (fieldName) {
+      const resolved = resolveValue(fieldName, value);
+      if (resolved) return <span className="break-all">{resolved}</span>;
+    }
     return <span className="break-all">{String(value)}</span>;
   };
 
@@ -136,7 +160,7 @@ export default function AuditLog() {
           {Object.entries(record).map(([field, val]) => (
             <tr key={field} className="odd:bg-white even:bg-slate-50/50">
               <td className="px-3 py-2 font-mono text-xs text-slate-600 border-b border-slate-100 align-top">{field}</td>
-              <td className="px-3 py-2 border-b border-slate-100 align-top">{renderFieldValue(val)}</td>
+              <td className="px-3 py-2 border-b border-slate-100 align-top">{renderFieldValue(val, field)}</td>
             </tr>
           ))}
         </tbody>
@@ -163,8 +187,8 @@ export default function AuditLog() {
             {changedKeys.map(field => (
               <tr key={field} className="odd:bg-white even:bg-slate-50/50">
                 <td className="px-3 py-2 font-mono text-xs font-bold text-slate-800 border-b border-slate-100 align-top">{field}</td>
-                <td className="px-3 py-2 text-rose-700 border-b border-slate-100 align-top">{renderFieldValue(before[field])}</td>
-                <td className="px-3 py-2 text-emerald-700 border-b border-slate-100 align-top">{renderFieldValue(after[field])}</td>
+                <td className="px-3 py-2 text-rose-700 border-b border-slate-100 align-top">{renderFieldValue(before[field], field)}</td>
+                <td className="px-3 py-2 text-emerald-700 border-b border-slate-100 align-top">{renderFieldValue(after[field], field)}</td>
               </tr>
             ))}
           </tbody>

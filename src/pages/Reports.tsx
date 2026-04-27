@@ -85,6 +85,7 @@ export default function Reports() {
   // 2. P&L Data
   // 3. Salesperson Performance Data
   const salespersonData = useMemo(() => {
+    const advancesCategoryId = state.expenseCategories.find(c => c.name === 'سلفيات')?.id || '3';
     return state.salespeople.map(sp => {
       const spInvoices = state.invoices.filter(i => i.salespersonId === sp.id && i.shipmentId === activeShipmentId);
       const sales = spInvoices.reduce((sum, inv) => sum + inv.total, 0);
@@ -100,12 +101,51 @@ export default function Reports() {
       const collectionRate = sales > 0 ? Math.round((collections / sales) * 100) : 0;
       const cities = [...new Set(spInvoices.map(i => state.cities.find(c => c.id === i.cityId)?.name).filter(Boolean))] as string[];
 
-      return { id: sp.id, name: sp.name, sales, collections, debt, invoiceCount, collectionRate, cities };
+      // Commission calculation (FIFO allocation of payments to credit invoices)
+      let amount2pct = 0;
+      let amount1pct = 0;
+      spCustomerIds.forEach(customerId => {
+        const customerInvoices = state.invoices
+          .filter(i => i.customerId === customerId && i.shipmentId === activeShipmentId && i.paymentType === 'credit')
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const customerPayments = state.payments
+          .filter(p => p.customerId === customerId && p.shipmentId === activeShipmentId)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const invoiceRemaining = customerInvoices.map(inv => ({ invDate: inv.date, remaining: inv.total }));
+        let invIdx = 0;
+        for (const payment of customerPayments) {
+          let paymentLeft = payment.amount;
+          while (paymentLeft > 0 && invIdx < invoiceRemaining.length) {
+            const inv = invoiceRemaining[invIdx];
+            const allocated = Math.min(paymentLeft, inv.remaining);
+            const ageDays = Math.floor(
+              (new Date(payment.date).getTime() - new Date(inv.invDate).getTime()) / 86400000
+            );
+            if (ageDays < 30) { amount2pct += allocated; } else { amount1pct += allocated; }
+            inv.remaining -= allocated;
+            paymentLeft -= allocated;
+            if (inv.remaining <= 0) invIdx++;
+          }
+        }
+      });
+      const totalEligible = amount2pct + amount1pct;
+      const commission2 = amount2pct * 0.02;
+      const commission1 = amount1pct * 0.01;
+      const grossCommission = commission2 + commission1;
+      const advances = state.expenses
+        .filter(e => e.categoryId === advancesCategoryId && e.description === sp.name && e.shipmentId === activeShipmentId)
+        .reduce((sum, e) => sum + e.amount, 0);
+      const netCommission = grossCommission - advances;
+
+      return {
+        id: sp.id, name: sp.name, sales, collections, debt, invoiceCount, collectionRate, cities,
+        totalEligible, amount2pct, amount1pct, commission2, commission1, grossCommission, advances, netCommission,
+      };
     })
       .filter(sp => sp.sales > 0 || sp.collections > 0)
       .filter(sp => !salespersonCityFilter || sp.cities.includes(state.cities.find(c => c.id === salespersonCityFilter)?.name || ''))
       .sort((a, b) => b.sales - a.sales);
-  }, [state.salespeople, state.invoices, state.payments, state.customers, state.cities, activeShipmentId, salespersonCityFilter]);
+  }, [state.salespeople, state.invoices, state.payments, state.customers, state.cities, state.expenses, state.expenseCategories, activeShipmentId, salespersonCityFilter]);
 
   const { items: sortedSalespersonData, requestSort: sortSalesperson, sortConfig: salespersonSortConfig } = useSortableData(salespersonData, { key: 'sales', direction: 'desc' });
 
@@ -220,10 +260,19 @@ export default function Reports() {
 
   const printSalespersonReport = () => {
     const shipmentName = state.shipments.find(s => s.id === activeShipmentId)?.name || '';
-    const fmt = (n: number) => new Intl.NumberFormat('en-US').format(n);
+    const fmt = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
     const totals = salespersonData.reduce(
-      (acc, sp) => ({ sales: acc.sales + sp.sales, collections: acc.collections + sp.collections, debt: acc.debt + sp.debt, invoiceCount: acc.invoiceCount + sp.invoiceCount }),
-      { sales: 0, collections: 0, debt: 0, invoiceCount: 0 }
+      (acc, sp) => ({
+        sales: acc.sales + sp.sales,
+        collections: acc.collections + sp.collections,
+        debt: acc.debt + sp.debt,
+        invoiceCount: acc.invoiceCount + sp.invoiceCount,
+        totalEligible: acc.totalEligible + sp.totalEligible,
+        grossCommission: acc.grossCommission + sp.grossCommission,
+        advances: acc.advances + sp.advances,
+        netCommission: acc.netCommission + sp.netCommission,
+      }),
+      { sales: 0, collections: 0, debt: 0, invoiceCount: 0, totalEligible: 0, grossCommission: 0, advances: 0, netCommission: 0 }
     );
     const rowsHtml = salespersonData.map((sp, i) => `
       <tr class="${i % 2 === 1 ? 'alt' : ''}">
@@ -234,41 +283,69 @@ export default function Reports() {
         <td class="num teal">${fmt(sp.collections)}</td>
         <td class="num debt">${fmt(sp.debt)}</td>
         <td class="center">${sp.collectionRate}%</td>
+        <td class="num">${fmt(sp.totalEligible)}</td>
+        <td class="num blue">${fmt(sp.amount2pct)}</td>
+        <td class="num blue">${fmt(sp.amount1pct)}</td>
+        <td class="num blue">${fmt(sp.grossCommission)}</td>
+        <td class="num amber">${fmt(sp.advances)}</td>
+        <td class="num ${sp.netCommission >= 0 ? 'green' : 'debt'}">${fmt(sp.netCommission)}</td>
       </tr>`).join('');
     const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير المناديب</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 landscape; margin: 8mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .title { font-size: 16px; font-weight: 900; color: #134e4a; text-align: center; margin-bottom: 3px; }
-  .subtitle { font-size: 12px; color: #1e293b; text-align: center; margin-bottom: 10px; }
-  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .title { font-size: 15px; font-weight: 900; color: #134e4a; text-align: center; margin-bottom: 3px; }
+  .subtitle { font-size: 11px; color: #1e293b; text-align: center; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
   thead tr { background-color: #134e4a !important; color: #fff; }
-  th { padding: 6px 8px; font-weight: 700; text-align: center; border: 1px solid #134e4a; color: #fff; background-color: #134e4a !important; }
-  td { padding: 5px 8px; border: 1px solid #cbd5e1; background-color: #fff; }
+  th { padding: 5px 5px; font-weight: 700; text-align: center; border: 1px solid #134e4a; color: #fff; background-color: #134e4a !important; }
+  td { padding: 4px 5px; border: 1px solid #cbd5e1; background-color: #fff; }
   tr.alt td { background-color: #f8fafc !important; }
   td.name { text-align: right; font-weight: 600; }
   td.center { text-align: center; }
   td.num { text-align: center; font-weight: 600; }
   td.teal { color: #0d9488 !important; }
   td.debt { color: #e11d48 !important; font-weight: 700; }
-  tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #134e4a; font-size: 12px; font-weight: 900; color: #134e4a; text-align: center; }
+  td.blue { color: #2563eb !important; }
+  td.amber { color: #d97706 !important; }
+  td.green { color: #059669 !important; }
+  thead .sep { border-right: 3px solid #fff !important; }
+  tfoot tr td { background-color: #e2e8f0 !important; border: 1px solid #134e4a; font-size: 9px; font-weight: 900; color: #134e4a; text-align: center; }
   tfoot td.name { text-align: right; } tfoot td.debt { color: #e11d48 !important; }
+  tfoot td.blue { color: #2563eb !important; } tfoot td.green { color: #059669 !important; }
 </style></head><body>
   <div class="title">تقرير أداء مناديب المبيعات</div>
   <div class="subtitle">الرسالة: ${shipmentName}</div>
   <table>
     <thead><tr>
-      <th style="text-align:right;width:16%">المندوب</th><th style="width:18%">المدن</th>
-      <th style="width:8%">الفواتير</th><th style="width:16%">إجمالي المبيعات</th>
-      <th style="width:16%">التحصيلات</th><th style="width:16%">المديونية</th><th style="width:10%">نسبة التحصيل</th>
+      <th style="text-align:right;width:12%">المندوب</th>
+      <th style="width:12%">المدن</th>
+      <th style="width:5%">الفواتير</th>
+      <th style="width:8%">إجمالي المبيعات</th>
+      <th style="width:8%">التحصيلات</th>
+      <th style="width:8%">المديونية</th>
+      <th style="width:5%">نسبة التحصيل</th>
+      <th style="width:8%" class="sep">إجمالي التحصيل المؤهل</th>
+      <th style="width:7%">مبلغ العمولة 2%</th>
+      <th style="width:7%">مبلغ العمولة 1%</th>
+      <th style="width:7%">إجمالي العمولة</th>
+      <th style="width:7%">السلفيات</th>
+      <th style="width:7%">صافي العمولة</th>
     </tr></thead>
     <tbody>${rowsHtml}</tbody>
     <tfoot><tr>
       <td class="name">الإجمالي</td><td></td><td>${totals.invoiceCount}</td>
-      <td>${fmt(totals.sales)}</td><td class="teal">${fmt(totals.collections)}</td>
-      <td class="debt">${fmt(totals.debt)}</td><td></td>
+      <td>${fmt(totals.sales)}</td>
+      <td class="teal">${fmt(totals.collections)}</td>
+      <td class="debt">${fmt(totals.debt)}</td>
+      <td></td>
+      <td>${fmt(totals.totalEligible)}</td>
+      <td></td><td></td>
+      <td class="blue">${fmt(totals.grossCommission)}</td>
+      <td class="amber">${fmt(totals.advances)}</td>
+      <td class="${totals.netCommission >= 0 ? 'green' : 'debt'}">${fmt(totals.netCommission)}</td>
     </tr></tfoot>
   </table>
   <script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}<\/script>
@@ -776,6 +853,20 @@ tfoot tr td{background-color:#134e4a!important;border:1px solid #134e4a;font-siz
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1">
                           <div className={`h-1.5 rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(sp.collectionRate, 100)}%` }} />
+                        </div>
+                        {/* Commission section */}
+                        <div className="border-t border-slate-100 pt-2 mt-1">
+                          <p className="text-xs font-semibold text-slate-500 mb-2">العمولة</p>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div><p className="text-xs text-slate-400">إجمالي التحصيل المؤهل</p><p className="font-bold text-slate-700">{formatCurrency(sp.totalEligible)}</p></div>
+                            <div><p className="text-xs text-slate-400">مبلغ العمولة 2%</p><p className="font-bold text-slate-700">{formatCurrency(sp.amount2pct)}</p></div>
+                            <div><p className="text-xs text-slate-400">مبلغ العمولة 1%</p><p className="font-bold text-slate-700">{formatCurrency(sp.amount1pct)}</p></div>
+                            <div><p className="text-xs text-slate-400">العمولة المكتسبة 2%</p><p className="font-bold text-blue-600">{formatCurrency(sp.commission2)}</p></div>
+                            <div><p className="text-xs text-slate-400">العمولة المكتسبة 1%</p><p className="font-bold text-blue-600">{formatCurrency(sp.commission1)}</p></div>
+                            <div><p className="text-xs text-slate-400">إجمالي العمولة الإجمالية</p><p className="font-bold text-blue-700">{formatCurrency(sp.grossCommission)}</p></div>
+                            <div><p className="text-xs text-slate-400">السلفيات</p><p className="font-bold text-amber-600">{formatCurrency(sp.advances)}</p></div>
+                            <div><p className="text-xs text-slate-400">صافي العمولة بعد الخصم</p><p className={`font-bold ${sp.netCommission >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(sp.netCommission)}</p></div>
+                          </div>
                         </div>
                       </motion.div>
                     );
