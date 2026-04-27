@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useTranslation } from '../hooks/useTranslation';
 import { motion } from 'framer-motion';
@@ -12,10 +12,11 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { buildLedgerEntryId, computeBankBalance, formatCurrency, generateId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
-import type { CapitalContribution, GeneralTransfer } from '../types';
+import type { CapitalContribution, GeneralTransfer, ManualProfitEntry, ManualProfitDistribution } from '../types';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
 import { canWrite } from '../lib/permissions';
+import { upsertRecord } from '../lib/syncEngine';
 import { computeExpenseDeduction } from './Settings';
 
 type Tab = 'investors' | 'distribution' | 'verification';
@@ -61,6 +62,10 @@ export default function Capital() {
   const [drawExchangeRate, setDrawExchangeRate] = useState<number | ''>('');
   const [drawSplits, setDrawSplits] = useState<{ bankAccountId: string; amount: number }[]>([{ bankAccountId: '', amount: 0 }]);
 
+  // ─── Profit distribution state ────────────────────────────────
+  const [profitDraft, setProfitDraft] = useState<Record<string, { profit: string; expenses: string }>>({});
+  const [distAddPartnerId, setDistAddPartnerId] = useState('');
+
   const activeShipment = state.shipments.find(s => s.id === activeShipmentId);
   const operatingPartners = useMemo(() => state.partners.filter(p => p.isOperatingPartner), [state.partners]);
   const contributions = useMemo(() =>
@@ -72,6 +77,47 @@ export default function Capital() {
   const drawingTransfers = useMemo(() =>
     state.generalTransfers.filter(t => t.transferType === 'drawings' && t.shipmentId === activeShipmentId),
     [state.generalTransfers, activeShipmentId]);
+
+  // Reset profit draft when active shipment changes
+  useEffect(() => {
+    setProfitDraft({});
+    setDistAddPartnerId('');
+  }, [activeShipmentId]);
+
+  // Capital return amounts per partner for active shipment
+  const capitalReturnByPartner = useMemo(() => {
+    const map: Record<string, number> = {};
+    capitalReturns.forEach(t => {
+      const pid = t.beneficiaryPartnerId || t.partnerId;
+      map[pid] = (map[pid] ?? 0) + t.amountSAR;
+    });
+    return map;
+  }, [capitalReturns]);
+
+  // Saved profit distribution for active shipment
+  const savedDist = useMemo(() =>
+    (state.manualProfitDistributions || []).find(d => d.shipmentId === activeShipmentId),
+    [state.manualProfitDistributions, activeShipmentId]
+  );
+
+  // Which partners to show in the distribution editor
+  const distDisplayPartnerIds = useMemo(() => {
+    const ids = new Set<string>();
+    state.partners.filter(p => (capitalReturnByPartner[p.id] ?? 0) > 0).forEach(p => ids.add(p.id));
+    (savedDist?.entries || []).forEach(e => ids.add(e.partnerId));
+    Object.keys(profitDraft).forEach(id => ids.add(id));
+    return ids;
+  }, [state.partners, capitalReturnByPartner, savedDist, profitDraft]);
+
+  const finalDistPartners = useMemo(() =>
+    state.partners.filter(p => distDisplayPartnerIds.has(p.id)),
+    [state.partners, distDisplayPartnerIds]
+  );
+
+  const unshownDistPartners = useMemo(() =>
+    state.partners.filter(p => !distDisplayPartnerIds.has(p.id)),
+    [state.partners, distDisplayPartnerIds]
+  );
   // === TAB 1: Investor data per partner (capital tracking only) ===
   const investorData = useMemo(() => {
     if (!activeShipmentId) return [];
@@ -248,6 +294,57 @@ export default function Capital() {
       ledger: state.ledger.filter(l => l.linkedId !== showDeleteDrawingId),
     });
     setShowDeleteDrawingId(null);
+  };
+
+  // === PROFIT DISTRIBUTION HANDLERS ===
+  const getDistEntryDraft = (partnerId: string) => {
+    const saved = savedDist?.entries.find(e => e.partnerId === partnerId);
+    const draft = profitDraft[partnerId];
+    return {
+      profit: draft?.profit !== undefined ? draft.profit : (saved?.profit != null ? String(saved.profit) : ''),
+      expenses: draft?.expenses !== undefined ? draft.expenses : (saved?.expenses != null ? String(saved.expenses) : '0'),
+    };
+  };
+
+  const handleDistDraftChange = (partnerId: string, field: 'profit' | 'expenses', value: string) => {
+    if (!hasWriteAccess) return;
+    setProfitDraft(prev => ({
+      ...prev,
+      [partnerId]: { ...{ profit: '', expenses: '0', ...prev[partnerId] }, [field]: value },
+    }));
+  };
+
+  const handleAddDistPartner = () => {
+    if (!distAddPartnerId) return;
+    if (!profitDraft[distAddPartnerId]) {
+      setProfitDraft(prev => ({ ...prev, [distAddPartnerId]: { profit: '', expenses: '0' } }));
+    }
+    setDistAddPartnerId('');
+  };
+
+  const handleSaveDistribution = () => {
+    if (!hasWriteAccess || !activeShipmentId) return;
+    const partnerIds = new Set([
+      ...(savedDist?.entries.map(e => e.partnerId) ?? []),
+      ...Object.keys(profitDraft),
+      ...state.partners.filter(p => (capitalReturnByPartner[p.id] ?? 0) > 0).map(p => p.id),
+    ]);
+    const entries: ManualProfitEntry[] = Array.from(partnerIds).map(pid => {
+      const d = getDistEntryDraft(pid);
+      const profitVal = d.profit.trim() === '' ? null : Number(d.profit);
+      const expensesVal = Number(d.expenses) || 0;
+      const capReturn = capitalReturnByPartner[pid] ?? 0;
+      return { partnerId: pid, capitalReturn: capReturn, expenses: expensesVal, profit: profitVal };
+    }).filter(e => e.capitalReturn > 0 || e.profit != null || e.expenses > 0);
+    const newDist: ManualProfitDistribution = {
+      shipmentId: activeShipmentId,
+      savedAt: new Date().toISOString(),
+      entries,
+    };
+    const existing = (state.manualProfitDistributions || []).filter(d => d.shipmentId !== activeShipmentId);
+    updateState({ manualProfitDistributions: [...existing, newDist] });
+    upsertRecord('manualProfitDistributions', newDist);
+    setProfitDraft({});
   };
 
   const printInvestorTable = () => {
@@ -502,145 +599,204 @@ export default function Capital() {
       )}
 
       {/* ═══════════ TAB 2: توزيع الأرباح ═══════════ */}
-      {activeTab === 'distribution' && (() => {
-        const savedDist = (state.manualProfitDistributions || []).find(d => d.shipmentId === activeShipmentId);
-        if (!savedDist) {
-          return (
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center space-y-3">
-              <TrendingUp className="w-12 h-12 text-slate-300 mx-auto" />
-              <p className="text-slate-600 font-semibold">لم يتم إدخال توزيع الأرباح بعد</p>
-              <p className="text-sm text-slate-400">يمكنك إدخال بيانات التوزيع من صفحة <strong>الإعدادات ← إعدادات الشركاء</strong></p>
+      {activeTab === 'distribution' && (
+        <div className="space-y-6 max-w-3xl mx-auto">
+          {/* ── Profit Distribution Form ── */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-[#134e4a]" />توزيع الأرباح اليدوي
+              </h3>
+              <p className="text-xs text-slate-400">يتم توزيع الأرباح يدوياً — مرتبط بالرسالة النشطة: <strong>{activeShipment?.name || '—'}</strong></p>
             </div>
-          );
-        }
-        return (
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <div className="flex justify-between items-center">
-              <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><TrendingUp className="w-4 h-4" />توزيع الأرباح</h3>
-              <span className="text-xs text-slate-400">حُفظ بتاريخ {format(new Date(savedDist.savedAt), 'dd/MM/yyyy HH:mm')}</span>
-            </div>
-            {savedDist.entries.map(e => {
-              const partnerName = state.partners.find(p => p.id === e.partnerId)?.name || e.partnerId;
-              const d = computeExpenseDeduction(e.capitalReturn, e.profit, e.expenses);
-              return (
-                <div key={e.partnerId} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-slate-900 text-base">{partnerName}</h4>
-                    {e.profit === null && <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700">لم يُحدَّد الربح بعد</span>}
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-                    <span className="text-slate-500">رأس المال العائد</span><span className="font-mono text-right">{fmtSAR(e.capitalReturn)}</span>
-                    <span className="text-slate-500">الربح المُدخَل</span><span className="font-mono text-right">{e.profit !== null ? fmtSAR(e.profit) : '—'}</span>
-                    <span className="text-slate-500">المصروفات</span><span className="font-mono text-right">{fmtSAR(e.expenses)}</span>
-                  </div>
-                  {e.profit !== null && (
-                    <>
-                      <div className="border-t border-slate-100 pt-3 space-y-1.5 text-sm">
-                        {d.fromProfit > 0 && <div className="flex justify-between"><span className="text-slate-500">من الربح</span><span className="font-mono text-red-600">- {fmtSAR(d.fromProfit)}</span></div>}
-                        {d.fromCapital > 0 && <div className="flex justify-between"><span className="text-slate-500">من رأس المال</span><span className="font-mono text-red-600">- {fmtSAR(d.fromCapital)}</span></div>}
-                        <div className="flex justify-between font-bold border-t border-slate-200 pt-1.5">
-                          <span>صافي الربح</span><span className="font-mono text-[#134e4a]">{fmtSAR(d.netProfit)}</span>
+
+            {/* Add partner manually */}
+            {hasWriteAccess && unshownDistPartners.length > 0 && (
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">إضافة شخص للتوزيع</label>
+                  <SearchableSelect
+                    value={distAddPartnerId}
+                    onChange={setDistAddPartnerId}
+                    options={[{ value: '', label: 'اختر...' }, ...unshownDistPartners.map(p => ({ value: p.id, label: p.name }))]}
+                    placeholder="اختر شريكاً"
+                  />
+                </div>
+                <button
+                  onClick={handleAddDistPartner}
+                  disabled={!distAddPartnerId}
+                  className="px-3 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] disabled:opacity-40 text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Per-partner input rows */}
+            {finalDistPartners.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">لا يوجد شركاء لهذه الرسالة — أضف شريكاً أعلاه أو تأكد من تسجيل التحاويل</p>
+            ) : (
+              <div className="space-y-4">
+                {finalDistPartners.map(partner => {
+                  const d = getDistEntryDraft(partner.id);
+                  const capReturn = capitalReturnByPartner[partner.id] ?? 0;
+                  const profitNum = d.profit.trim() === '' ? null : Number(d.profit);
+                  const expensesNum = Number(d.expenses) || 0;
+                  const calc = computeExpenseDeduction(capReturn, profitNum, expensesNum);
+                  return (
+                    <div key={partner.id} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
+                      <p className="font-semibold text-slate-800 text-sm">{partner.name}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">إرجاع رأس المال (SAR)</label>
+                          <input type="number" readOnly value={capReturn}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-500 cursor-not-allowed text-sm outline-none" />
+                          <p className="text-xs text-slate-400 mt-0.5">من سجل التحاويل</p>
                         </div>
-                        <div className="flex justify-between font-bold">
-                          <span>صافي رأس المال العائد</span><span className="font-mono">{fmtSAR(d.netCapitalReturn)}</span>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">الربح (SAR)</label>
+                          <input type="number" min="0" step="0.01" value={d.profit}
+                            onChange={e => handleDistDraftChange(partner.id, 'profit', e.target.value)}
+                            placeholder="اتركه فارغاً إن لم يُحدَّد"
+                            disabled={!hasWriteAccess}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-sm outline-none disabled:bg-slate-100 disabled:cursor-not-allowed" />
+                          <p className="text-xs text-slate-400 mt-0.5">فارغ = لم يُحدَّد بعد</p>
                         </div>
-                        <div className="flex justify-between font-bold text-base border-t-2 border-[#134e4a] pt-2 mt-1">
-                          <span>الإجمالي المستحق</span><span className="font-mono text-[#134e4a]">{fmtSAR(d.netProfit + d.netCapitalReturn)}</span>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">المصاريف (SAR)</label>
+                          <input type="number" min="0" step="0.01" value={d.expenses}
+                            onChange={e => handleDistDraftChange(partner.id, 'expenses', e.target.value)}
+                            disabled={!hasWriteAccess}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-sm outline-none disabled:bg-slate-100 disabled:cursor-not-allowed" />
                         </div>
                       </div>
-                      {d.fromCapital > 0 && (
-                        <p className="text-xs text-amber-700">⚠️ المصروفات تجاوزت الربح — الفرق خُصم من رأس المال</p>
-                      )}
-                    </>
-                  )}
-                  {e.profit === null && e.expenses > 0 && (
-                    <p className="text-xs text-slate-400">المصروفات لن تُخصَم من رأس المال حتى يُحدَّد الربح</p>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Drawings section */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><CreditCard className="w-4 h-4" />منصرفات الشركاء</h3>
-                {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] text-xs font-semibold shadow-sm">
-                  <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
-                }
-              </div>
-              {drawingTransfers.length > 0 ? (
-                <div className="rounded-lg border border-slate-200 overflow-hidden">
-                  <div className="md:hidden divide-y divide-slate-100">
-                    {sortedDrawingTransfers.map((dt, idx) => (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className="p-3 space-y-1">
-                        <div className="flex justify-between items-start gap-2">
-                          <div>
-                            <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
-                            <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-mono text-sm font-bold">{fmtSDG(dt.amountSDG)}</p>
-                            <p className="font-mono text-xs text-slate-500">{fmtSAR(dt.amountSAR)}</p>
+                      <div className={`rounded-lg p-3 text-xs space-y-1.5 border ${calc.fromCapital > 0 ? 'bg-amber-50 border-amber-200' : 'bg-[#f0fdfa] border-[#99f6e4]'}`}>
+                        {expensesNum > 0 && profitNum == null && (
+                          <p className="font-medium text-slate-500">⚠️ الربح غير محدد — المصاريف لن تُخصم من رأس المال</p>
+                        )}
+                        {expensesNum > 0 && profitNum != null && (
+                          <>
+                            <p className="text-slate-600">مصاريف مخصومة من الربح: <span className="font-bold text-red-600">{fmtSAR(calc.fromProfit)}</span></p>
+                            {calc.fromCapital > 0 && (
+                              <p className="text-slate-600">مصاريف مخصومة من رأس المال (فائض): <span className="font-bold text-amber-700">{fmtSAR(calc.fromCapital)}</span></p>
+                            )}
+                          </>
+                        )}
+                        <div className="pt-1 border-t border-slate-200 grid grid-cols-2 gap-2">
+                          <div><span className="text-slate-500">إرجاع رأس المال الصافي: </span><span className="font-bold text-[#134e4a]">{fmtSAR(calc.netCapitalReturn)}</span></div>
+                          <div><span className="text-slate-500">الربح الصافي: </span>
+                            {calc.netProfit == null ? <span className="italic text-slate-400">غير محدد</span> : <span className="font-bold text-[#134e4a]">{fmtSAR(calc.netProfit)}</span>}
                           </div>
                         </div>
-                        {dt.description && <p className="text-xs text-slate-400">{dt.description}</p>}
-                        {hasWriteAccess && (
-                          <div className="flex gap-2 pt-1">
-                            <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="text-xs text-white bg-[#134e4a]">
-                        <tr>
-                          <th className="px-3 py-2 text-right cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('date')}>التاريخ <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'date'}/></th>
-                          <th className="px-3 py-2 text-right">الشريك</th>
-                          <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSDG')}>المبلغ (SDG) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSDG'}/></th>
-                          <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSAR')}>المبلغ (SAR) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSAR'}/></th>
-                          <th className="px-3 py-2 text-right">الوصف</th>
-                          <th className="px-3 py-2 text-center">إجراء</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {sortedDrawingTransfers.map((dt, idx) => (
-                          <motion.tr key={dt.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
-                            <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
-                            <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
-                            <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
-                            <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>
-                            <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
-                            <td className="px-3 py-2 text-center">
-                              <div className="flex justify-center gap-1">
-                                {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded"><Edit2 className="w-3.5 h-3.5" /></button>}
-                                {hasWriteAccess && <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded"><Trash2 className="w-3.5 h-3.5" /></button>}
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                        <tr>
-                          <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
-                          <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
-                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
-                          <td colSpan={2}></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-slate-400 text-center py-4">لا توجد منصرفات مسجلة</p>
-              )}
-            </div>
+                        <div className="pt-1 border-t border-slate-200">
+                          <span className="text-slate-500">الإجمالي الصافي: </span>
+                          {calc.netProfit == null
+                            ? <span className="italic text-slate-400">غير محدد (رأس المال: {fmtSAR(calc.netCapitalReturn)})</span>
+                            : <span className="font-bold text-slate-800">{fmtSAR(calc.netCapitalReturn + calc.netProfit)}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {hasWriteAccess && (
+              <div className="pt-2 flex justify-end">
+                <button onClick={handleSaveDistribution}
+                  className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] transition-colors text-sm font-medium">
+                  حفظ التوزيع
+                </button>
+              </div>
+            )}
+            {savedDist && (
+              <p className="text-xs text-slate-400 text-left rtl:text-right">
+                آخر حفظ: {format(new Date(savedDist.savedAt), 'dd/MM/yyyy HH:mm')}
+              </p>
+            )}
           </div>
-        );
-      })()}
+
+          {/* ── Drawings ── */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-[#134e4a] flex items-center gap-2"><CreditCard className="w-4 h-4" />منصرفات الشركاء</h3>
+              {hasWriteAccess && <button onClick={() => { resetDrawForm(); setShowDrawModal(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] text-xs font-semibold shadow-sm">
+                <Plus className="w-3.5 h-3.5" />إضافة منصرف</button>
+              }
+            </div>
+            {drawingTransfers.length > 0 ? (
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="md:hidden divide-y divide-slate-100">
+                  {sortedDrawingTransfers.map((dt, idx) => (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} key={dt.id} className="p-3 space-y-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <p className="font-semibold text-slate-900 text-sm">{state.partners.find(p => p.id === dt.partnerId)?.name}</p>
+                          <p className="text-xs text-slate-400">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-mono text-sm font-bold">{fmtSDG(dt.amountSDG)}</p>
+                          <p className="font-mono text-xs text-slate-500">{fmtSAR(dt.amountSAR)}</p>
+                        </div>
+                      </div>
+                      {dt.description && <p className="text-xs text-slate-400">{dt.description}</p>}
+                      {hasWriteAccess && (
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-white bg-[#134e4a]">
+                      <tr>
+                        <th className="px-3 py-2 text-right cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('date')}>التاريخ <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'date'}/></th>
+                        <th className="px-3 py-2 text-right">الشريك</th>
+                        <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSDG')}>المبلغ (SDG) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSDG'}/></th>
+                        <th className="px-3 py-2 text-left cursor-pointer hover:bg-[#0c3531]" onClick={() => sortDrawings('amountSAR')}>المبلغ (SAR) <SortIcon direction={drawSortConfig?.direction!} active={drawSortConfig?.key === 'amountSAR'}/></th>
+                        <th className="px-3 py-2 text-right">الوصف</th>
+                        <th className="px-3 py-2 text-center">إجراء</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {sortedDrawingTransfers.map((dt, idx) => (
+                        <motion.tr key={dt.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx * 0.02, 0.2) }} className={idx % 2 === 1 ? 'bg-slate-50' : ''}>
+                          <td className="px-3 py-2">{format(new Date(dt.date), 'dd/MM/yyyy HH:mm')}</td>
+                          <td className="px-3 py-2 font-semibold">{state.partners.find(p => p.id === dt.partnerId)?.name}</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSDG(dt.amountSDG)}</td>
+                          <td className="px-3 py-2 text-left font-mono">{fmtSAR(dt.amountSAR)}</td>
+                          <td className="px-3 py-2 text-slate-500">{dt.description || '-'}</td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex justify-center gap-1">
+                              {hasWriteAccess && <button onClick={() => openEditDraw(dt)} className="p-1 text-slate-400 hover:text-[#14b8a6] rounded"><Edit2 className="w-3.5 h-3.5" /></button>}
+                              {hasWriteAccess && <button onClick={() => setShowDeleteDrawingId(dt.id)} className="p-1 text-slate-400 hover:text-red-600 rounded"><Trash2 className="w-3.5 h-3.5" /></button>}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                      <tr>
+                        <td className="px-3 py-2" colSpan={2}>الإجمالي</td>
+                        <td className="px-3 py-2 text-left font-mono">{fmtSDG(drawingTransfers.reduce((s, t) => s + t.amountSDG, 0))}</td>
+                        <td className="px-3 py-2 text-left font-mono">{fmtSAR(drawingTransfers.reduce((s, t) => s + t.amountSAR, 0))}</td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-4">لا توجد منصرفات مسجلة</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ═══════════ TAB 3: التحقق من الرسالة ═══════════ */}
       {activeTab === 'verification' && verification && (

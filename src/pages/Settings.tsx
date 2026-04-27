@@ -9,7 +9,7 @@ import SearchableSelect from '../components/SearchableSelect';
 import { generateSeedData } from '../lib/seedData';
 import { canWrite } from '../lib/permissions';
 import { ALL_PAGE_KEYS } from '../lib/permissions';
-import type { User, Role, PagePermission, PageKey, ManualProfitEntry, ManualProfitDistribution } from '../types';
+import type { User, Role, PagePermission, PageKey } from '../types';
 import { upsertRecord, deleteRecord } from '../lib/syncEngine';
 import { hashPassword } from '../lib/utils';
 
@@ -65,14 +65,6 @@ export default function Settings() {
   const { state, updateState, resetAndFullSync } = useAppStore();
   const hasSettingsWrite = canWrite(state.currentUser, state.roles, 'settings');
   const [activeTab, setActiveTab] = useState<'products' | 'salespeople' | 'cities' | 'cars' | 'bankAccounts' | 'expenseCategories' | 'partners' | 'shipments' | 'partnerSettings' | 'users' | 'roles'>('products');
-
-  // Profit distribution settings — which shipment is being configured
-  const [profitShipmentId, setProfitShipmentId] = useState<string>(
-    () => state.shipments.find(s => !s.isClosed)?.id || state.shipments[0]?.id || ''
-  );
-
-  // Manual profit distribution — draft entries keyed by partnerId for current shipment
-  const [manualDraft, setManualDraft] = useState<Record<string, { profit: string; expenses: string }>>({});
 
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<SettingsRecord | null>(null);
@@ -162,7 +154,6 @@ export default function Settings() {
     if (!ok) return;
     updateState(generateSeedData());
     setActiveTab('products');
-    setProfitShipmentId('4');
   };
 
   const renderFormFields = () => {
@@ -397,8 +388,6 @@ export default function Settings() {
 
   const list = (activeTab !== 'partnerSettings' && activeTab !== 'users' && activeTab !== 'roles') ? (state[activeTab as keyof typeof state] as any[]) : [];
 
-  const operatingPartners = state.partners.filter(p => p.isOperatingPartner);
-
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -437,278 +426,13 @@ export default function Settings() {
           {/* Partner Settings Tab */}
           {activeTab === 'partnerSettings' ? (
             <div className="space-y-6">
-              {/* Section — Manual Profit Distribution (per shipment) */}
-              {(() => {
-                // ── helpers ──────────────────────────────────────────────
-                const fmtSAR = (v: number) =>
-                  new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + ' SAR';
-
-                // Saved distribution for selected shipment
-                const savedDist: ManualProfitDistribution | undefined =
-                  (state.manualProfitDistributions || []).find(d => d.shipmentId === profitShipmentId);
-
-                // All partners used as recipients
-                const allPartners = state.partners;
-
-                // Capital return amounts per partner for selected shipment (from general_transfers)
-                const capitalReturnByPartner: Record<string, number> = {};
-                (state.generalTransfers || [])
-                  .filter(t => t.shipmentId === profitShipmentId && (t.transferType === 'capital_return' || t.transferType === 'capital'))
-                  .forEach(t => {
-                    const pid = t.beneficiaryPartnerId || t.partnerId;
-                    capitalReturnByPartner[pid] = (capitalReturnByPartner[pid] ?? 0) + t.amountSAR;
-                  });
-
-                // Build draft for entries that have saved data
-                const getEntryDraft = (partnerId: string) => {
-                  const saved = savedDist?.entries.find(e => e.partnerId === partnerId);
-                  const draft = manualDraft[partnerId];
-                  return {
-                    profit: draft?.profit !== undefined ? draft.profit : (saved?.profit != null ? String(saved.profit) : ''),
-                    expenses: draft?.expenses !== undefined ? draft.expenses : (saved?.expenses != null ? String(saved.expenses) : '0'),
-                  };
-                };
-
-                const handleDraftChange = (partnerId: string, field: 'profit' | 'expenses', value: string) => {
-                  if (!hasSettingsWrite) return;
-                  setManualDraft(prev => ({
-                    ...prev,
-                    [partnerId]: { ...{ profit: '', expenses: '0', ...prev[partnerId] }, [field]: value },
-                  }));
-                };
-
-                const handleSaveDistribution = () => {
-                  if (!hasSettingsWrite) return;
-                  // Merge all partners who have any saved or draft entry
-                  const partnerIds = new Set([
-                    ...(savedDist?.entries.map(e => e.partnerId) ?? []),
-                    ...Object.keys(manualDraft),
-                  ]);
-                  // Also include partners explicitly in allPartners who have capital return
-                  allPartners.forEach(p => {
-                    if ((capitalReturnByPartner[p.id] ?? 0) > 0) partnerIds.add(p.id);
-                  });
-                  const entries: ManualProfitEntry[] = Array.from(partnerIds).map(pid => {
-                    const d = getEntryDraft(pid);
-                    const profitVal = d.profit.trim() === '' ? null : Number(d.profit);
-                    const expensesVal = Number(d.expenses) || 0;
-                    const capReturn = capitalReturnByPartner[pid] ?? 0;
-                    return {
-                      partnerId: pid,
-                      capitalReturn: capReturn,
-                      expenses: expensesVal,
-                      profit: profitVal,
-                    };
-                  }).filter(e => e.capitalReturn > 0 || e.profit != null || e.expenses > 0);
-
-                  const newDist: ManualProfitDistribution = {
-                    shipmentId: profitShipmentId,
-                    savedAt: new Date().toISOString(),
-                    entries,
-                  };
-                  const existing = (state.manualProfitDistributions || []).filter(d => d.shipmentId !== profitShipmentId);
-                  updateState({ manualProfitDistributions: [...existing, newDist] });
-                  upsertRecord('manualProfitDistributions', newDist);
-                  setManualDraft({});
-                };
-
-                // Partners to display = union of those with capital return + those already in saved dist
-                const displayPartnerIds = new Set([
-                  ...allPartners.filter(p => (capitalReturnByPartner[p.id] ?? 0) > 0).map(p => p.id),
-                  ...(savedDist?.entries.map(e => e.partnerId) ?? []),
-                ]);
-                const displayPartners = allPartners.filter(p => displayPartnerIds.has(p.id));
-                // Also allow adding any partner manually via selector
-                const [addPartnerId, setAddPartnerId] = useState('');
-
-                const handleAddPartner = () => {
-                  if (!addPartnerId) return;
-                  // ensure they have a draft entry
-                  if (!manualDraft[addPartnerId]) {
-                    setManualDraft(prev => ({ ...prev, [addPartnerId]: { profit: '', expenses: '0' } }));
-                  }
-                  setAddPartnerId('');
-                };
-
-                // Partners not yet shown
-                const shownIds = new Set([...displayPartnerIds, ...Object.keys(manualDraft)]);
-                const unshownPartners = allPartners.filter(p => !shownIds.has(p.id));
-
-                // All displayed partner IDs (including manually added drafts)
-                const allDisplayIds = new Set([...shownIds]);
-                // Remove those who have no data at all
-                const finalPartners = allPartners.filter(p =>
-                  allDisplayIds.has(p.id) || (capitalReturnByPartner[p.id] ?? 0) > 0
-                );
-
-                return (
-                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-800 mb-1">توزيع الأرباح اليدوي</h2>
-                      <p className="text-xs text-slate-400">يتم توزيع الأرباح يدوياً بعد احتساب إرجاع رأس المال — الإعدادات مرتبطة بكل رسالة</p>
-                    </div>
-
-                    {/* Shipment selector */}
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">الرسالة</label>
-                      <SearchableSelect
-                        value={profitShipmentId}
-                        onChange={(val) => { setProfitShipmentId(val); setManualDraft({}); }}
-                        options={state.shipments.map(s => ({ value: s.id, label: s.name + (s.isClosed ? ' (مغلقة)' : '') }))}
-                        placeholder="الرسالة"
-                      />
-                    </div>
-
-                    {profitShipmentId && (
-                      <>
-                        {/* Add person manually */}
-                        {hasSettingsWrite && unshownPartners.length > 0 && (
-                          <div className="flex gap-2 items-end">
-                            <div className="flex-1">
-                              <label className="block text-xs font-medium text-slate-600 mb-1">إضافة شخص للتوزيع</label>
-                              <SearchableSelect
-                                value={addPartnerId}
-                                onChange={setAddPartnerId}
-                                options={[{ value: '', label: 'اختر...' }, ...unshownPartners.map(p => ({ value: p.id, label: p.name }))]}
-                                placeholder="اختر شريكاً"
-                              />
-                            </div>
-                            <button
-                              onClick={handleAddPartner}
-                              disabled={!addPartnerId}
-                              className="px-3 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] disabled:opacity-40 text-sm"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Per-person input rows */}
-                        {finalPartners.length === 0 ? (
-                          <p className="text-sm text-slate-400 py-4 text-center">لا يوجد شركاء لهذه الرسالة — أضف شريكاً أعلاه أو تأكد من إرجاع رأس المال</p>
-                        ) : (
-                          <div className="space-y-4">
-                            {finalPartners.map(partner => {
-                              const d = getEntryDraft(partner.id);
-                              const capReturn = capitalReturnByPartner[partner.id] ?? 0;
-                              const profitNum = d.profit.trim() === '' ? null : Number(d.profit);
-                              const expensesNum = Number(d.expenses) || 0;
-                              const calc = computeExpenseDeduction(capReturn, profitNum, expensesNum);
-
-                              return (
-                                <div key={partner.id} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
-                                  <p className="font-semibold text-slate-800 text-sm">{partner.name}</p>
-
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    {/* Capital Return (read-only from transactions) */}
-                                    <div>
-                                      <label className="block text-xs font-medium text-slate-500 mb-1">إرجاع رأس المال (SAR)</label>
-                                      <input
-                                        type="number"
-                                        readOnly
-                                        value={capReturn}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-500 cursor-not-allowed text-sm outline-none"
-                                      />
-                                      <p className="text-xs text-slate-400 mt-0.5">من سجل التحاويل</p>
-                                    </div>
-
-                                    {/* Profit — manual input */}
-                                    <div>
-                                      <label className="block text-xs font-medium text-slate-500 mb-1">الربح (SAR)</label>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={d.profit}
-                                        onChange={e => handleDraftChange(partner.id, 'profit', e.target.value)}
-                                        placeholder="اتركه فارغاً إن لم يُحدَّد"
-                                        disabled={!hasSettingsWrite}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-sm outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                      />
-                                      <p className="text-xs text-slate-400 mt-0.5">فارغ = لم يُحدَّد بعد</p>
-                                    </div>
-
-                                    {/* Expenses */}
-                                    <div>
-                                      <label className="block text-xs font-medium text-slate-500 mb-1">المصاريف (SAR)</label>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={d.expenses}
-                                        onChange={e => handleDraftChange(partner.id, 'expenses', e.target.value)}
-                                        disabled={!hasSettingsWrite}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-sm outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Deduction summary card */}
-                                  <div className={`rounded-lg p-3 text-xs space-y-1.5 border ${calc.fromCapital > 0 ? 'bg-amber-50 border-amber-200' : 'bg-[#f0fdfa] border-[#99f6e4]'}`}>
-                                    {expensesNum > 0 && profitNum == null && (
-                                      <p className="font-medium text-slate-500">⚠️ الربح غير محدد — المصاريف لن تُخصم من رأس المال</p>
-                                    )}
-                                    {expensesNum > 0 && profitNum != null && (
-                                      <>
-                                        <p className="text-slate-600">
-                                          مصاريف مخصومة من الربح: <span className="font-bold text-red-600">{fmtSAR(calc.fromProfit)}</span>
-                                        </p>
-                                        {calc.fromCapital > 0 && (
-                                          <p className="text-slate-600">
-                                            مصاريف مخصومة من رأس المال (فائض): <span className="font-bold text-amber-700">{fmtSAR(calc.fromCapital)}</span>
-                                          </p>
-                                        )}
-                                      </>
-                                    )}
-                                    <div className="pt-1 border-t border-slate-200 grid grid-cols-2 gap-2">
-                                      <div>
-                                        <span className="text-slate-500">إرجاع رأس المال الصافي: </span>
-                                        <span className="font-bold text-[#134e4a]">{fmtSAR(calc.netCapitalReturn)}</span>
-                                      </div>
-                                      <div>
-                                        <span className="text-slate-500">الربح الصافي: </span>
-                                        {calc.netProfit == null
-                                          ? <span className="italic text-slate-400">غير محدد</span>
-                                          : <span className="font-bold text-[#134e4a]">{fmtSAR(calc.netProfit)}</span>
-                                        }
-                                      </div>
-                                    </div>
-                                    <div className="pt-1 border-t border-slate-200">
-                                      <span className="text-slate-500">الإجمالي الصافي: </span>
-                                      {calc.netProfit == null
-                                        ? <span className="italic text-slate-400">غير محدد (رأس المال: {fmtSAR(calc.netCapitalReturn)})</span>
-                                        : <span className="font-bold text-slate-800">{fmtSAR(calc.netCapitalReturn + calc.netProfit)}</span>
-                                      }
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Save button */}
-                        {hasSettingsWrite && (
-                          <div className="pt-2 flex justify-end">
-                            <button
-                              onClick={handleSaveDistribution}
-                              className="px-5 py-2.5 bg-[#134e4a] text-white rounded-lg hover:bg-[#0c3531] transition-colors text-sm font-medium"
-                            >
-                              حفظ التوزيع
-                            </button>
-                          </div>
-                        )}
-
-                        {savedDist && (
-                          <p className="text-xs text-slate-400 text-left rtl:text-right">
-                            آخر حفظ: {new Date(savedDist.savedAt).toLocaleString('ar-SA')}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              })()}
+              {/* توزيع الأرباح — يتم إدارته من صفحة رأس المال */}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center space-y-3">
+                <p className="text-3xl">📊</p>
+                <h2 className="text-lg font-bold text-slate-800">توزيع الأرباح</h2>
+                <p className="text-sm text-slate-500">يتم إدارة توزيع الأرباح من صفحة رأس المال مباشرةً</p>
+                <p className="text-xs text-slate-400">انتقل إلى <strong>رأس المال ← توزيع الأرباح</strong> لإدخال أو تعديل بيانات التوزيع لكل رسالة</p>
+              </div>
 
               {/* Section B — Partners List with Operating Flag */}
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
