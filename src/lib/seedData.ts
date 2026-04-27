@@ -263,12 +263,12 @@ export function generateSeedData(): AppState {
     generalTransfers,
     accountTransfers: [],
     ledger,
-    savedSettlements: [],
     capitalContributions,
-    settlementResults: {},
+    manualProfitDistributions: [],
     shipmentTransfers: [],
     roles: [],
     users: [],
     currentUser: null,
+    auditLogs: [],
   };
 }

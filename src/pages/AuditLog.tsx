@@ -26,7 +26,6 @@ const MODULE_LABEL_KEYS: Record<string, TranslationKey> = {
   accountTransfers: 'accountTransfers',
   savedSettlements: 'shipmentSettlement',
   capitalContributions: 'capitalContributions',
-  settlementResults: 'shipmentSettlement',
   shipmentTransfers: 'shipmentTransfer',
   roles: 'manageRoles',
   users: 'manageUsers',

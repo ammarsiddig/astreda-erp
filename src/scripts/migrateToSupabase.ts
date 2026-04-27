@@ -48,12 +48,7 @@ async function migrateAllData(): Promise<void> {
   for (const mapping of TABLE_MAPPINGS) {
     const key = mapping.stateKey
     let items: any[]
-
-    if (key === 'settlementResults') {
-      items = Object.values((state as any).settlementResults || {})
-    } else {
-      items = (state as any)[key] ?? []
-    }
+    items = (state as any)[key] ?? []
 
     if (!Array.isArray(items) || items.length === 0) {
       console.log(`  ⏭ ${mapping.table}: فارغ`)
@@ -170,9 +165,7 @@ async function migrateTable(...tableNames: string[]): Promise<void> {
     if (!mapping) { console.error(`❌ جدول غير موجود: ${tableName}`); continue }
 
     const key = mapping.stateKey
-    let items: any[] = key === 'settlementResults'
-      ? Object.values((state as any).settlementResults || {})
-      : (state as any)[key] ?? []
+    let items: any[] = (state as any)[key] ?? []
 
     if (!Array.isArray(items) || items.length === 0) {
       console.log(`  ⏭ ${tableName}: فارغ`); continue

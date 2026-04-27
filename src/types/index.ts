@@ -213,12 +213,6 @@ export interface LedgerEntry {
   shipmentId?: string;
 }
 
-export interface SavedSettlement {
-  shipmentId: string;
-  savedAt: string;
-  profitByPartner: { partnerId: string; profitSAR: number }[];
-}
-
 export interface CapitalContribution {
   id: string;
   partnerId: string;
@@ -227,16 +221,6 @@ export interface CapitalContribution {
   date: string;
   notes?: string;
   profitRate?: number; // optional per-investor profit rate (e.g. 3 = 3%). Pool is split by capital × profitRate weight.
-}
-
-export interface SettlementResult {
-  shipmentId: string;
-  savedAt: string;
-  exchangeRate: number;
-  investorsProfitPercent: number;
-  managementFeePercent: number;
-  partnerProfits: { partnerId: string; profit: number }[];
-  investorProfits: { partnerId: string; profit: number }[];
 }
 
 // ─── Manual Profit Distribution ──────────────────────────────────
@@ -318,9 +302,7 @@ export interface AppState {
   generalTransfers: GeneralTransfer[];
   accountTransfers: AccountTransfer[];
   ledger: LedgerEntry[];
-  savedSettlements: SavedSettlement[];
   capitalContributions: CapitalContribution[];
-  settlementResults: { [shipmentId: string]: SettlementResult };
   manualProfitDistributions: ManualProfitDistribution[];
   shipmentTransfers: ShipmentTransfer[];
   auditLogs: AuditLogEntry[];

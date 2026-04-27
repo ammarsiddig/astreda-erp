@@ -66,7 +66,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
   };
 
   const handleKeyDownCapture = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Enter' || event.shiftKey || event.defaultPrevented || event.isComposing) {
+    if (event.key !== 'Enter' || event.shiftKey || event.defaultPrevented || event.nativeEvent.isComposing) {
       return;
     }
 

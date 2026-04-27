@@ -4,7 +4,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { motion } from 'framer-motion';
 import {
   Wallet, Plus, Printer, CheckCircle, XCircle,
-  LayoutGrid, Table2, ChevronDown, ChevronUp, Save,
+  LayoutGrid, Table2, ChevronDown, ChevronUp,
   AlertTriangle, Users, TrendingUp,
   BarChart3, Building2, CreditCard, Trash2, Edit2
 } from 'lucide-react';
@@ -24,27 +24,12 @@ const fmtSAR = (v: number) =>
   new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + ' SAR';
 const fmtSDG = (v: number) =>
   new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v) + ' SDG';
-const fmtPct = (v: number) =>
-  new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v) + '%';
-const roundDownToNearest10 = (amount: number) => Math.floor(amount / 10) * 10;
-const normalizeProfitRate = (profitRate?: number | null) => profitRate == null ? 1 : profitRate / 100;
-
 function getPartnerContributionStats(contributions: CapitalContribution[], partnerId: string) {
   const partnerContributions = contributions.filter(c => c.partnerId === partnerId);
   const capital = partnerContributions.reduce((sum, c) => sum + c.amountSAR, 0);
-  const weightedCapital = partnerContributions.reduce(
-    (sum, c) => sum + (c.amountSAR * normalizeProfitRate(c.profitRate)),
-    0
-  );
   const rateEntry = partnerContributions.filter(c => c.profitRate != null).slice(-1)[0];
   const profitRate = rateEntry?.profitRate ?? null;
-  return { capital, weightedCapital, profitRate };
-}
-
-function getLastExchangeRate(transfers: { exchangeRate: number; date: string }[]): number | null {
-  const sorted = [...transfers].filter(t => t.exchangeRate > 0)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return sorted.length > 0 ? sorted[0].exchangeRate : null;
+  return { capital, profitRate };
 }
 
 export default function Capital() {
@@ -66,7 +51,6 @@ export default function Capital() {
   const toggleExpanded = (id: string) => {
     setExpandedPartnerIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
-  const autoExchangeRate = getLastExchangeRate(state.generalTransfers);
 
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [showDeleteDrawingId, setShowDeleteDrawingId] = useState<string | null>(null);
@@ -84,9 +68,6 @@ export default function Capital() {
     [state.capitalContributions, activeShipmentId]);
   const capitalReturns = useMemo(() =>
     state.generalTransfers.filter(t => t.shipmentId === activeShipmentId && (t.transferType === 'capital_return' || t.transferType === 'capital')),
-    [state.generalTransfers, activeShipmentId]);
-  const profitPayments = useMemo(() =>
-    state.generalTransfers.filter(t => t.shipmentId === activeShipmentId && t.transferType === 'profit_payment'),
     [state.generalTransfers, activeShipmentId]);
   const drawingTransfers = useMemo(() =>
     state.generalTransfers.filter(t => t.transferType === 'drawings' && t.shipmentId === activeShipmentId),
@@ -358,7 +339,6 @@ export default function Capital() {
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">إجمالي ما تم إرجاعه (رأس مال فقط)</p>
               <p className="text-xl font-bold text-slate-800">{fmtSAR(totalReturned)}</p>
-              {totalProfitPaid > 0 && <p className="text-xs text-blue-600 mt-0.5">+ أرباح مدفوعة: {fmtSAR(totalProfitPaid)}</p>}
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
               <p className="text-xs text-slate-500 mb-1">إجمالي المتبقي</p>
@@ -384,26 +364,16 @@ export default function Capital() {
                         <div className="w-10 h-10 rounded-full bg-[#134e4a] text-white flex items-center justify-center font-bold text-sm">{initials}</div>
                         <span className="font-bold text-slate-800">{d.partner.name}</span>
                       </div>
-                      {statusBadge(d.status)}
+                      {capitalStatusBadge(d.capitalStatus)}
                     </div>
                     {/* Card body */}
                     <div className="px-4 py-3 space-y-3 text-sm">
-                      <div className="space-y-1.5 border-b border-slate-100 pb-3">
+                      <div className="space-y-1.5">
                         <div className="flex justify-between"><span className="text-slate-500">رأس المال</span><span className="font-semibold">{fmtSAR(d.capital)}</span></div>
                         {d.profitRate != null && <div className="flex justify-between"><span className="text-slate-500">معدل الربح</span><span className="font-semibold text-blue-600">{d.profitRate}%</span></div>}
                         <div className="flex justify-between"><span className="text-slate-500">المُرجَع</span><span className="font-semibold">{fmtSAR(d.returned)}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">متبقي رأس المال</span>
                           <span className={`font-bold ${d.remainingCapital > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{fmtSAR(d.remainingCapital)}</span></div>
-                      </div>
-                      <div className="space-y-1.5 border-b border-slate-100 pb-3">
-                        <div className="flex justify-between"><span className="text-slate-500">الأرباح المستحقة</span>
-                          <span className="font-semibold">{liveProfitCalc ? fmtSAR(d.profitEntitledRounded) : <span className="text-amber-500 text-xs">⚠️ أدخل سعر الصرف في تصفية الشركاء</span>}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">الأرباح المدفوعة</span><span className="font-semibold">{fmtSAR(d.profitPaid)}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">الأرباح المتبقية</span><span className="font-semibold">{fmtSAR(d.profitRemaining)}</span></div>
-                      </div>
-                      <div className="flex justify-between pt-1">
-                        <span className="font-bold text-slate-700">الإجمالي المستحق</span>
-                        <span className="font-bold text-lg text-[#134e4a]">{fmtSAR(d.totalDue)}</span>
                       </div>
                     </div>
                     {/* Expandable transactions */}

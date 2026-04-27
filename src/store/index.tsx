@@ -227,9 +227,7 @@ const initialState: AppState = {
   generalTransfers: [],
   accountTransfers: [],
   ledger: [],
-  savedSettlements: [],
   capitalContributions: [],
-  settlementResults: {},
   manualProfitDistributions: [],
   shipmentTransfers: [],
   auditLogs: [],
@@ -271,7 +269,7 @@ const NON_AUDITABLE_KEYS = new Set<keyof AppState>(['currentUser', 'auditLogs', 
 const AUDIT_ID_LIMIT = 10;
 
 function getAuditPk(key: keyof AppState, item: any): string {
-  if (key === 'savedSettlements' || key === 'manualProfitDistributions') return String(item.shipmentId);
+  if (key === 'manualProfitDistributions') return String(item.shipmentId);
   return String(item.id ?? item.shipmentId ?? JSON.stringify(item));
 }
 
@@ -589,11 +587,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const merged: any = { ...prev };
       for (const [key, value] of Object.entries(updates)) {
         if (key === 'currentUser') continue;
-        if (key === 'settlementResults') {
-          merged[key] = { ...(prev as any)[key], ...(value as Record<string, unknown>) };
-        } else {
-          merged[key] = value;
-        }
+        merged[key] = value;
       }
       merged.currentUser = prev.currentUser;
       return cleanOrphanedLedger(ensureDefaults(merged) as AppState);
@@ -687,18 +681,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (scalarKeys.includes(key) || key === 'currentUser' || key === 'auditLogs') continue;
       const newVal = (auditedFinal as any)[key];
       const oldVal = prev[key];
-
-      // settlementResults is Record<shipmentId, result> — sync each changed entry
-      if (key === 'settlementResults' && typeof newVal === 'object' && !Array.isArray(newVal)) {
-        const oldMap = (oldVal ?? {}) as Record<string, any>;
-        const newMap = newVal as Record<string, any>;
-        for (const shipId of Object.keys(newMap)) {
-          if (JSON.stringify(oldMap[shipId]) !== JSON.stringify(newMap[shipId])) {
-            upsertRecord('settlementResults', { shipmentId: shipId, ...newMap[shipId] });
-          }
-        }
-        continue;
-      }
 
       // Array data — diff by primary key, push changes
       if (Array.isArray(newVal) && Array.isArray(oldVal)) {

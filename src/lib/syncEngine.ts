@@ -150,17 +150,6 @@ export const TABLE_MAPPINGS: TableMapping[] = [
   { table: 'account_transfers', stateKey: 'accountTransfers', toRow: objectToSnake, fromRow: objectToCamel },
   { table: 'ledger', stateKey: 'ledger', toRow: objectToSnake, fromRow: objectToCamel },
   {
-    table: 'saved_settlements', stateKey: 'savedSettlements', pkField: 'shipment_id',
-    toRow: (s) => ({
-      shipment_id: s.shipmentId, saved_at: s.savedAt,
-      profit_by_partner: JSON.stringify(s.profitByPartner),
-    }),
-    fromRow: (row) => ({
-      shipmentId: row.shipment_id, savedAt: row.saved_at,
-      profitByPartner: typeof row.profit_by_partner === 'string' ? JSON.parse(row.profit_by_partner) : row.profit_by_partner,
-    }),
-  },
-  {
     table: 'capital_contributions', stateKey: 'capitalContributions',
     toRow: (c) => ({
       id: c.id, partner_id: c.partnerId, shipment_id: c.shipmentId,
@@ -171,23 +160,6 @@ export const TABLE_MAPPINGS: TableMapping[] = [
       id: row.id, partnerId: row.partner_id, shipmentId: row.shipment_id,
       amountSAR: row.amount_sar, date: row.date, notes: row.notes,
       profitRate: row.profit_rate ?? undefined,
-    }),
-  },
-  {
-    table: 'settlement_results', stateKey: 'settlementResults', pkField: 'shipment_id',
-    toRow: (sr) => ({
-      shipment_id: sr.shipmentId, saved_at: sr.savedAt,
-      exchange_rate: sr.exchangeRate, investors_profit_percent: sr.investorsProfitPercent,
-      management_fee_percent: sr.managementFeePercent,
-      partner_profits: JSON.stringify(sr.partnerProfits),
-      investor_profits: JSON.stringify(sr.investorProfits),
-    }),
-    fromRow: (row) => ({
-      shipmentId: row.shipment_id, savedAt: row.saved_at,
-      exchangeRate: row.exchange_rate, investorsProfitPercent: row.investors_profit_percent,
-      managementFeePercent: row.management_fee_percent,
-      partnerProfits: typeof row.partner_profits === 'string' ? JSON.parse(row.partner_profits) : row.partner_profits,
-      investorProfits: typeof row.investor_profits === 'string' ? JSON.parse(row.investor_profits) : row.investor_profits,
     }),
   },
   {
@@ -656,13 +628,7 @@ export async function pullFromCloud(
     } else {
       const { mapping, data } = result.value
       const mapped = data.map(mapping.fromRow)
-      if (mapping.stateKey === 'settlementResults') {
-        const record: Record<string, any> = {}
-        for (const sr of mapped) record[sr.shipmentId] = sr
-        ;(bulkUpdate as any)[mapping.stateKey] = record
-      } else {
-        ;(bulkUpdate as any)[mapping.stateKey] = mapped
-      }
+      ;(bulkUpdate as any)[mapping.stateKey] = mapped
     }
   }
 
@@ -683,11 +649,7 @@ export async function fullPushToCloud(state: AppState): Promise<void> {
   for (const mapping of TABLE_MAPPINGS) {
     try {
       let items: any[]
-      if (mapping.stateKey === 'settlementResults') {
-        items = Object.values(state.settlementResults || {})
-      } else {
-        items = (state as any)[mapping.stateKey] ?? []
-      }
+      items = (state as any)[mapping.stateKey] ?? []
       if (!Array.isArray(items) || items.length === 0) continue
       const rows = items.map(item => mapping.toRow(item))
       const pkCol = mapping.pkField ?? 'id'
@@ -760,11 +722,6 @@ export function setupRealtimeSync(
             if (!deletedPk || isRecentWrite(mapping.table, String(deletedPk))) return
             console.log(`[realtime-v3] DELETE ${mapping.table}/${deletedPk}`)
             queueRealtimePatch(s => {
-              if (key === 'settlementResults') {
-                const record = { ...(s.settlementResults || {}) }
-                delete record[deletedPk]
-                return { settlementResults: record }
-              }
               const arr = ((s as any)[key] || []) as any[]
               return { [key]: arr.filter((i: any) => pkGetter(i) !== deletedPk) } as any
             }, applyToState, getState)
@@ -778,9 +735,6 @@ export function setupRealtimeSync(
           console.log(`[realtime-v3] ${payload.eventType} ${mapping.table}/${pk}`)
 
           queueRealtimePatch(s => {
-            if (key === 'settlementResults') {
-              return { settlementResults: { ...(s.settlementResults || {}), [newItem.shipmentId]: newItem } }
-            }
             const arr = ((s as any)[key] || []) as any[]
             const idx = arr.findIndex((i: any) => pkGetter(i) === pk)
             if (idx === -1) return { [key]: [...arr, newItem] } as any
