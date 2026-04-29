@@ -4,7 +4,11 @@ import App from './App.tsx';
 import './index.css';
 import { setWaitingRegistration } from './lib/appUpdate';
 
-const BUILD_VERSION = '2026-04-14-hard-refresh-1';
+// Injected by Vite at build time (vite.config.ts `define`). Every production
+// build gets a unique timestamp so enforceLatestBuild() always detects a new
+// deployment without any manual edits to this file.
+declare const __BUILD_TIME__: string;
+const BUILD_VERSION = __BUILD_TIME__;
 const BUILD_VERSION_STORAGE_KEY = 'astreda_build_version';
 
 // Lazy-load migration script — only needed when called from console
