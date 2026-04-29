@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, AuditLogDetail, AuditLogEntry, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { getCurrentDateTimeValue, hashPassword, isPasswordHashed } from '../lib/utils';
-import { setupRealtimeSync, initNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
+import { setupRealtimeSync, initNetworkMonitoring, disposeNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -661,7 +661,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     })();
 
-    return cleanup;
+    return () => {
+      disposeNetworkMonitoring();
+      cleanup();
+    };
   }, [cloudApply]);
 
   // Save to localStorage as read-only cache (for next app load)

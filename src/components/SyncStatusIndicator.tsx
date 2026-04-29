@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getSyncStatus, onSyncStatusChange, SyncStatus } from '../lib/syncEngine'
-import { Cloud, CloudOff, RefreshCw, Check } from 'lucide-react'
+import { AlertTriangle, Cloud, CloudOff, RefreshCw, Check } from 'lucide-react'
 import { useTranslation } from '../hooks/useTranslation'
 
 export const SyncStatusIndicator: React.FC<{ onManualSync?: () => void }> = ({ onManualSync }) => {
@@ -17,16 +17,20 @@ export const SyncStatusIndicator: React.FC<{ onManualSync?: () => void }> = ({ o
       {/* Online / Offline dot */}
       <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border"
         style={{
-          background: status.isOnline ? '#ecfdf5' : '#fef2f2',
-          borderColor: status.isOnline ? '#a7f3d0' : '#fecaca',
-          color: status.isOnline ? '#047857' : '#b91c1c',
+          background: status.connectionMode === 'online' ? '#ecfdf5' : status.connectionMode === 'degraded' ? '#fffbeb' : '#fef2f2',
+          borderColor: status.connectionMode === 'online' ? '#a7f3d0' : status.connectionMode === 'degraded' ? '#fde68a' : '#fecaca',
+          color: status.connectionMode === 'online' ? '#047857' : status.connectionMode === 'degraded' ? '#92400e' : '#b91c1c',
         }}
       >
-        {status.isOnline
-          ? <Cloud className="w-3.5 h-3.5" />
-          : <CloudOff className="w-3.5 h-3.5" />}
+        {status.connectionMode === 'online' && <Cloud className="w-3.5 h-3.5" />}
+        {status.connectionMode === 'degraded' && <AlertTriangle className="w-3.5 h-3.5" />}
+        {status.connectionMode === 'offline' && <CloudOff className="w-3.5 h-3.5" />}
         <span className="hidden sm:inline">
-          {status.isOnline ? t('connected') : t('disconnected')}
+          {status.connectionMode === 'online'
+            ? t('connected')
+            : status.connectionMode === 'degraded'
+            ? (t('degraded') || 'اتصال غير مستقر')
+            : t('disconnected')}
         </span>
       </div>
 
@@ -43,7 +47,7 @@ export const SyncStatusIndicator: React.FC<{ onManualSync?: () => void }> = ({ o
       )}
 
       {/* Synced checkmark */}
-      {!status.isSyncing && status.lastSynced && status.pendingChanges === 0 && status.isOnline && (
+      {!status.isSyncing && status.lastSynced && status.pendingChanges === 0 && status.connectionMode === 'online' && (
         <Check className="w-3.5 h-3.5 text-emerald-500" />
       )}
 

@@ -221,6 +221,9 @@ export const TABLE_MAPPINGS: TableMapping[] = [
 
 export interface SyncStatus {
   isOnline: boolean
+  browserOnline: boolean
+  backendReachable: boolean
+  connectionMode: 'online' | 'degraded' | 'offline'
   isSyncing: boolean
   lastSynced: string | null
   pendingChanges: number
@@ -229,6 +232,9 @@ export interface SyncStatus {
 
 let syncStatus: SyncStatus = {
   isOnline: navigator.onLine,
+  browserOnline: navigator.onLine,
+  backendReachable: navigator.onLine,
+  connectionMode: navigator.onLine ? 'online' : 'offline',
   isSyncing: false,
   lastSynced: null,
   pendingChanges: 0,
@@ -251,12 +257,60 @@ function updateStatus(patch: Partial<SyncStatus>) {
 // Real connectivity: ping Supabase
 let pingTimer: ReturnType<typeof setInterval> | null = null
 const PING_INTERVAL = 15_000
+const PING_TIMEOUT_MS = 4_000
+const OFFLINE_FAILURE_THRESHOLD = 3
+const ONLINE_SUCCESS_THRESHOLD = 2
+const TRANSITION_TOAST_COOLDOWN_MS = 15_000
+
+let networkMonitorInitialized = false
+let onBrowserOnline: (() => void) | null = null
+let onBrowserOffline: (() => void) | null = null
+let consecutiveFailures = 0
+let consecutiveSuccesses = 0
+let lastToastAtByMode: Record<'online' | 'offline', number> = {
+  online: 0,
+  offline: 0,
+}
+
+function maybeNotifyTransition(nextMode: 'online' | 'offline') {
+  const now = Date.now()
+  if (now - lastToastAtByMode[nextMode] < TRANSITION_TOAST_COOLDOWN_MS) return
+  lastToastAtByMode[nextMode] = now
+
+  if (nextMode === 'online') {
+    addToast('success', '✅ الاتصال عاد — جارٍ المزامنة...')
+  } else {
+    addToast('error', '⚠️ انقطع الاتصال — التعديلات لن تُحفظ حتى يعود', 5000)
+  }
+}
+
+async function commitMode(nextMode: 'online' | 'degraded' | 'offline') {
+  const prevMode = syncStatus.connectionMode
+  if (prevMode === nextMode) return
+
+  updateStatus({
+    connectionMode: nextMode,
+    // Degraded keeps optimistic online behavior; true offline still blocks writes.
+    isOnline: nextMode !== 'offline',
+  })
+
+  if (nextMode === 'online' && prevMode !== 'online') {
+    maybeNotifyTransition('online')
+    console.log('[sync-v3] back online — flushing WAL + pulling')
+    await flushQueue()
+    return
+  }
+
+  if (nextMode === 'offline') {
+    maybeNotifyTransition('offline')
+  }
+}
 
 async function checkRealConnectivity(): Promise<boolean> {
   if (!navigator.onLine) return false
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 4000)
+    const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT_MS)
     const res = await fetch(
       `${supabaseUrl}/rest/v1/app_settings?select=id&id=eq.singleton`,
       {
@@ -272,28 +326,89 @@ async function checkRealConnectivity(): Promise<boolean> {
 }
 
 export function initNetworkMonitoring(): void {
+  if (networkMonitorInitialized) return
+  networkMonitorInitialized = true
+
   const check = async () => {
-    const wasOnline = syncStatus.isOnline
-    const isOnline = await checkRealConnectivity()
-    updateStatus({ isOnline })
-    if (!wasOnline && isOnline) {
-      console.log('[sync-v3] back online — flushing WAL + pulling')
-      addToast('success', '✅ الاتصال عاد — جارٍ المزامنة...')
-      await flushQueue()
+    const browserOnline = navigator.onLine
+    if (!browserOnline) {
+      consecutiveFailures = 0
+      consecutiveSuccesses = 0
+      updateStatus({ browserOnline: false, backendReachable: false })
+      await commitMode('offline')
+      return
     }
-    if (wasOnline && !isOnline) {
-      addToast('error', '⚠️ انقطع الاتصال — التعديلات لن تُحفظ حتى يعود', 5000)
+
+    updateStatus({ browserOnline: true })
+    const backendReachable = await checkRealConnectivity()
+    updateStatus({ backendReachable })
+
+    if (backendReachable) {
+      consecutiveFailures = 0
+      consecutiveSuccesses += 1
+      if (syncStatus.connectionMode === 'offline' && consecutiveSuccesses < ONLINE_SUCCESS_THRESHOLD) {
+        await commitMode('degraded')
+        return
+      }
+      if (consecutiveSuccesses >= ONLINE_SUCCESS_THRESHOLD || syncStatus.connectionMode !== 'offline') {
+        await commitMode('online')
+      }
+      return
     }
+
+    consecutiveSuccesses = 0
+    consecutiveFailures += 1
+    if (consecutiveFailures >= OFFLINE_FAILURE_THRESHOLD) {
+      await commitMode('offline')
+      return
+    }
+
+    // Transient backend miss: remain calm and non-blocking.
+    await commitMode('degraded')
   }
 
-  window.addEventListener('online', check)
-  window.addEventListener('offline', () => {
-    updateStatus({ isOnline: false })
-    addToast('error', '⚠️ انقطع الاتصال — التعديلات لن تُحفظ حتى يعود', 5000)
-  })
+  onBrowserOnline = () => {
+    consecutiveFailures = 0
+    consecutiveSuccesses = 0
+    updateStatus({ browserOnline: true })
+    void check()
+  }
 
-  check()
-  pingTimer = setInterval(check, PING_INTERVAL)
+  onBrowserOffline = () => {
+    consecutiveFailures = 0
+    consecutiveSuccesses = 0
+    updateStatus({ browserOnline: false, backendReachable: false })
+    void commitMode('offline')
+  }
+
+  window.addEventListener('online', onBrowserOnline)
+  window.addEventListener('offline', onBrowserOffline)
+
+  void check()
+  pingTimer = setInterval(() => {
+    void check()
+  }, PING_INTERVAL)
+}
+
+export function disposeNetworkMonitoring(): void {
+  if (!networkMonitorInitialized) return
+  networkMonitorInitialized = false
+
+  if (pingTimer) {
+    clearInterval(pingTimer)
+    pingTimer = null
+  }
+  if (onBrowserOnline) {
+    window.removeEventListener('online', onBrowserOnline)
+    onBrowserOnline = null
+  }
+  if (onBrowserOffline) {
+    window.removeEventListener('offline', onBrowserOffline)
+    onBrowserOffline = null
+  }
+
+  consecutiveFailures = 0
+  consecutiveSuccesses = 0
 }
 
 // ─── Schema Version Check ───────────────────────────────────────
