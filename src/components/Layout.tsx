@@ -134,7 +134,7 @@ export default function Layout() {
     : null;
 
   return (
-    <div className="flex h-screen bg-[#f0fdfa] font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-screen bg-[#edf2f1] font-sans text-slate-900 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* Sidebar — Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-[#0c3531] text-white shadow-xl z-20 flex-shrink-0">
@@ -183,7 +183,7 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Top bar */}
-        <header className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between shadow-sm flex-shrink-0 z-10 sticky top-0">
+        <header className="bg-[#fbfcfc] border-b border-[#d6e0de] px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between shadow-sm flex-shrink-0 z-10 sticky top-0">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
@@ -220,7 +220,7 @@ export default function Layout() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center bg-[#f0fdfa] text-[#134e4a] border border-[#99f6e4] px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-[#ccfbf1] transition-colors"
+              className="flex items-center bg-[#e6edeb] text-[#134e4a] border border-[#99f6e4] px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-[#d0e2de] transition-colors"
             >
               <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 rtl:ml-1 rtl:mr-0" />
               <span>{lang === 'ar' ? 'EN' : 'AR'}</span>
@@ -254,7 +254,7 @@ export default function Layout() {
         <ConnectionBanner />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#f0fdfa]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#edf2f1]">
           <div className="p-4 sm:p-6 max-w-full">
             <Outlet />
           </div>
