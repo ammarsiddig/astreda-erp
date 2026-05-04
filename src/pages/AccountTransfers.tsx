@@ -6,7 +6,7 @@ import { ArrowRightLeft, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, calculateTransferFee, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -35,6 +35,7 @@ export default function AccountTransfers() {
   const [toBankAccountId, setToBankAccountId] = useState('');
   const [amount, setAmount] = useState<number | ''>('');
   const [transferFee, setTransferFee] = useState<number | ''>(0);
+  const [transferCount, setTransferCount] = useState<number>(1);
   const [notes, setNotes] = useState('');
 
   const filteredTransfers = useMemo(() => {
@@ -71,6 +72,7 @@ export default function AccountTransfers() {
       toBankAccountId,
       amount: Number(amount),
       transferFee: Number(transferFee) || 0,
+      transferCount: type === 'transfer' ? transferCount : undefined,
       notes,
     };
 
@@ -143,6 +145,7 @@ export default function AccountTransfers() {
     setToBankAccountId('');
     setAmount('');
     setTransferFee(0);
+    setTransferCount(1);
     setNotes('');
     setDate(getCurrentDateInputValue());
   };
@@ -154,6 +157,7 @@ export default function AccountTransfers() {
     setToBankAccountId(transfer.toBankAccountId);
     setAmount(transfer.amount);
     setTransferFee(transfer.transferFee);
+    setTransferCount(transfer.transferCount ?? 1);
     setNotes(transfer.notes || '');
     setShowEditModal(transfer);
   };
@@ -272,7 +276,9 @@ export default function AccountTransfers() {
               <div className="text-xs text-slate-500 space-y-0.5">
                 {transfer.fromBankAccountId && <p>{t('fromAccount')}: {state.bankAccounts.find(b => b.id === transfer.fromBankAccountId)?.name}</p>}
                 <p>{t('toAccount')}: {state.bankAccounts.find(b => b.id === transfer.toBankAccountId)?.name}</p>
-                {Number(transfer.transferFee) > 0 && <p>{t('transferFee')}: {formatCurrency(transfer.transferFee)}</p>}
+                {Number(transfer.transferFee) > 0 && (
+                  <p>{t('transferFee')}: {formatCurrency(transfer.transferFee)}{(transfer.transferCount ?? 1) > 1 && <span className="ml-1 rtl:mr-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-bold">×{transfer.transferCount}</span>}</p>
+                )}
               </div>
               <div className="flex gap-1 pt-1">
                 <button onClick={(e) => { e.stopPropagation(); setShowViewModal(transfer); }} className="p-2 text-slate-400 hover:text-[#14b8a6] hover:bg-slate-100 rounded-lg transition-colors"><Eye className="w-4 h-4"/></button>
@@ -317,7 +323,10 @@ export default function AccountTransfers() {
                     {formatCurrency(transfer.amount)}
                   </td>
                   <td className="px-4 py-3 text-slate-500 text-right rtl:text-left">
-                    {formatCurrency(transfer.transferFee)}
+                    <span className="inline-flex items-center gap-1">
+                      {formatCurrency(transfer.transferFee)}
+                      {(transfer.transferCount ?? 1) > 1 && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-bold">×{transfer.transferCount}</span>}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center gap-2">
@@ -387,8 +396,9 @@ export default function AccountTransfers() {
                   value={fromBankAccountId}
                   onChange={(val) => {
                     setFromBankAccountId(val);
-                    const bank = state.bankAccounts.find(b => b.id === val);
-                    if (bank) setTransferFee(bank.transferFee);
+                    const fromBank = state.bankAccounts.find(b => b.id === val);
+                    const toBank = state.bankAccounts.find(b => b.id === toBankAccountId);
+                    if (fromBank) setTransferFee(calculateTransferFee(fromBank.name, toBank?.name) * transferCount);
                   }}
                   options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
                   placeholder={t('select')}
@@ -401,7 +411,12 @@ export default function AccountTransfers() {
               <SearchableSelect
                 required
                 value={toBankAccountId}
-                onChange={(val) => setToBankAccountId(val)}
+                onChange={(val) => {
+                  setToBankAccountId(val);
+                  const fromBank = state.bankAccounts.find(b => b.id === fromBankAccountId);
+                  const toBank = state.bankAccounts.find(b => b.id === val);
+                  if (fromBank && type === 'transfer') setTransferFee(calculateTransferFee(fromBank.name, toBank?.name) * transferCount);
+                }}
                 options={state.bankAccounts.map(b => ({ value: b.id, label: b.name }))}
                 placeholder={t('select')}
               />
@@ -413,6 +428,27 @@ export default function AccountTransfers() {
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               />
             </div>
+
+            {type === 'transfer' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">عدد التحويلات</label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  step="1"
+                  value={transferCount}
+                  onChange={(e) => {
+                    const count = Math.max(1, Number(e.target.value) || 1);
+                    setTransferCount(count);
+                    const fromBank = state.bankAccounts.find(b => b.id === fromBankAccountId);
+                    const toBank = state.bankAccounts.find(b => b.id === toBankAccountId);
+                    if (fromBank) setTransferFee(calculateTransferFee(fromBank.name, toBank?.name) * count);
+                  }}
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
+                />
+              </div>
+            )}
 
             {type === 'transfer' && (
               <div>
@@ -475,7 +511,12 @@ export default function AccountTransfers() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">{t('transferFee')}</label>
-                <p className="font-medium">{formatCurrency(showViewModal.transferFee)}</p>
+                <p className="font-medium">
+                  {formatCurrency(showViewModal.transferFee)}
+                  {(showViewModal.transferCount ?? 1) > 1 && (
+                    <span className="mr-2 rtl:ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-bold">×{showViewModal.transferCount} تحويل</span>
+                  )}
+                </p>
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500">{t('notes')}</label>

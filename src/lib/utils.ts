@@ -214,6 +214,35 @@ export function computeBankBalance(accountId: string, ledger: LedgerEntry[]): nu
   }, 0);
 }
 
+// ─── Sudan Bank Transfer Fee Utilities ────────────────────────────────────────
+
+type SudanProvider = 'بنكك' | 'أوكاش' | 'فوري';
+
+const PROVIDER_FEES: Record<SudanProvider, { internal: number; external: number }> = {
+  'بنكك':  { internal: 110, external: 500 },
+  'أوكاش': { internal: 0,   external: 400 },
+  'فوري':  { internal: 100, external: 700 },
+};
+
+export function getProviderFromName(name: string): SudanProvider | null {
+  if (name.includes('بنكك')) return 'بنكك';
+  if (name.includes('اوكاش') || name.includes('أوكاش')) return 'أوكاش';
+  if (name.includes('فوري')) return 'فوري';
+  return null;
+}
+
+/**
+ * Returns the per-transfer fee for a single sub-transfer.
+ * Multiply by transferCount to get the total fee.
+ */
+export function calculateTransferFee(fromName: string, toName?: string): number {
+  const fromProvider = getProviderFromName(fromName);
+  if (!fromProvider) return 0;
+  const toProvider = toName ? getProviderFromName(toName) : null;
+  const isInternal = fromProvider === toProvider;
+  return isInternal ? PROVIDER_FEES[fromProvider].internal : PROVIDER_FEES[fromProvider].external;
+}
+
 export function computeShipmentBalance(shipmentId: string, accountId: string, ledger: LedgerEntry[]): number {
   return ledger
     .filter(e => e.shipmentId === shipmentId)

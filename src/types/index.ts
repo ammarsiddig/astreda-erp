@@ -196,6 +196,7 @@ export interface AccountTransfer {
   toBankAccountId: string;
   amount: number;
   transferFee: number;
+  transferCount?: number;
   notes: string;
 }
 
