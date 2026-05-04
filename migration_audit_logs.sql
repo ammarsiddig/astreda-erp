@@ -42,7 +42,13 @@ END $$;
 
 ALTER TABLE audit_logs REPLICA IDENTITY FULL;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE audit_logs;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE audit_logs;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN undefined_object THEN NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
