@@ -14,6 +14,31 @@ interface InvoiceModalProps {
   invoiceToEdit?: Invoice | null;
 }
 
+function comparableInvoice(invoice: Invoice) {
+  return {
+    id: invoice.id,
+    date: invoice.date,
+    customerId: invoice.customerId,
+    salespersonId: invoice.salespersonId,
+    cityId: invoice.cityId,
+    carId: invoice.carId,
+    shipmentId: invoice.shipmentId,
+    lines: invoice.lines.map(line => ({
+      productId: line.productId,
+      qty: Number(line.qty),
+      unitPrice: Number(line.unitPrice),
+      total: Number(line.total),
+    })),
+    total: Number(invoice.total),
+    paymentType: invoice.paymentType,
+    bankAccountId: invoice.bankAccountId || undefined,
+  };
+}
+
+function isSameInvoiceBusinessData(before: Invoice, after: Invoice): boolean {
+  return JSON.stringify(comparableInvoice(before)) === JSON.stringify(comparableInvoice(after));
+}
+
 export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: InvoiceModalProps) {
   const { t } = useTranslation();
   const { state, updateState, activeShipmentId } = useAppStore();
@@ -100,22 +125,31 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
 
     const validLines = lines.filter(l => l.productId && l.qty > 0 && l.unitPrice > 0);
     if (validLines.length === 0) return;
+    const validLineTotal = validLines.reduce((sum, line) => sum + line.total, 0);
 
     const invoiceId = invoiceToEdit ? invoiceToEdit.id : generateInvoiceId(invoiceDate, state.invoices);
+    const invoiceDateTime = invoiceToEdit && invoiceDate === invoiceToEdit.date.slice(0, 10)
+      ? invoiceToEdit.date
+      : dateTimeFromDateString(invoiceDate);
 
     const newInvoice: Invoice = {
       id: invoiceId,
-      date: dateTimeFromDateString(invoiceDate),
+      date: invoiceDateTime,
       customerId,
       salespersonId,
       cityId,
       carId,
       shipmentId: activeShipmentId,
       lines: validLines,
-      total: invoiceTotal,
+      total: validLineTotal,
       paymentType,
       bankAccountId: paymentType === 'cash' ? bankAccountId : undefined,
     };
+
+    if (invoiceToEdit && isSameInvoiceBusinessData(invoiceToEdit, newInvoice)) {
+      onClose();
+      return;
+    }
 
     let updatedInvoices = [...state.invoices];
     let updatedInventoryTransactions = [...state.inventoryTransactions];
@@ -142,7 +176,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     // Create new inventory transactions
     const newInventoryTransactions = validLines.map((line, idx) => ({
       id: generateId('IT', state.inventoryTransactions, idx),
-      date: dateTimeFromDateString(invoiceDate),
+      date: invoiceDateTime,
       shipmentId: activeShipmentId,
       productId: line.productId,
       type: 'sell' as const,
@@ -158,10 +192,10 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     if (paymentType === 'cash' && bankAccountId) {
       updatedLedger.push({
         id: buildLedgerEntryId('sale_cash', invoiceId, 0, activeShipmentId),
-        date: dateTimeFromDateString(invoiceDate),
+        date: invoiceDateTime,
         toAccount: bankAccountId,
         description: `فاتورة مبيعات نقدية #${invoiceId}`,
-        amountIn: invoiceTotal,
+        amountIn: validLineTotal,
         amountOut: 0,
         sourceModule: 'sale_cash' as const,
         linkedId: invoiceId,
