@@ -11,7 +11,7 @@ import {
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, computeBankBalance, formatCurrency, generateId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
+import { buildLedgerEntryId, computeBankBalance, formatCurrency, generateDatedId, getCurrentDateInputValue, getCurrentDateTimeValue } from '../lib/utils';
 import type { CapitalContribution, GeneralTransfer, ManualProfitEntry, ManualProfitDistribution } from '../types';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
@@ -198,7 +198,7 @@ export default function Capital() {
       });
     } else {
       const newContrib: CapitalContribution = {
-        id: generateId('CC', state.capitalContributions || []),
+        id: generateDatedId('CC', contribDate, state.capitalContributions || []),
         partnerId: contribPartnerId, shipmentId: activeShipmentId,
         amountSAR: Number(contribAmountSAR), date: contribDate, notes: contribNotes || undefined,
       };
@@ -250,7 +250,7 @@ export default function Capital() {
     const exRate = Number(drawExchangeRate) || 1;
     const amountSAR = totalSDG / exRate;
     const isEditing = !!editingDrawId;
-    const drawId = isEditing ? editingDrawId! : generateId('TR', state.generalTransfers);
+    const drawId = isEditing ? editingDrawId! : generateDatedId('TR', drawDate, state.generalTransfers);
     const newTransfer: GeneralTransfer = {
       id: drawId, date: drawDate, partnerId: drawPartnerId,
       transferType: 'drawings', amountSDG: totalSDG, exchangeRate: exRate,

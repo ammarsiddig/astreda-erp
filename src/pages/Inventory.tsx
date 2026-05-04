@@ -8,7 +8,7 @@ import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction, ShipmentTransfer } from '../types';
 import { canWrite, isSalesperson } from '../lib/permissions';
-import { buildLedgerEntryId, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 import { useSortableData } from '../hooks/useSortableData';
 import { SortIcon } from '../components/SortIcon';
 
@@ -162,7 +162,7 @@ export default function Inventory() {
     if (!activeShipmentId) return;
 
     const newTransactions = receiveItems.filter(item => item.productId && item.qty > 0).map((item, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', receiveDate, state.inventoryTransactions, idx),
       date: receiveDate,
       shipmentId: activeShipmentId,
       productId: item.productId,
@@ -186,7 +186,7 @@ export default function Inventory() {
     const type = transferFrom === 'warehouse' ? 'load' : transferTo === 'warehouse' ? 'return' : 'transfer';
 
     const newTransactions = transferItems.filter(item => item.productId && item.qty > 0).map((item, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', transferDate, state.inventoryTransactions, idx),
       date: transferDate,
       shipmentId: activeShipmentId,
       productId: item.productId,
@@ -296,10 +296,10 @@ export default function Inventory() {
       }
     }
 
-    const transferId = generateId('ST', state.shipmentTransfers || []);
+    const transferId = generateDatedId('ST', carTransferDate, state.shipmentTransfers || []);
 
     const newTransactions = validItems.map((item, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', carTransferDate, state.inventoryTransactions, idx),
       date: carTransferDate,
       shipmentId: activeShipmentId,
       productId: item.productId,
@@ -329,12 +329,12 @@ export default function Inventory() {
     const validItems = shipmentTransferItems.filter(item => item.productId && item.qty > 0);
     if (validItems.length === 0) return;
 
-    const transferId = generateId('ST', state.shipmentTransfers || []);
+    const transferId = generateDatedId('ST', shipmentTransferDate, state.shipmentTransfers || []);
     const totalAmount = Number(shipmentTransferTotalAmount) || 0;
 
     // Create inventory transactions: remove from source shipment, add to target shipment
     const outTransactions: InventoryTransaction[] = validItems.map((item, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', shipmentTransferDate, state.inventoryTransactions, idx),
       date: shipmentTransferDate,
       shipmentId: activeShipmentId,
       productId: item.productId,
@@ -347,7 +347,7 @@ export default function Inventory() {
     }));
 
     const inTransactions: InventoryTransaction[] = validItems.map((item, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, validItems.length + idx),
+      id: generateDatedId('IT', shipmentTransferDate, state.inventoryTransactions, validItems.length + idx),
       date: shipmentTransferDate,
       shipmentId: targetShipmentId,
       productId: item.productId,
@@ -427,7 +427,7 @@ export default function Inventory() {
     const amount = Number(shipmentPaymentAmount);
     if (!amount || amount <= 0) return;
 
-    const paymentId = generateId('SP', state.shipmentTransfers || []);
+    const paymentId = generateDatedId('SP', shipmentPaymentDate, state.shipmentTransfers || []);
     const accountId = shipmentPaymentBankAccountId;
     const sourceShipmentName = state.shipments.find(s => s.id === activeShipmentId)?.name || '';
     const targetShipmentName = state.shipments.find(s => s.id === shipmentPaymentTargetId)?.name || '';

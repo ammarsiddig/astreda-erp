@@ -87,7 +87,7 @@ export default function Customers() {
       setShowEditModal(null);
     } else {
       const newCustomer: Customer = {
-        id: generateId('CU', state.customers),
+        id: generateId('CUS', state.customers),
         name,
         phone,
         cityId,

@@ -4,9 +4,6 @@ import type { LedgerEntry } from '../types';
 
 export const APP_TIME_ZONE = 'Africa/Khartoum';
 
-let lastGeneratedTimestamp = 0;
-let intraMsCounter = 0;
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -99,24 +96,42 @@ export function dateTimeFromDateStringPreservingTime(dateString: string, origina
   return `${dateString}T${hour}:${minute}:${second.slice(0, 2)}`;
 }
 
-function getRandomIdChunk() {
-  const bytes = new Uint8Array(3);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(36).toUpperCase().padStart(2, '0')).join('').slice(0, 6);
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function generateId(prefix: string, _items: { id: string }[] = [], offset = 0) {
-  const nowMs = Date.now();
-  if (nowMs === lastGeneratedTimestamp) {
-    intraMsCounter += 1;
-  } else {
-    lastGeneratedTimestamp = nowMs;
-    intraMsCounter = 0;
-  }
+function getSequenceForPrefix(prefix: string, items: { id: string }[]): number {
+  const escaped = escapeRegExp(prefix);
+  const readablePattern = new RegExp(`^${escaped}-(?:\\d{6}-)?(\\d+)$`);
+  const compactPattern = new RegExp(`^${escaped}(\\d+)$`);
+  return items.reduce((max, item) => {
+    const readableMatch = readablePattern.exec(item.id);
+    const compactMatch = compactPattern.exec(item.id);
+    const raw = readableMatch?.[1] ?? compactMatch?.[1];
+    if (!raw) return max;
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > max ? parsed : max;
+  }, 0);
+}
 
-  const timePart = nowMs.toString(36).toUpperCase();
-  const counterPart = (intraMsCounter + offset).toString(36).toUpperCase().padStart(2, '0');
-  return `${prefix}${timePart}${counterPart}${getRandomIdChunk()}`;
+const lastIssuedSequences = new Map<string, number>();
+
+function nextReadableSequence(key: string, requestedSequence: number): number {
+  const lastIssued = lastIssuedSequences.get(key) ?? 0;
+  const sequence = Math.max(requestedSequence, lastIssued + 1);
+  lastIssuedSequences.set(key, sequence);
+  return sequence;
+}
+
+export function generateId(prefix: string, items: { id: string }[] = [], offset = 0): string {
+  const sequence = nextReadableSequence(prefix, getSequenceForPrefix(prefix, items) + offset + 1);
+  return `${prefix}-${String(sequence).padStart(4, '0')}`;
+}
+
+export function generateDatedId(prefix: string, dateString: string, items: { id: string }[] = [], offset = 0): string {
+  const yymmdd = `${dateString.slice(2, 4)}${dateString.slice(5, 7)}${dateString.slice(8, 10)}`;
+  const sequence = nextReadableSequence(`${prefix}-${yymmdd}`, getSequenceForPrefix(prefix, items) + offset + 1);
+  return `${prefix}-${yymmdd}-${String(sequence).padStart(4, '0')}`;
 }
 
 // Matches the new INV-YYMM-<seq> format only; old legacy IDs are ignored.

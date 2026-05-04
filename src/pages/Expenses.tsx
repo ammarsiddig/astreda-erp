@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -57,7 +57,7 @@ export default function Expenses() {
 
     const expenseAmount = Number(amount);
     const isEditing = !!showEditModal;
-    const expenseId = isEditing ? showEditModal!.id : generateId('EX', state.expenses);
+    const expenseId = isEditing ? showEditModal!.id : generateDatedId('EX', date, state.expenses);
     const expenseDateTime = isEditing
       ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
       : dateTimeFromDateString(date);
@@ -395,7 +395,7 @@ export default function Expenses() {
           <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => setShowAddModal(false)}
+              onClick={() => { setShowAddModal(false); setShowEditModal(null); resetForm(); }}
               className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
             >
               {t('cancel')}

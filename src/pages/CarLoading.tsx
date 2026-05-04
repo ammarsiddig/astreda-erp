@@ -4,12 +4,11 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { Truck, Plus, Eye, Edit2, Trash2, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { InventoryTransaction } from '../types';
 import { canWrite } from '../lib/permissions';
-import { generateId, getCurrentDateInputValue } from '../lib/utils';
+import { generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 
 export default function CarLoading() {
   const { t, lang } = useTranslation();
@@ -130,7 +129,7 @@ export default function CarLoading() {
     if (!activeShipmentId || !selectedCarId) return;
 
     const newTransactions = loadItems.filter(item => item.productId && item.qty > 0).map((item, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', loadDate, state.inventoryTransactions, idx),
       date: loadDate,
       shipmentId: activeShipmentId,
       productId: item.productId,
@@ -154,7 +153,7 @@ export default function CarLoading() {
     const today = getCurrentDateInputValue();
 
     const returnTransactions = productsWithStock.map((row, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', today, state.inventoryTransactions, idx),
       date: today,
       shipmentId: activeShipmentId,
       productId: row.product.id,

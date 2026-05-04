@@ -6,7 +6,7 @@ import { ArrowLeftRight, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 import { GeneralTransfer, GeneralTransferType } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -90,7 +90,7 @@ export default function GeneralTransfers() {
     if (validSplits.length === 0) return;
 
     const isEditing = !!showEditModal;
-    const transferId = isEditing ? showEditModal!.id : generateId('TR', state.generalTransfers);
+    const transferId = isEditing ? showEditModal!.id : generateDatedId('TR', date, state.generalTransfers);
     const transferDateTime = isEditing
       ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
       : dateTimeFromDateString(date);

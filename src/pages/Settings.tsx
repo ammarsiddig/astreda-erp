@@ -3,7 +3,6 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, Trash2, Shield, Users, Eye, EyeOff, RefreshCw } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { generateSeedData } from '../lib/seedData';
@@ -11,10 +10,21 @@ import { canWrite } from '../lib/permissions';
 import { ALL_PAGE_KEYS } from '../lib/permissions';
 import type { User, Role, PagePermission, PageKey } from '../types';
 import { upsertRecord, deleteRecord } from '../lib/syncEngine';
-import { hashPassword } from '../lib/utils';
+import { generateId, hashPassword } from '../lib/utils';
 
 // Generic entity shape used by the settings CRUD handlers
 type SettingsRecord = { id: string; [key: string]: unknown };
+
+const SETTINGS_ID_PREFIXES: Record<string, string> = {
+  products: 'PROD',
+  salespeople: 'SLS',
+  cities: 'CITY',
+  cars: 'CAR',
+  bankAccounts: 'BANK',
+  expenseCategories: 'CAT',
+  partners: 'PART',
+  shipments: 'SHIP',
+};
 
 const PAGE_LABELS: Record<PageKey, string> = {
   dashboard: 'لوحة التحكم',
@@ -92,7 +102,7 @@ export default function Settings() {
       const updatedList = list.map(item => item.id === editingItem.id ? { ...item, ...formData } : item);
       updateState({ [activeTab]: updatedList });
     } else {
-      const newItem: SettingsRecord = { id: uuidv4(), ...formData };
+      const newItem: SettingsRecord = { id: generateId(SETTINGS_ID_PREFIXES[activeTab] || activeTab.toUpperCase(), list), ...formData };
       const newList = [...list, newItem];
       updateState({ [activeTab]: newList });
     }
@@ -262,7 +272,7 @@ export default function Settings() {
       : await hashPassword(userForm.password);
 
     const newUser: User = {
-      id: editingUser ? editingUser.id : uuidv4(),
+      id: editingUser ? editingUser.id : generateId('USER', state.users),
       name: userForm.name,
       username: userForm.username,
       password: storedPassword,
@@ -317,7 +327,7 @@ export default function Settings() {
     if (!hasSettingsWrite) return;
     if (!roleForm.name || !roleForm.nameEn) return;
     const newRole: Role = {
-      id: editingRole ? editingRole.id : uuidv4(),
+      id: editingRole ? editingRole.id : generateId('ROLE', state.roles),
       name: roleForm.name,
       nameEn: roleForm.nameEn,
       isSalesperson: roleForm.isSalesperson,

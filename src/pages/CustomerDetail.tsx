@@ -5,7 +5,7 @@ import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Edit2, Trash2, Printer, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 import InvoiceModal from '../components/InvoiceModal';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
@@ -125,7 +125,7 @@ export default function CustomerDetail() {
     if (!activeShipmentId || !bankAccountId) return;
 
     const isEditing = !!editingPayment;
-    const paymentId = isEditing ? editingPayment!.id : generateId('PM', state.payments);
+    const paymentId = isEditing ? editingPayment!.id : generateDatedId('PM', paymentDate, state.payments);
     const paymentDateTime = isEditing
       ? dateTimeFromDateStringPreservingTime(paymentDate, editingPayment!.date)
       : dateTimeFromDateString(paymentDate);

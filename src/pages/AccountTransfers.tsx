@@ -6,7 +6,7 @@ import { ArrowRightLeft, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, getCurrentDateInputValue } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -58,7 +58,7 @@ export default function AccountTransfers() {
     }
 
     const isEditing = !!showEditModal;
-    const transferId = isEditing ? showEditModal!.id : generateId('MV', state.accountTransfers);
+    const transferId = isEditing ? showEditModal!.id : generateDatedId('MV', date, state.accountTransfers);
     const transferDateTime = isEditing
       ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
       : dateTimeFromDateString(date);
@@ -434,7 +434,7 @@ export default function AccountTransfers() {
           <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => setShowAddModal(false)}
+              onClick={() => { setShowAddModal(false); setShowEditModal(null); resetForm(); }}
               className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
             >
               {t('cancel')}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildLedgerEntryId, computeBankBalance, formatCurrency, formatDate, generateId, generateInvoiceId } from '../utils';
+import { buildLedgerEntryId, computeBankBalance, formatCurrency, formatDate, generateDatedId, generateId, generateInvoiceId } from '../utils';
 import type { LedgerEntry } from '../../types';
 
 // ─── formatCurrency ───────────────────────────────────────────────
@@ -52,16 +52,25 @@ describe('formatDate', () => {
 // ─── generateId ───────────────────────────────────────────────────
 
 describe('generateId', () => {
-  it('keeps the prefix and generates a collision-safe value', () => {
-    const id = generateId('INV', [], 0);
-    expect(id.startsWith('INV')).toBe(true);
-    expect(id.length).toBeGreaterThan(10);
+  it('generates a readable sequential value', () => {
+    const id = generateId('TEST', [], 0);
+    expect(id).toBe('TEST-0001');
   });
 
   it('generates different ids even for the same prefix', () => {
-    const first = generateId('PM', [], 0);
-    const second = generateId('PM', [], 0);
+    const first = generateId('TSEQ', [], 0);
+    const second = generateId('TSEQ', [], 0);
     expect(first).not.toBe(second);
+  });
+});
+
+describe('generateDatedId', () => {
+  it('includes the document date and readable sequence', () => {
+    expect(generateDatedId('PAYT', '2026-05-04', [])).toBe('PAYT-260504-0001');
+  });
+
+  it('increments above existing readable ids', () => {
+    expect(generateDatedId('EXPT', '2026-05-04', [{ id: 'EXPT-260503-0002' }])).toBe('EXPT-260504-0003');
   });
 });
 

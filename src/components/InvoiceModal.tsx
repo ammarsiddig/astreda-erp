@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, generateInvoiceId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, generateInvoiceId, getCurrentDateInputValue } from '../lib/utils';
 import Modal from './Modal';
 import SearchableSelect from './SearchableSelect';
 import { Invoice, InvoiceLine } from '../types';
@@ -175,7 +175,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
 
     // Create new inventory transactions
     const newInventoryTransactions = validLines.map((line, idx) => ({
-      id: generateId('IT', state.inventoryTransactions, idx),
+      id: generateDatedId('IT', invoiceDate, state.inventoryTransactions, idx),
       date: invoiceDateTime,
       shipmentId: activeShipmentId,
       productId: line.productId,

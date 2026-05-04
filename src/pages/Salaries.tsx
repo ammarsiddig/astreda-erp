@@ -6,7 +6,7 @@ import { Plus, Edit2, Eye, Trash2, UserPlus, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateDatedId, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
 import { Salary, Expense, Employee } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -198,7 +198,7 @@ export default function Salaries() {
 
     const salaryAmount = Number(amount);
     const isEditing = !!showEditModal;
-    const salaryId = isEditing ? showEditModal!.id : generateId('SA', state.salaries);
+    const salaryId = isEditing ? showEditModal!.id : generateDatedId('SA', date, state.salaries);
     const emp = state.employees.find(e => e.id === employeeId);
     const salaryDateTime = isEditing
       ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
@@ -566,7 +566,7 @@ export default function Salaries() {
 
     const advAmountNum = Number(advAmount);
     const emp = state.employees.find(e => e.id === advEmployee);
-    const newExpenseId = generateId('EX', state.expenses);
+    const newExpenseId = generateDatedId('ADV', advDate, state.expenses);
 
     const newExpense: Expense = {
       id: newExpenseId,
