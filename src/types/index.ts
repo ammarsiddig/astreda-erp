@@ -287,6 +287,7 @@ export interface AuditLogEntry {
   userName: string;
   action: 'create' | 'update' | 'delete' | 'mixed';
   details: AuditLogDetail[];
+  timestampTrusted?: boolean;
 }
 
 export interface AppState {

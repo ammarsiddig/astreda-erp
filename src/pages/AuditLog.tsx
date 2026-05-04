@@ -197,6 +197,129 @@ export default function AuditLog() {
     );
   };
 
+  const formatSimpleValue = (fieldName: string, value: unknown): string => {
+    if (value === null || value === undefined || value === '') return '-';
+    const resolved = resolveValue(fieldName, value);
+    if (resolved) return resolved.replace(/ \(ID: .+\)$/, '');
+    if (fieldName === 'date' && typeof value === 'string') return formatDateTimeValue(value, true);
+    if (fieldName === 'paymentType') return value === 'cash' ? t('cash') : t('credit');
+    if (typeof value === 'number') return new Intl.NumberFormat('en-US').format(value);
+    if (typeof value === 'boolean') return value ? 'نعم' : 'لا';
+    return String(value);
+  };
+
+  const getFieldLabel = (fieldName: string): string => {
+    const labels: Record<string, string> = {
+      id: t('recordId'),
+      date: t('date'),
+      customerId: t('customer'),
+      salespersonId: t('salesperson'),
+      cityId: t('city'),
+      carId: t('car'),
+      shipmentId: t('shipments'),
+      paymentType: t('paymentType'),
+      bankAccountId: t('bankAccount'),
+      productId: t('product'),
+      qty: t('qty'),
+      unitPrice: t('unitPrice'),
+      total: t('total'),
+      fromLocation: t('from'),
+      toLocation: t('to'),
+      type: t('type'),
+      referenceId: 'المرجع',
+      invoiceId: t('invoiceNumber'),
+      amount: t('amount'),
+      notes: t('notes'),
+    };
+    return labels[fieldName] || fieldName;
+  };
+
+  const productName = (productId: unknown) =>
+    state.products.find(product => product.id === String(productId))?.name || String(productId || '-');
+
+  const renderHumanRow = (label: string, before: string, after: string) => (
+    <div key={`${label}-${before}-${after}`} className="grid grid-cols-[minmax(120px,1fr)_minmax(110px,1fr)_minmax(110px,1fr)] gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
+      <div className="font-semibold text-slate-700">{label}</div>
+      <div className="text-rose-700">{before}</div>
+      <div className="text-emerald-700">{after}</div>
+    </div>
+  );
+
+  const renderInvoiceHumanSummary = (detail: AuditLogDetail): React.ReactNode => {
+    if (detail.stateKey !== 'invoices' || !detail.snapshots) return null;
+    const rows: React.ReactNode[] = [];
+    Object.entries(detail.snapshots).forEach(([id, snap]) => {
+      const before = snap.before;
+      const after = snap.after;
+      const title = `فاتورة ${id}`;
+      if (before && after) {
+        rows.push(<div key={`${id}-title`} className="text-sm font-bold text-slate-900">{title}</div>);
+        ['date', 'customerId', 'salespersonId', 'cityId', 'carId', 'paymentType', 'bankAccountId', 'total'].forEach((field) => {
+          if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
+            rows.push(renderHumanRow(getFieldLabel(field), formatSimpleValue(field, before[field]), formatSimpleValue(field, after[field])));
+          }
+        });
+
+        const beforeLines = new Map<string, any>((Array.isArray(before.lines) ? before.lines : []).map((line: any) => [String(line.productId), line]));
+        const afterLines = new Map<string, any>((Array.isArray(after.lines) ? after.lines : []).map((line: any) => [String(line.productId), line]));
+        const lineProductIds = [...new Set([...beforeLines.keys(), ...afterLines.keys()])];
+        lineProductIds.forEach((productId) => {
+          const oldLine = beforeLines.get(productId);
+          const newLine = afterLines.get(productId);
+          if (JSON.stringify(oldLine) === JSON.stringify(newLine)) return;
+          const name = productName(productId);
+          rows.push(<div key={`${id}-${productId}-product`} className="mt-2 text-sm font-semibold text-slate-800">{name}</div>);
+          rows.push(renderHumanRow(t('qty'), oldLine ? formatSimpleValue('qty', oldLine.qty) : '-', newLine ? formatSimpleValue('qty', newLine.qty) : '-'));
+          rows.push(renderHumanRow(t('unitPrice'), oldLine ? formatSimpleValue('unitPrice', oldLine.unitPrice) : '-', newLine ? formatSimpleValue('unitPrice', newLine.unitPrice) : '-'));
+          rows.push(renderHumanRow(t('total'), oldLine ? formatSimpleValue('total', oldLine.total) : '-', newLine ? formatSimpleValue('total', newLine.total) : '-'));
+        });
+      } else if (after || before) {
+        const record = after || before!;
+        const isCreate = !!after;
+        rows.push(
+          <div key={`${id}-${isCreate ? 'create' : 'delete'}`} className={`text-sm font-bold ${isCreate ? 'text-emerald-700' : 'text-rose-700'}`}>
+            {isCreate ? t('add') : t('delete')} {title}
+          </div>
+        );
+        ['date', 'customerId', 'salespersonId', 'cityId', 'carId', 'paymentType', 'bankAccountId', 'total'].forEach((field) => {
+          rows.push(renderHumanRow(getFieldLabel(field), isCreate ? '-' : formatSimpleValue(field, record[field]), isCreate ? formatSimpleValue(field, record[field]) : '-'));
+        });
+        (Array.isArray(record.lines) ? record.lines : []).forEach((line: any) => {
+          const name = productName(line.productId);
+          rows.push(<div key={`${id}-${line.productId}-line-${isCreate ? 'create' : 'delete'}`} className="mt-2 text-sm font-semibold text-slate-800">{name}</div>);
+          rows.push(renderHumanRow(t('qty'), isCreate ? '-' : formatSimpleValue('qty', line.qty), isCreate ? formatSimpleValue('qty', line.qty) : '-'));
+          rows.push(renderHumanRow(t('unitPrice'), isCreate ? '-' : formatSimpleValue('unitPrice', line.unitPrice), isCreate ? formatSimpleValue('unitPrice', line.unitPrice) : '-'));
+          rows.push(renderHumanRow(t('total'), isCreate ? '-' : formatSimpleValue('total', line.total), isCreate ? formatSimpleValue('total', line.total) : '-'));
+        });
+      }
+    });
+    if (rows.length === 0) return null;
+    return <div className="space-y-2 rounded-xl border border-cyan-100 bg-cyan-50/40 p-3">{rows}</div>;
+  };
+
+  const renderInventoryHumanSummary = (detail: AuditLogDetail): React.ReactNode => {
+    if (detail.stateKey !== 'inventoryTransactions' || !detail.snapshots) return null;
+    const rows = Object.entries(detail.snapshots).map(([id, snap]) => {
+      const record = snap.after || snap.before;
+      if (!record) return null;
+      const action = snap.before && snap.after ? t('edit') : snap.after ? t('add') : t('delete');
+      const color = snap.before && snap.after ? 'text-amber-700' : snap.after ? 'text-emerald-700' : 'text-rose-700';
+      return (
+        <div key={id} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
+          <div className={`font-bold ${color}`}>{action}: {productName(record.productId)}</div>
+          <div className="mt-1 text-slate-600">
+            {t('qty')}: {formatSimpleValue('qty', record.qty)} | {t('invoiceNumber')}: {formatSimpleValue('invoiceId', record.invoiceId || record.referenceId)}
+          </div>
+        </div>
+      );
+    }).filter(Boolean);
+    if (rows.length === 0) return null;
+    return <div className="space-y-2 rounded-xl border border-cyan-100 bg-cyan-50/40 p-3">{rows}</div>;
+  };
+
+  const renderHumanSummary = (detail: AuditLogDetail): React.ReactNode =>
+    renderInvoiceHumanSummary(detail) || renderInventoryHumanSummary(detail);
+
   const renderDetailSection = (detail: AuditLogDetail) => {
     const moduleLabel = getModuleLabel(detail.stateKey);
     const hasSnapshots = !!detail.snapshots && Object.keys(detail.snapshots).length > 0;
@@ -204,6 +327,7 @@ export default function AuditLog() {
     const updatedSet = new Set(detail.updatedIds);
     const addedSet = new Set(detail.addedIds);
     const deletedSet = new Set(detail.deletedIds);
+    const humanSummary = renderHumanSummary(detail);
 
     return (
       <div key={detail.stateKey} className="border border-slate-200 rounded-xl overflow-hidden">
@@ -223,7 +347,13 @@ export default function AuditLog() {
           </div>
         </div>
 
-        <div className="p-4">
+        <div className="p-4 space-y-4">
+          {humanSummary && (
+            <div>
+              <div className="text-xs font-bold text-cyan-700 mb-2">ملخص واضح</div>
+              {humanSummary}
+            </div>
+          )}
           {hasSnapshots ? (
             // ── New entries: full per-record snapshots ──────────────────────
             <div className="space-y-6">

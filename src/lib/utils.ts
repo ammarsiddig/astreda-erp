@@ -2,6 +2,8 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import type { LedgerEntry } from '../types';
 
+export const APP_TIME_ZONE = 'Africa/Khartoum';
+
 let lastGeneratedTimestamp = 0;
 let intraMsCounter = 0;
 
@@ -31,24 +33,51 @@ function pad2(value: number) {
   return String(value).padStart(2, '0');
 }
 
+function getTimeZoneParts(value: Date, timeZone = APP_TIME_ZONE): Record<string, string> {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(value).reduce<Record<string, string>>((parts, part) => {
+    if (part.type !== 'literal') parts[part.type] = part.value;
+    return parts;
+  }, {});
+}
+
 export function getCurrentDateInputValue(now = new Date()): string {
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+  const parts = getTimeZoneParts(now);
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 export function getCurrentMonthInputValue(now = new Date()): string {
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+  const parts = getTimeZoneParts(now);
+  return `${parts.year}-${parts.month}`;
 }
 
 export function getCurrentDateTimeValue(now = new Date()): string {
-  return `${getCurrentDateInputValue(now)}T${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+  const parts = getTimeZoneParts(now);
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`;
 }
 
 export function formatDateTimeValue(value: string | Date, includeSeconds = false): string {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && !/(Z|[+-]\d{2}:?\d{2})$/.test(value)) {
+    const [datePart, timePart = ''] = value.split('T');
+    const [year, month, day] = datePart.split('-');
+    const [hour = '00', minute = '00', second = '00'] = timePart.split(':');
+    const time = includeSeconds ? `${hour}:${minute}:${second.slice(0, 2)}` : `${hour}:${minute}`;
+    return `${day}/${month}/${year} ${time}`;
+  }
   const date = value instanceof Date ? value : new Date(value);
+  const parts = getTimeZoneParts(date);
   const time = includeSeconds
-    ? `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
-    : `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-  return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()} ${time}`;
+    ? `${parts.hour}:${parts.minute}:${parts.second}`
+    : `${parts.hour}:${parts.minute}`;
+  return `${parts.day}/${parts.month}/${parts.year} ${time}`;
 }
 
 export function formatDateOnlyValue(dateString: string): string {
@@ -59,7 +88,8 @@ export function formatDateOnlyValue(dateString: string): string {
 }
 
 export function dateTimeFromDateString(dateString: string, now = new Date()): string {
-  return `${dateString}T${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+  const parts = getTimeZoneParts(now);
+  return `${dateString}T${parts.hour}:${parts.minute}:${parts.second}`;
 }
 
 function getRandomIdChunk() {

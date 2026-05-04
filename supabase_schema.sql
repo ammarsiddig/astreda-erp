@@ -265,7 +265,7 @@ CREATE TABLE shipment_transfers (
 
 CREATE TABLE audit_logs (
   id TEXT PRIMARY KEY,
-  timestamp TEXT NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   user_id TEXT,
   user_name TEXT NOT NULL DEFAULT 'Unknown',
   action TEXT NOT NULL, -- 'create' | 'update' | 'delete' | 'mixed'

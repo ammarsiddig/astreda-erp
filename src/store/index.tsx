@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, AuditLogDetail, AuditLogEntry, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { getCurrentDateTimeValue, hashPassword, isPasswordHashed } from '../lib/utils';
-import { setupRealtimeSync, initNetworkMonitoring, disposeNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertRecord, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
+import { setupRealtimeSync, initNetworkMonitoring, disposeNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertAuditLog, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
+import { addToast } from '../lib/toast';
 
 const DEFAULT_ROLES: Role[] = [
   {
@@ -239,7 +240,7 @@ const initialState: AppState = {
 interface AppContextType {
   state: AppState;
   setState: React.Dispatch<React.SetStateAction<AppState>>;
-  updateState: (updates: Partial<AppState>) => void;
+  updateState: (updates: Partial<AppState>) => boolean;
   activeShipmentId: string | undefined;
   setActiveShipmentId: (id: string) => void;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -266,7 +267,6 @@ const SOURCE_MODULE_TO_STATE_KEY: Record<string, keyof AppState> = {
 };
 
 const NON_AUDITABLE_KEYS = new Set<keyof AppState>(['currentUser', 'auditLogs', 'ledger']);
-const AUDIT_ID_LIMIT = 10;
 
 function getAuditPk(key: keyof AppState, item: any): string {
   if (key === 'manualProfitDistributions') return String(item.shipmentId);
@@ -298,32 +298,23 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
     const previousItem = previousMap.get(id);
     if (!previousItem) {
       addedIds.push(id);
-      // Store snapshot for every added record up to the limit
-      if (addedIds.length <= AUDIT_ID_LIMIT) {
-        snapshots[id] = { after: nextItem as Record<string, unknown> };
-      }
+      snapshots[id] = { after: nextItem as Record<string, unknown> };
       continue;
     }
     if (JSON.stringify(previousItem) !== JSON.stringify(nextItem)) {
       updatedIds.push(id);
       collectChangedFields(previousItem, nextItem).forEach((field) => changedFields.add(field));
-      // Store full before+after snapshot for every updated record up to the limit
-      if (updatedIds.length <= AUDIT_ID_LIMIT) {
-        snapshots[id] = {
-          before: previousItem as Record<string, unknown>,
-          after: nextItem as Record<string, unknown>,
-        };
-      }
+      snapshots[id] = {
+        before: previousItem as Record<string, unknown>,
+        after: nextItem as Record<string, unknown>,
+      };
     }
   }
 
   for (const id of previousMap.keys()) {
     if (!nextMap.has(id)) {
       deletedIds.push(id);
-      // Store full before snapshot for every deleted record up to the limit
-      if (deletedIds.length <= AUDIT_ID_LIMIT) {
-        snapshots[id] = { before: previousMap.get(id) as Record<string, unknown> };
-      }
+      snapshots[id] = { before: previousMap.get(id) as Record<string, unknown> };
     }
   }
 
@@ -346,9 +337,9 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
 
   return {
     stateKey: String(key),
-    addedIds: addedIds.slice(0, AUDIT_ID_LIMIT),
-    updatedIds: updatedIds.slice(0, AUDIT_ID_LIMIT),
-    deletedIds: deletedIds.slice(0, AUDIT_ID_LIMIT),
+    addedIds,
+    updatedIds,
+    deletedIds,
     changedFields: Array.from(changedFields),
     snapshots,
     before: firstBefore,
@@ -383,9 +374,9 @@ function buildObjectAuditDetail(key: keyof AppState, previousValue: Record<strin
 
   return {
     stateKey: String(key),
-    addedIds: addedIds.slice(0, AUDIT_ID_LIMIT),
-    updatedIds: updatedIds.slice(0, AUDIT_ID_LIMIT),
-    deletedIds: deletedIds.slice(0, AUDIT_ID_LIMIT),
+    addedIds,
+    updatedIds,
+    deletedIds,
     changedFields: Array.from(changedFields),
   };
 }
@@ -455,7 +446,18 @@ function createAuditLogEntry(prev: AppState, next: AppState, updates: Partial<Ap
     userName: prev.currentUser?.name ?? 'Unknown',
     action,
     details,
+    timestampTrusted: false,
   };
+}
+
+function requiresOnlineCommit(details: AuditLogDetail[]): boolean {
+  return details.some((detail) => {
+    const onlyCreates = detail.addedIds.length > 0
+      && detail.updatedIds.length === 0
+      && detail.deletedIds.length === 0
+      && detail.changedFields.length === 0;
+    return !onlyCreates;
+  });
 }
 
 function cleanOrphanedLedger(st: AppState): AppState {
@@ -681,7 +683,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // updateState: local state update + automatic Supabase push for ALL data types
   // Pages do NOT need to call upsertRecord/deleteRecord manually — this handles it.
-  const updateState = (updates: Partial<AppState>) => {
+  const updateState = (updates: Partial<AppState>): boolean => {
     // Capture prev state BEFORE updating for diff computation
     const prev = stateRef.current;
 
@@ -701,17 +703,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const auditEntry = createAuditLogEntry(prev, final_, updates);
-    const auditedFinal = auditEntry
+    if (auditEntry && requiresOnlineCommit(auditEntry.details)) {
+      const syncStatus = getSyncStatus();
+      if (syncStatus.connectionMode !== 'online') {
+        addToast('error', 'لا يمكن تعديل أو حذف البيانات أثناء ضعف/انقطاع الاتصال. اتصل بالإنترنت ثم حاول مرة أخرى.', 6000);
+        return false;
+      }
+    }
+
+    const showLocalAuditEntry = !!auditEntry && getSyncStatus().connectionMode === 'online';
+    const auditedFinal = showLocalAuditEntry
       ? {
           ...final_,
-          auditLogs: [auditEntry, ...final_.auditLogs].slice(0, 500),
+          auditLogs: [auditEntry!, ...final_.auditLogs].slice(0, 500),
         }
       : final_;
 
     setState(() => auditedFinal);
 
     // Push new audit entry to cloud so all users see it (silent — table may not exist yet before migration)
-    if (auditEntry) upsertRecord('auditLogs', auditEntry, true);
+    if (auditEntry) {
+      upsertAuditLog(auditEntry).then((serverEntry) => {
+        if (!serverEntry) return;
+        setState(prevState => ({
+          ...prevState,
+          auditLogs: prevState.auditLogs.map(entry => entry.id === serverEntry.id ? serverEntry : entry),
+        }));
+      });
+    }
 
     // v3: profitRate is synced to Supabase directly — no localStorage overrides
 
@@ -759,6 +778,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (toDelete.length > 0) deleteRecords(key, toDelete);
       }
     }
+    return true;
   };
 
   // ── Active shipment selector (cloud-synced via user_preferences) ──

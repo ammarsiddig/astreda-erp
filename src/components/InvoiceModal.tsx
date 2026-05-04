@@ -171,11 +171,12 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
       });
     }
 
-    updateState({
+    const saved = updateState({
       invoices: updatedInvoices,
       inventoryTransactions: updatedInventoryTransactions,
       ledger: updatedLedger,
     });
+    if (!saved) return;
 
     onClose();
   };

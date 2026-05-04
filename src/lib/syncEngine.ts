@@ -13,7 +13,7 @@
 
 import { supabase, isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from './supabase'
 import { addToast } from './toast'
-import type { AppState } from '../types'
+import type { AppState, AuditLogEntry } from '../types'
 
 // ─── Constants ──────────────────────────────────────────────────
 
@@ -200,7 +200,6 @@ export const TABLE_MAPPINGS: TableMapping[] = [
     table: 'audit_logs', stateKey: 'auditLogs',
     toRow: (entry) => ({
       id: entry.id,
-      timestamp: entry.timestamp,
       user_id: entry.userId ?? null,
       user_name: entry.userName,
       action: entry.action,
@@ -213,6 +212,7 @@ export const TABLE_MAPPINGS: TableMapping[] = [
       userName: row.user_name,
       action: row.action,
       details: typeof row.details === 'string' ? JSON.parse(row.details) : (row.details ?? []),
+      timestampTrusted: true,
     }),
   },
 ]
@@ -590,6 +590,37 @@ export async function upsertRecord(stateKey: keyof AppState, item: any, silent =
     walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
     if (!silent) addToast('error', `❌ فشل الحفظ: ${mapping.table} — ${msg}`)
     return false
+  }
+}
+
+export async function upsertAuditLog(entry: AuditLogEntry): Promise<AuditLogEntry | null> {
+  if (!assertSchemaOk()) return null
+  const mapping = TABLE_MAPPINGS.find(m => m.stateKey === 'auditLogs')
+  if (!mapping) return null
+
+  const row = mapping.toRow(entry)
+  const pkField = mapping.pkField ?? 'id'
+  const pk = String(row[pkField])
+
+  if (!syncStatus.isOnline || !isSupabaseConfigured()) {
+    walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
+    return null
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from(mapping.table)
+      .upsert(row, { onConflict: pkField })
+      .select('*')
+      .single()
+    if (error) throw error
+    markRecentWrite(mapping.table, pk)
+    return mapping.fromRow(data) as AuditLogEntry
+  } catch (e: any) {
+    const msg = e?.message || e?.details || JSON.stringify(e)
+    console.error(`[sync-v3] UPSERT ${mapping.table}/${pk} failed:`, msg)
+    walAppend({ table: mapping.table, pk, op: 'UPSERT', data: row })
+    return null
   }
 }
 

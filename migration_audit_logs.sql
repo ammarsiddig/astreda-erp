@@ -5,13 +5,18 @@
 
 CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY,
-  timestamp TEXT NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   user_id TEXT,
   user_name TEXT NOT NULL DEFAULT 'Unknown',
   action TEXT NOT NULL, -- 'create' | 'update' | 'delete' | 'mixed'
   details JSONB NOT NULL DEFAULT '[]',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE audit_logs
+  ALTER COLUMN timestamp TYPE TIMESTAMPTZ USING timestamp::timestamp AT TIME ZONE 'Africa/Khartoum',
+  ALTER COLUMN timestamp SET DEFAULT NOW(),
+  ALTER COLUMN timestamp SET NOT NULL;
 
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
