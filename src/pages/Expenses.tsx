@@ -37,6 +37,7 @@ export default function Expenses() {
   const [amount, setAmount] = useState<number | ''>('');
   const [bankAccountId, setBankAccountId] = useState('');
   const [notes, setNotes] = useState('');
+  const [isPartnerExpense, setIsPartnerExpense] = useState(false);
   const [expensePartnerId, setExpensePartnerId] = useState('');
 
   const filteredExpenses = useMemo(() => {
@@ -71,7 +72,7 @@ export default function Expenses() {
       bankAccountId,
       shipmentId: activeShipmentId,
       notes,
-      ...(expensePartnerId ? { partnerId: expensePartnerId } : {}),
+      ...(isPartnerExpense && expensePartnerId ? { partnerId: expensePartnerId } : {}),
     };
 
     let newLedger = [...state.ledger];
@@ -115,6 +116,7 @@ export default function Expenses() {
     setBankAccountId('');
     setNotes('');
     setDate(getCurrentDateInputValue());
+    setIsPartnerExpense(false);
     setExpensePartnerId('');
   };
 
@@ -124,6 +126,7 @@ export default function Expenses() {
     setAmount(expense.amount);
     setBankAccountId(expense.bankAccountId);
     setNotes(expense.notes || '');
+    setIsPartnerExpense(!!expense.partnerId);
     setExpensePartnerId(expense.partnerId || '');
     setShowEditModal(expense);
   };
@@ -375,15 +378,30 @@ export default function Expenses() {
                 placeholder={t('select')}
               />
             </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">الشريك المسؤول <span className="text-slate-400 font-normal">(اختياري — لتوزيع الأرباح)</span></label>
-              <SearchableSelect
-                value={expensePartnerId}
-                onChange={setExpensePartnerId}
-                options={[{ value: '', label: 'غير مُحدَّد' }, ...state.partners.map(p => ({ value: p.id, label: p.name }))]}
-                placeholder="اختر شريكاً..."
+            <div className="col-span-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isPartnerExpense"
+                checked={isPartnerExpense}
+                onChange={(e) => { setIsPartnerExpense(e.target.checked); if (!e.target.checked) setExpensePartnerId(''); }}
+                className="w-4 h-4 rounded border-slate-300 text-[#14b8a6] focus:ring-[#14b8a6]"
               />
+              <label htmlFor="isPartnerExpense" className="text-sm font-medium text-slate-700 cursor-pointer">
+                مصروف خاص بشريك <span className="text-slate-400 font-normal">(لتوزيع الأرباح)</span>
+              </label>
             </div>
+            {isPartnerExpense && (
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">الشريك المسؤول</label>
+                <SearchableSelect
+                  required
+                  value={expensePartnerId}
+                  onChange={setExpensePartnerId}
+                  options={state.partners.map(p => ({ value: p.id, label: p.name }))}
+                  placeholder="اختر شريكاً..."
+                />
+              </div>
+            )}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
