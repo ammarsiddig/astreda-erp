@@ -6,7 +6,7 @@ import { ArrowLeftRight, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { GeneralTransfer, GeneralTransferType } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -91,10 +91,13 @@ export default function GeneralTransfers() {
 
     const isEditing = !!showEditModal;
     const transferId = isEditing ? showEditModal!.id : generateId('TR', state.generalTransfers);
+    const transferDateTime = isEditing
+      ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
+      : dateTimeFromDateString(date);
 
     const newTransfer: GeneralTransfer = {
       id: transferId,
-      date: dateTimeFromDateString(date),
+      date: transferDateTime,
       partnerId: transferType === 'drawings' ? partnerId : (beneficiaryPartnerId || ''),
       transferType,
       beneficiaryPartnerId: (transferType === 'capital_return' || transferType === 'capital' || transferType === 'profit_payment') ? beneficiaryPartnerId : undefined,
@@ -120,7 +123,7 @@ export default function GeneralTransfers() {
 
     const newLedgerEntries = validSplits.map((split, index) => ({
       id: buildLedgerEntryId('general_transfer', transferId, index, activeShipmentId),
-      date: dateTimeFromDateString(date),
+      date: transferDateTime,
       fromAccount: split.bankAccountId,
       description: `${typeLabel} - ${partnerLabel} ${description ? `(${description})` : ''}`,
       amountIn: 0,

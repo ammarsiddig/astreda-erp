@@ -354,6 +354,9 @@ export default function AuditLog() {
               {humanSummary}
             </div>
           )}
+          <details open={!humanSummary} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <summary className="cursor-pointer select-none text-xs font-bold text-slate-600">التفاصيل الفنية</summary>
+            <div className="mt-3">
           {hasSnapshots ? (
             // ── New entries: full per-record snapshots ──────────────────────
             <div className="space-y-6">
@@ -483,6 +486,8 @@ export default function AuditLog() {
               )}
             </div>
           )}
+            </div>
+          </details>
         </div>
       </div>
     );

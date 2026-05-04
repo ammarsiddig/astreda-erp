@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { Expense } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -58,10 +58,13 @@ export default function Expenses() {
     const expenseAmount = Number(amount);
     const isEditing = !!showEditModal;
     const expenseId = isEditing ? showEditModal!.id : generateId('EX', state.expenses);
+    const expenseDateTime = isEditing
+      ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
+      : dateTimeFromDateString(date);
 
     const newExpense: Expense = {
       id: expenseId,
-      date: dateTimeFromDateString(date),
+      date: expenseDateTime,
       categoryId,
       description: notes,
       amount: expenseAmount,
@@ -82,7 +85,7 @@ export default function Expenses() {
     // Apply new effects
     const newLedgerEntry = {
       id: buildLedgerEntryId('expense', expenseId, 0, activeShipmentId),
-      date: dateTimeFromDateString(date),
+      date: expenseDateTime,
       toAccount: bankAccountId,
       description: `مصروفات / Expense - ${state.expenseCategories.find(c => c.id === categoryId)?.name} ${notes ? `(${notes})` : ''}`,
       amountIn: 0,

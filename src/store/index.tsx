@@ -280,8 +280,25 @@ function collectChangedFields(previousValue: any, nextValue: any): string[] {
   ]);
   // No cap — we want all changed fields so snapshots render complete diffs
   return Array.from(keys).filter((key) =>
-    JSON.stringify(previousValue?.[key]) !== JSON.stringify(nextValue?.[key])
+    !auditValueEquals(previousValue?.[key], nextValue?.[key])
   );
+}
+
+function isBlankAuditValue(value: unknown): boolean {
+  return value === undefined || value === null || value === '';
+}
+
+function auditValueEquals(previousValue: unknown, nextValue: unknown): boolean {
+  if (isBlankAuditValue(previousValue) && isBlankAuditValue(nextValue)) return true;
+  return JSON.stringify(previousValue) === JSON.stringify(nextValue);
+}
+
+function auditRecordEquals(previousValue: Record<string, unknown>, nextValue: Record<string, unknown>): boolean {
+  const keys = new Set([
+    ...Object.keys(previousValue ?? {}),
+    ...Object.keys(nextValue ?? {}),
+  ]);
+  return Array.from(keys).every((key) => auditValueEquals(previousValue?.[key], nextValue?.[key]));
 }
 
 function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextValue: any[]): AuditLogDetail | null {
@@ -301,7 +318,7 @@ function buildArrayAuditDetail(key: keyof AppState, previousValue: any[], nextVa
       snapshots[id] = { after: nextItem as Record<string, unknown> };
       continue;
     }
-    if (JSON.stringify(previousItem) !== JSON.stringify(nextItem)) {
+    if (!auditRecordEquals(previousItem as Record<string, unknown>, nextItem as Record<string, unknown>)) {
       updatedIds.push(id);
       collectChangedFields(previousItem, nextItem).forEach((field) => changedFields.add(field));
       snapshots[id] = {
@@ -360,7 +377,7 @@ function buildObjectAuditDetail(key: keyof AppState, previousValue: Record<strin
       addedIds.push(id);
       continue;
     }
-    if (JSON.stringify(previousValue[id]) !== JSON.stringify(nextValue[id])) {
+    if (!auditRecordEquals(previousValue[id], nextValue[id])) {
       updatedIds.push(id);
       collectChangedFields(previousValue[id], nextValue[id]).forEach((field) => changedFields.add(field));
     }
@@ -382,7 +399,7 @@ function buildObjectAuditDetail(key: keyof AppState, previousValue: Record<strin
 }
 
 function buildScalarAuditDetail(key: keyof AppState, previousValue: unknown, nextValue: unknown): AuditLogDetail | null {
-  if (JSON.stringify(previousValue) === JSON.stringify(nextValue)) return null;
+  if (auditValueEquals(previousValue, nextValue)) return null;
   const before: Record<string, unknown> = { [String(key)]: previousValue };
   const after: Record<string, unknown> = { [String(key)]: nextValue };
   return {

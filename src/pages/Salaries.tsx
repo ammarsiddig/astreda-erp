@@ -6,7 +6,7 @@ import { Plus, Edit2, Eye, Trash2, UserPlus, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue, getCurrentMonthInputValue } from '../lib/utils';
 import { Salary, Expense, Employee } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -200,6 +200,9 @@ export default function Salaries() {
     const isEditing = !!showEditModal;
     const salaryId = isEditing ? showEditModal!.id : generateId('SA', state.salaries);
     const emp = state.employees.find(e => e.id === employeeId);
+    const salaryDateTime = isEditing
+      ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
+      : dateTimeFromDateString(date);
 
     let finalNotes = notes;
     if (autoSettle && totalOpenAdvances > 0 && openAdvancesForEmployee.length > 0) {
@@ -209,7 +212,7 @@ export default function Salaries() {
 
     const newSalary: Salary = {
       id: salaryId,
-      date: dateTimeFromDateString(date),
+      date: salaryDateTime,
       employeeId,
       type,
       month,
@@ -228,7 +231,7 @@ export default function Salaries() {
 
     const newLedgerEntry = {
       id: buildLedgerEntryId('salary', salaryId, 0, activeShipmentId),
-      date: dateTimeFromDateString(date),
+      date: salaryDateTime,
       toAccount: bankAccountId,
       description: `راتب / Salary - ${emp?.name} ${finalNotes ? `(${finalNotes})` : ''}`,
       amountIn: 0,
@@ -365,7 +368,7 @@ export default function Salaries() {
     if (!showAdvEditModal || !advAmount || !advBankAccountId) return;
     const adv = showAdvEditModal;
     const emp = state.employees.find(em => em.id === advEmployee);
-    const newDate = dateTimeFromDateString(advDate);
+    const newDate = dateTimeFromDateStringPreservingTime(advDate, adv.date);
     const updatedExpense: Expense = {
       ...adv,
       date: newDate,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { Plus, Trash2 } from 'lucide-react';
-import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, generateInvoiceId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, generateInvoiceId, getCurrentDateInputValue } from '../lib/utils';
 import Modal from './Modal';
 import SearchableSelect from './SearchableSelect';
 import { Invoice, InvoiceLine } from '../types';
@@ -128,8 +128,8 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     const validLineTotal = validLines.reduce((sum, line) => sum + line.total, 0);
 
     const invoiceId = invoiceToEdit ? invoiceToEdit.id : generateInvoiceId(invoiceDate, state.invoices);
-    const invoiceDateTime = invoiceToEdit && invoiceDate === invoiceToEdit.date.slice(0, 10)
-      ? invoiceToEdit.date
+    const invoiceDateTime = invoiceToEdit
+      ? dateTimeFromDateStringPreservingTime(invoiceDate, invoiceToEdit.date)
       : dateTimeFromDateString(invoiceDate);
 
     const newInvoice: Invoice = {

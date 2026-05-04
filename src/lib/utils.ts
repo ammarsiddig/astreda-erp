@@ -92,6 +92,13 @@ export function dateTimeFromDateString(dateString: string, now = new Date()): st
   return `${dateString}T${parts.hour}:${parts.minute}:${parts.second}`;
 }
 
+export function dateTimeFromDateStringPreservingTime(dateString: string, originalDateTime?: string, now = new Date()): string {
+  if (!originalDateTime) return dateTimeFromDateString(dateString, now);
+  const [, originalTime = '00:00:00'] = originalDateTime.split('T');
+  const [hour = '00', minute = '00', second = '00'] = originalTime.split(':');
+  return `${dateString}T${hour}:${minute}:${second.slice(0, 2)}`;
+}
+
 function getRandomIdChunk() {
   const bytes = new Uint8Array(3);
   crypto.getRandomValues(bytes);

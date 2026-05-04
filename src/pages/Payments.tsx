@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { useToast } from '../components/Toast';
-import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { Payment } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -65,10 +65,13 @@ export default function Payments() {
     const paymentAmount = Number(amount);
     const isEditing = !!showEditModal;
     const paymentId = isEditing ? showEditModal!.id : generateId('PM', state.payments);
+    const paymentDateTime = isEditing
+      ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
+      : dateTimeFromDateString(date);
 
     const newPayment: Payment = {
       id: paymentId,
-      date: dateTimeFromDateString(date),
+      date: paymentDateTime,
       customerId,
       amount: paymentAmount,
       bankAccountId,
@@ -87,7 +90,7 @@ export default function Payments() {
     // Apply new effects
     const newLedgerEntry = {
       id: buildLedgerEntryId('payment', paymentId, 0, activeShipmentId),
-      date: dateTimeFromDateString(date),
+      date: paymentDateTime,
       toAccount: bankAccountId,
       description: `سداد دفعة من عميل - ${state.customers.find(c => c.id === customerId)?.name} ${notes ? `(${notes})` : ''}`,
       amountIn: paymentAmount,

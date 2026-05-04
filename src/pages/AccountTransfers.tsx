@@ -6,7 +6,7 @@ import { ArrowRightLeft, Plus, Search, Edit2, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
-import { buildLedgerEntryId, dateTimeFromDateString, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
+import { buildLedgerEntryId, dateTimeFromDateString, dateTimeFromDateStringPreservingTime, formatCurrency, generateId, getCurrentDateInputValue } from '../lib/utils';
 import { AccountTransfer } from '../types';
 import { canWrite } from '../lib/permissions';
 import { useSortableData } from '../hooks/useSortableData';
@@ -59,10 +59,13 @@ export default function AccountTransfers() {
 
     const isEditing = !!showEditModal;
     const transferId = isEditing ? showEditModal!.id : generateId('MV', state.accountTransfers);
+    const transferDateTime = isEditing
+      ? dateTimeFromDateStringPreservingTime(date, showEditModal!.date)
+      : dateTimeFromDateString(date);
 
     const newTransfer: AccountTransfer = {
       id: transferId,
-      date: dateTimeFromDateString(date),
+      date: transferDateTime,
       type,
       fromBankAccountId: type === 'transfer' ? fromBankAccountId : undefined,
       toBankAccountId,
@@ -86,7 +89,7 @@ export default function AccountTransfers() {
     if (type === 'transfer' && fromBankAccountId) {
       newLedgerEntries.push({
         id: buildLedgerEntryId('account_transfer', transferId, 0),
-        date: dateTimeFromDateString(date),
+        date: transferDateTime,
         fromAccount: fromBankAccountId,
         toAccount: toBankAccountId,
         description: `تحويل بين الحسابات ${notes ? `(${notes})` : ''}`,
@@ -98,7 +101,7 @@ export default function AccountTransfers() {
       });
       newLedgerEntries.push({
         id: buildLedgerEntryId('account_transfer', transferId, 1),
-        date: dateTimeFromDateString(date),
+        date: transferDateTime,
         fromAccount: fromBankAccountId,
         toAccount: toBankAccountId,
         description: `تحويل بين الحسابات ${notes ? `(${notes})` : ''}`,
@@ -111,7 +114,7 @@ export default function AccountTransfers() {
     } else {
       newLedgerEntries.push({
         id: buildLedgerEntryId('account_transfer', transferId, 0),
-        date: dateTimeFromDateString(date),
+        date: transferDateTime,
         toAccount: toBankAccountId,
         description: `رصيد افتتاحي ${notes ? `(${notes})` : ''}`,
         amountIn: transferAmount,
