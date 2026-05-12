@@ -87,7 +87,7 @@ export default function Reports() {
   const salespersonData = useMemo(() => {
     const advancesCategoryId = state.expenseCategories.find(c => c.name === 'سلفيات')?.id || '3';
     return state.salespeople.map(sp => {
-      const spInvoices = state.invoices.filter(i => i.salespersonId === sp.id && i.shipmentId === activeShipmentId);
+      const spInvoices = state.invoices.filter(i => i.salespersonId === sp.id && i.shipmentId === activeShipmentId && i.total > 0);
       const sales = spInvoices.reduce((sum, inv) => sum + inv.total, 0);
       const invoiceCount = spInvoices.length;
 
