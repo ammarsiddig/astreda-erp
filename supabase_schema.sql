@@ -201,6 +201,7 @@ CREATE TABLE account_transfers (
   to_bank_account_id TEXT,
   amount DECIMAL(12,2) NOT NULL DEFAULT 0,
   transfer_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+  transfer_count INTEGER NOT NULL DEFAULT 1,
   notes TEXT DEFAULT '',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
