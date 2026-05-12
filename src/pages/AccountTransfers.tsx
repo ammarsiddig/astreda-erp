@@ -431,7 +431,7 @@ export default function AccountTransfers() {
 
             {type === 'transfer' && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">عدد التحويلات</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">عدد الاشعارات</label>
                 <input
                   type="number"
                   required
