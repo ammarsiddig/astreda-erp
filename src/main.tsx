@@ -84,7 +84,7 @@ async function enforceLatestBuild(): Promise<void> {
           });
         };
 
-        window.setInterval(checkForUpdates, 5 * 60 * 1000);
+        window.setInterval(checkForUpdates, 30 * 1000);
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') checkForUpdates();
         });
