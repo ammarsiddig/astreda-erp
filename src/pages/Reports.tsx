@@ -142,7 +142,7 @@ export default function Reports() {
         totalEligible, amount2pct, amount1pct, commission2, commission1, grossCommission, advances, netCommission,
       };
     })
-      .filter(sp => sp.sales > 0 || sp.collections > 0)
+      .filter(sp => sp.sales > 0)
       .filter(sp => !salespersonCityFilter || sp.cities.includes(state.cities.find(c => c.id === salespersonCityFilter)?.name || ''))
       .sort((a, b) => b.sales - a.sales);
   }, [state.salespeople, state.invoices, state.payments, state.customers, state.cities, state.expenses, state.expenseCategories, activeShipmentId, salespersonCityFilter]);
