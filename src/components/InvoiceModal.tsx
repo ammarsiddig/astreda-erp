@@ -125,7 +125,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
     if (!activeShipmentId || !customerId || !salespersonId || !cityId || !carId) return;
     if (paymentType === 'cash' && !bankAccountId) return;
 
-    const validLines = lines.filter(l => l.productId && l.qty > 0 && l.unitPrice > 0);
+    const validLines = lines.filter(l => l.productId && l.qty > 0 && l.unitPrice >= 0);
     if (validLines.length === 0) return;
     const validLineTotal = validLines.reduce((sum, line) => sum + line.total, 0);
 
@@ -298,7 +298,7 @@ export default function InvoiceModal({ isOpen, onClose, invoiceToEdit }: Invoice
                 />
               </div>
               <div className="w-28">
-                <input type="number" required min="0.01" step="0.01" value={line.unitPrice || ''} onChange={(e) => handleLineChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                <input type="number" required min="0" step="0.01" value={line.unitPrice || ''} onChange={(e) => handleLineChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none text-sm"
                   placeholder={t('unitPrice')}
                 />
