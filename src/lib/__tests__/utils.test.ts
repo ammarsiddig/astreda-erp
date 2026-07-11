@@ -182,4 +182,12 @@ describe('computeBankBalance', () => {
     ];
     expect(computeBankBalance('acc1', ledger)).toBe(0);
   });
+
+  it('dedupes by ledger id so a transient duplicate (sync/echo race) cannot double-count', () => {
+    // Same expense row appears twice (e.g. optimistic update + realtime echo overlap).
+    const dup = makeLedger({ id: 'dup1', toAccount: 'acc1', amountOut: 1044000 });
+    const ledger = [dup, { ...dup }];
+    // Must count the 1,044,000 outflow exactly once, not twice.
+    expect(computeBankBalance('acc1', ledger)).toBe(-1044000);
+  });
 });

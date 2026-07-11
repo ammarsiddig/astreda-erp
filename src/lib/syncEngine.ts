@@ -578,6 +578,9 @@ export async function upsertRecord(stateKey: keyof AppState, item: any, silent =
     return false
   }
 
+  // Arm echo suppression BEFORE the write so the realtime echo of our own
+  // change is reliably ignored (prevents a transient double-count on screen).
+  markRecentWrite(mapping.table, pk)
   try {
     const { error } = await supabase!.from(mapping.table).upsert(row, { onConflict: pkField })
     if (error) throw error
@@ -639,6 +642,8 @@ export async function upsertRecords(stateKey: keyof AppState, items: any[]): Pro
     return false
   }
 
+  // Arm echo suppression BEFORE the write (see upsertRecord).
+  rows.forEach(row => markRecentWrite(mapping.table, String(row[pkField])))
   try {
     const { error } = await supabase!.from(mapping.table).upsert(rows, { onConflict: pkField })
     if (error) throw error
@@ -666,6 +671,8 @@ export async function deleteRecord(stateKey: keyof AppState, pk: string): Promis
     return false
   }
 
+  // Arm echo suppression BEFORE the write (see upsertRecord).
+  markRecentWrite(mapping.table, pk)
   try {
     const { error } = await supabase!.from(mapping.table).delete().eq(pkField, pk)
     if (error) throw error
@@ -693,6 +700,8 @@ export async function deleteRecords(stateKey: keyof AppState, pks: string[]): Pr
     return false
   }
 
+  // Arm echo suppression BEFORE the write (see upsertRecord).
+  pks.forEach(pk => markRecentWrite(mapping.table, pk))
   try {
     const { error } = await supabase!.from(mapping.table).delete().in(pkField, pks)
     if (error) throw error

@@ -202,7 +202,14 @@ export function isPasswordHashed(password: string): boolean {
 }
 
 export function computeBankBalance(accountId: string, ledger: LedgerEntry[]): number {
+  // Dedupe by ledger id: guards against a duplicate row transiently appearing
+  // during a realtime sync/echo race so the balance can never double-count.
+  const seen = new Set<string>();
   return ledger.reduce((bal, entry) => {
+    if (entry.id) {
+      if (seen.has(entry.id)) return bal;
+      seen.add(entry.id);
+    }
     if (entry.toAccount === accountId) {
       bal += entry.amountIn;
       if (!entry.fromAccount) bal -= entry.amountOut;
@@ -244,9 +251,14 @@ export function calculateTransferFee(fromName: string, toName?: string): number 
 }
 
 export function computeShipmentBalance(shipmentId: string, accountId: string, ledger: LedgerEntry[]): number {
+  const seen = new Set<string>();
   return ledger
     .filter(e => e.shipmentId === shipmentId)
     .reduce((bal, entry) => {
+      if (entry.id) {
+        if (seen.has(entry.id)) return bal;
+        seen.add(entry.id);
+      }
       if (entry.toAccount === accountId) {
         bal += entry.amountIn;
         if (!entry.fromAccount) bal -= entry.amountOut;
