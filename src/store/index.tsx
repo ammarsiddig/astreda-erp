@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import { AppState, AuditLogDetail, AuditLogEntry, Language, UserRole, Role, User } from '../types';
 import { allPermissions, makePermissions } from '../lib/permissions';
 import { getCurrentDateTimeValue, hashPassword, isPasswordHashed } from '../lib/utils';
-import { setupRealtimeSync, initNetworkMonitoring, disposeNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertAuditLog, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue } from '../lib/syncEngine';
+import { setupRealtimeSync, initNetworkMonitoring, disposeNetworkMonitoring, pullFromCloud, flushQueue, fullPushToCloud, fetchUsersFromCloud, clearSyncState, pushScalarSettings, getSyncStatus, upsertRecords, deleteRecords, upsertAuditLog, TABLE_MAPPINGS, checkSchemaVersion, pushUserPreference, pullUserPreference, drainLegacyQueue, ensureAuthSession, clearAuthSession } from '../lib/syncEngine';
 import { addToast } from '../lib/toast';
 
 const DEFAULT_ROLES: Role[] = [
@@ -889,12 +889,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentUser: finalUser,
     }));
     localStorage.setItem('astreda_current_user', JSON.stringify(finalUser));
+    // Staged security migration: establish a real Supabase Auth session in the
+    // background (self-provisions on first login). Non-blocking — login UX is
+    // unchanged, and while RLS is still permissive a failure here is harmless.
+    void ensureAuthSession(username, finalUser.password);
     return { success: true };
   };
 
   const logout = () => {
     setState(prev => ({ ...prev, currentUser: null }));
     localStorage.removeItem('astreda_current_user');
+    void clearAuthSession();
   };
 
   const manualSync = useCallback(async () => {

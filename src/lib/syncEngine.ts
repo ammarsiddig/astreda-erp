@@ -561,6 +561,44 @@ function assertSchemaOk(): boolean {
   return true
 }
 
+// ─── Auth session (staged migration to real Supabase Auth) ──────
+// Phase 1: on login, establish a real Supabase Auth session in the background,
+// self-provisioning the account on first login. RLS stays permissive until all
+// users have transitioned, then it is locked to require an authenticated session
+// (see SECURITY_MIGRATION notes). The Auth password is the SHA-256 hash the app
+// already computes: deterministic, always >= 6 chars, and never the plaintext.
+const AUTH_EMAIL_DOMAIN = 'astrida.local'
+
+function authEmailFor(username: string): string {
+  return `${username.trim().toLowerCase()}@${AUTH_EMAIL_DOMAIN}`
+}
+
+export async function ensureAuthSession(username: string, hashedPassword: string): Promise<void> {
+  if (!isSupabaseConfigured() || !username || !hashedPassword) return
+  const email = authEmailFor(username)
+  const password = hashedPassword // 64-char hex — deterministic, meets min length
+  try {
+    const { error } = await supabase!.auth.signInWithPassword({ email, password })
+    if (!error) return
+    // Account not provisioned yet (first login under the new build) → create it.
+    const { error: signUpErr } = await supabase!.auth.signUp({ email, password })
+    if (signUpErr && !/already registered|already exists/i.test(signUpErr.message || '')) {
+      console.warn('[auth] provision failed:', signUpErr.message)
+      return
+    }
+    // If email confirmations are disabled (required — see migration notes), signUp
+    // yields a session directly; otherwise this sign-in attempt establishes it.
+    await supabase!.auth.signInWithPassword({ email, password })
+  } catch (e: any) {
+    console.warn('[auth] ensureAuthSession error:', e?.message || e)
+  }
+}
+
+export async function clearAuthSession(): Promise<void> {
+  if (!isSupabaseConfigured()) return
+  try { await supabase!.auth.signOut() } catch { /* best-effort */ }
+}
+
 // ─── Write API: Cloud-First ─────────────────────────────────────
 
 export async function upsertRecord(stateKey: keyof AppState, item: any, silent = false): Promise<boolean> {
