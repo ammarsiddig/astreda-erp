@@ -808,9 +808,23 @@ export async function pullFromCloud(
 
   const results = await Promise.allSettled([
     ...TABLE_MAPPINGS.map(async (mapping) => {
-      const { data, error } = await supabase!.from(mapping.table).select('*')
-      if (error) { console.warn(`[sync-v3] pull ${mapping.table}:`, error); return null }
-      if (!data) return null
+      // Paginate: PostgREST caps unranged selects at 1000 rows. Without this,
+      // tables past 1000 rows (ledger, audit_logs) get silently truncated and
+      // every pull wipes the newest rows from local state (balances "revert").
+      const pkField = mapping.pkField ?? 'id'
+      const PAGE = 1000
+      const data: any[] = []
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error } = await supabase!
+          .from(mapping.table)
+          .select('*')
+          .order(pkField, { ascending: true })
+          .range(from, from + PAGE - 1)
+        if (error) { console.warn(`[sync-v3] pull ${mapping.table}:`, error); return null }
+        if (!page || page.length === 0) break
+        data.push(...page)
+        if (page.length < PAGE) break
+      }
       return { mapping, data }
     }),
     (async () => {
