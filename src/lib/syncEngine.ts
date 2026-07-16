@@ -51,7 +51,13 @@ const snake2camel = (s: string) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpper
 
 const objectToSnake = (obj: Record<string, any>): Record<string, any> => {
   const out: Record<string, any> = {}
-  for (const [k, v] of Object.entries(obj)) out[camel2snake(k)] = v
+  for (const [k, v] of Object.entries(obj)) {
+    // Skip undefined: in a batch upsert postgrest-js lists the column (from the
+    // object's keys) but JSON drops the value, so PostgREST writes NULL instead
+    // of applying the column default — violating NOT NULL constraints.
+    if (v === undefined) continue
+    out[camel2snake(k)] = v
+  }
   return out
 }
 

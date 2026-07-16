@@ -72,7 +72,7 @@ export default function AccountTransfers() {
       toBankAccountId,
       amount: Number(amount),
       transferFee: Number(transferFee) || 0,
-      transferCount: type === 'transfer' ? transferCount : undefined,
+      transferCount: type === 'transfer' ? transferCount : 1,
       notes,
     };
 
