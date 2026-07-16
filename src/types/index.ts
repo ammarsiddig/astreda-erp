@@ -172,7 +172,9 @@ export interface Salary {
   notes: string;
 }
 
-export type GeneralTransferType = 'capital' | 'capital_contribution' | 'capital_return' | 'drawings' | 'profit_payment';
+// cash_injection = تغذية رصيد (external cash in, e.g. partner covers a shortage);
+// injection_return = سداد تغذية (paying that cash back, possibly at a different rate)
+export type GeneralTransferType = 'capital' | 'capital_contribution' | 'capital_return' | 'drawings' | 'profit_payment' | 'cash_injection' | 'injection_return';
 
 export interface GeneralTransfer {
   id: string;

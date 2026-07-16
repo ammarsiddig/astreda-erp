@@ -164,16 +164,21 @@ export default function Capital() {
     const totalSalesSDG = state.invoices.filter(i => i.shipmentId === activeShipmentId).reduce((s, i) => s + i.total, 0);
     const totalExpensesSDG = state.expenses.filter(e => e.shipmentId === activeShipmentId).reduce((s, e) => s + e.amount, 0);
     const totalSalariesSDG = state.salaries.filter(s2 => s2.shipmentId === activeShipmentId).reduce((s, sal) => s + sal.amount, 0);
+    // تغذية رصيد is cash ARRIVING from outside (not earned by the shipment):
+    // it enters the equation as a source, not as an outflow transfer.
+    const totalInjectionsSDG = state.generalTransfers.filter(t =>
+      t.shipmentId === activeShipmentId && t.transferType === 'cash_injection'
+    ).reduce((s, t) => s + t.amountSDG, 0);
     const totalTransfersSDG = state.generalTransfers.filter(t =>
-      t.shipmentId === activeShipmentId
+      t.shipmentId === activeShipmentId && t.transferType !== 'cash_injection'
     ).reduce((s, t) => s + t.amountSDG, 0);
     const shipmentLedger = state.ledger.filter(e => e.shipmentId === activeShipmentId);
     const cashBalanceSDG = state.bankAccounts.reduce((s, b) => s + computeBankBalance(b.id, shipmentLedger), 0);
     const totalCreditInvoices = state.invoices.filter(i => i.shipmentId === activeShipmentId && i.paymentType === 'credit').reduce((s, i) => s + i.total, 0);
     const totalPaymentsCollected = state.payments.filter(p => p.shipmentId === activeShipmentId).reduce((s, p) => s + p.amount, 0);
     const uncollectedDebtSDG = totalCreditInvoices - totalPaymentsCollected;
-    const diff = totalSalesSDG - totalExpensesSDG - totalSalariesSDG - totalTransfersSDG - cashBalanceSDG - uncollectedDebtSDG;
-    return { totalSalesSDG, totalExpensesSDG, totalSalariesSDG, totalTransfersSDG, cashBalanceSDG, uncollectedDebtSDG, diff };
+    const diff = totalSalesSDG + totalInjectionsSDG - totalExpensesSDG - totalSalariesSDG - totalTransfersSDG - cashBalanceSDG - uncollectedDebtSDG;
+    return { totalSalesSDG, totalInjectionsSDG, totalExpensesSDG, totalSalariesSDG, totalTransfersSDG, cashBalanceSDG, uncollectedDebtSDG, diff };
   }, [activeShipmentId, state]);
 
   // === HANDLERS ===
@@ -846,9 +851,12 @@ export default function Capital() {
             <h3 className="text-sm font-bold text-[#134e4a] mb-4">معادلة التحقق</h3>
             <div className="space-y-2 text-sm font-mono">
               <div className="flex justify-between py-1"><span className="text-slate-600">إجمالي المبيعات (فواتير) (SDG)</span><span className="text-emerald-600 font-semibold">+ {fmtSDG(verification.totalSalesSDG)}</span></div>
+              {verification.totalInjectionsSDG > 0 && (
+                <div className="flex justify-between py-1"><span className="text-slate-600">+ تغذية رصيد (أموال خارجية) (SDG)</span><span className="text-emerald-600 font-semibold">+ {fmtSDG(verification.totalInjectionsSDG)}</span></div>
+              )}
               <div className="flex justify-between py-1"><span className="text-slate-600">− إجمالي المصروفات (SDG)</span><span className="text-red-600 font-semibold">- {fmtSDG(verification.totalExpensesSDG)}</span></div>
               <div className="flex justify-between py-1"><span className="text-slate-600">− إجمالي الرواتب (SDG)</span><span className="text-red-600 font-semibold">- {fmtSDG(verification.totalSalariesSDG)}</span></div>
-              <div className="flex justify-between py-1"><span className="text-slate-600">− إجمالي التحاويل العامة (الكل) (SDG)</span><span className="text-red-600 font-semibold">- {fmtSDG(verification.totalTransfersSDG)}</span></div>
+              <div className="flex justify-between py-1"><span className="text-slate-600">− إجمالي التحاويل العامة (عدا التغذية) (SDG)</span><span className="text-red-600 font-semibold">- {fmtSDG(verification.totalTransfersSDG)}</span></div>
               <div className="flex justify-between py-1 text-xs text-slate-400">(الكل يخصم من البنوك)</div>
               <div className="flex justify-between py-1"><span className="text-slate-600">− الكاش المتوفر في الحسابات (SDG)</span><span className="text-red-600 font-semibold">- {fmtSDG(verification.cashBalanceSDG)}</span></div>
               <div className="flex justify-between py-1"><span className="text-slate-600">− إجمالي المديونية غير المحصلة (SDG)</span><span className="text-red-600 font-semibold">- {fmtSDG(verification.uncollectedDebtSDG)}</span></div>
@@ -879,7 +887,8 @@ export default function Capital() {
               { icon: <BarChart3 className="w-5 h-5 text-emerald-600" />, label: 'إجمالي المبيعات', value: fmtSDG(verification.totalSalesSDG), sub: 'من الفواتير', color: 'bg-emerald-50 border-emerald-200' },
               { icon: <CreditCard className="w-5 h-5 text-red-600" />, label: 'إجمالي المصروفات', value: fmtSDG(verification.totalExpensesSDG), sub: 'من المصروفات', color: 'bg-red-50 border-red-200' },
               { icon: <Users className="w-5 h-5 text-amber-600" />, label: 'إجمالي الرواتب', value: fmtSDG(verification.totalSalariesSDG), sub: 'من الرواتب', color: 'bg-amber-50 border-amber-200' },
-              { icon: <TrendingUp className="w-5 h-5 text-[#134e4a]" />, label: 'إجمالي التحاويل العامة (الكل)', value: fmtSDG(verification.totalTransfersSDG), sub: 'الكل يخصم من البنوك', color: 'bg-[#f0fdfa] border-[#99f6e4]' },
+              { icon: <TrendingUp className="w-5 h-5 text-[#134e4a]" />, label: 'إجمالي التحاويل العامة (عدا التغذية)', value: fmtSDG(verification.totalTransfersSDG), sub: 'الكل يخصم من البنوك', color: 'bg-[#f0fdfa] border-[#99f6e4]' },
+              ...(verification.totalInjectionsSDG > 0 ? [{ icon: <TrendingUp className="w-5 h-5 text-emerald-600" />, label: 'تغذية رصيد', value: fmtSDG(verification.totalInjectionsSDG), sub: 'أموال خارجية تدخل البنوك', color: 'bg-emerald-50 border-emerald-200' }] : []),
               { icon: <Building2 className="w-5 h-5 text-[#134e4a]" />, label: 'الكاش في الحسابات', value: fmtSDG(verification.cashBalanceSDG), sub: 'أرصدة البنوك (رسالة نشطة)', color: 'bg-[#f0fdfa] border-[#99f6e4]' },
               { icon: <AlertTriangle className="w-5 h-5 text-orange-600" />, label: 'المديونية غير المحصلة', value: fmtSDG(verification.uncollectedDebtSDG), sub: 'فواتير آجلة − مدفوعات', color: 'bg-orange-50 border-orange-200' },
             ].map((card, i) => (

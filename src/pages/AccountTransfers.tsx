@@ -224,7 +224,6 @@ export default function AccountTransfers() {
           >
             <option value="">{t('all')}</option>
             <option value="transfer">{t('transfer')}</option>
-            <option value="opening_balance">{t('openingBalance')}</option>
           </select>
         </div>
       </div>
@@ -380,11 +379,12 @@ export default function AccountTransfers() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t('type')}</label>
+              {/* رصيد افتتاحي removed: cash carried between shipments is not re-declared;
+                  external cash injections are recorded as تغذية رصيد in General Transfers. */}
               <select required value={type} onChange={(e) => setType(e.target.value as 'transfer' | 'opening_balance')}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] outline-none"
               >
                 <option value="transfer">{t('transfer')}</option>
-                <option value="opening_balance">{t('openingBalance')}</option>
               </select>
             </div>
 

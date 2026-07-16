@@ -80,10 +80,12 @@ export default function GeneralTransfers() {
   const totalSplitsAmount = splits.reduce((sum, split) => sum + (split.amount || 0), 0);
   const amountSAR = totalSplitsAmount / (Number(exchangeRate) || 1);
 
+  const isInjectionType = transferType === 'cash_injection' || transferType === 'injection_return';
+
   const handleSaveTransfer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeShipmentId || !exchangeRate || totalSplitsAmount <= 0) return;
-    if (transferType === 'drawings' && !partnerId) return;
+    if ((transferType === 'drawings' || isInjectionType) && !partnerId) return;
     if ((transferType === 'capital_return' || transferType === 'capital' || transferType === 'profit_payment') && !beneficiaryPartnerId) return;
 
     const validSplits = splits.filter(s => s.bankAccountId && s.amount > 0);
@@ -98,7 +100,7 @@ export default function GeneralTransfers() {
     const newTransfer: GeneralTransfer = {
       id: transferId,
       date: transferDateTime,
-      partnerId: transferType === 'drawings' ? partnerId : (beneficiaryPartnerId || ''),
+      partnerId: (transferType === 'drawings' || isInjectionType) ? partnerId : (beneficiaryPartnerId || ''),
       transferType,
       beneficiaryPartnerId: (transferType === 'capital_return' || transferType === 'capital' || transferType === 'profit_payment') ? beneficiaryPartnerId : undefined,
       amountSDG: totalSplitsAmount,
@@ -115,19 +117,24 @@ export default function GeneralTransfers() {
       newLedger = newLedger.filter(l => l.linkedId !== showEditModal!.id);
     }
 
-    const partnerLabel = transferType === 'drawings'
+    const partnerLabel = (transferType === 'drawings' || isInjectionType)
       ? state.partners.find(p => p.id === partnerId)?.name
       : state.partners.find(p => p.id === beneficiaryPartnerId)?.name;
 
-    const typeLabel = transferType === 'drawings' ? t('capitalTypeDrawings') : transferType === 'profit_payment' ? 'توزيع أرباح' : t('capitalReturn');
+    const typeLabel = transferType === 'drawings' ? t('capitalTypeDrawings')
+      : transferType === 'profit_payment' ? 'توزيع أرباح'
+      : transferType === 'cash_injection' ? 'تغذية رصيد'
+      : transferType === 'injection_return' ? 'سداد تغذية'
+      : t('capitalReturn');
 
+    // cash_injection is money ARRIVING into the accounts; every other type pays out.
     const newLedgerEntries = validSplits.map((split, index) => ({
       id: buildLedgerEntryId('general_transfer', transferId, index, activeShipmentId),
       date: transferDateTime,
-      fromAccount: split.bankAccountId,
+      ...(transferType === 'cash_injection'
+        ? { toAccount: split.bankAccountId, amountIn: split.amount, amountOut: 0 }
+        : { fromAccount: split.bankAccountId, amountIn: 0, amountOut: split.amount }),
       description: `${typeLabel} - ${partnerLabel} ${description ? `(${description})` : ''}`,
-      amountIn: 0,
-      amountOut: split.amount,
       sourceModule: 'general_transfer' as const,
       linkedId: transferId,
       shipmentId: activeShipmentId,
@@ -157,7 +164,7 @@ export default function GeneralTransfers() {
 
   const openEditModal = (transfer: GeneralTransfer) => {
     setDate(transfer.date.slice(0, 10));
-    setPartnerId(transfer.transferType === 'drawings' ? transfer.partnerId : '');
+    setPartnerId((transfer.transferType === 'drawings' || transfer.transferType === 'cash_injection' || transfer.transferType === 'injection_return') ? transfer.partnerId : '');
     setBeneficiaryPartnerId(transfer.beneficiaryPartnerId || transfer.partnerId || '');
     setTransferType(transfer.transferType === 'capital' ? 'capital_return' : (transfer.transferType || 'capital_return'));
     setExchangeRate(transfer.exchangeRate);
@@ -208,6 +215,12 @@ export default function GeneralTransfers() {
     if (type === 'drawings') {
       return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">{t('capitalTypeDrawings')}</span>;
     }
+    if (type === 'cash_injection') {
+      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">⬇ تغذية رصيد</span>;
+    }
+    if (type === 'injection_return') {
+      return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">⬆ سداد تغذية</span>;
+    }
     return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">{t('general')}</span>;
   };
 
@@ -252,6 +265,8 @@ export default function GeneralTransfers() {
             <option value="capital_return">إرجاع رأس مال</option>
             <option value="profit_payment">توزيع أرباح</option>
             <option value="drawings">{t('capitalTypeDrawings')}</option>
+            <option value="cash_injection">تغذية رصيد</option>
+            <option value="injection_return">سداد تغذية</option>
           </select>
         </div>
       </div>
@@ -456,19 +471,53 @@ export default function GeneralTransfers() {
               >
                 💸 {t('capitalTypeDrawings')}
               </button>
+              <button
+                type="button"
+                onClick={() => setTransferType('cash_injection')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                  transferType === 'cash_injection'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                ⬇ تغذية رصيد
+              </button>
+              <button
+                type="button"
+                onClick={() => setTransferType('injection_return')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                  transferType === 'injection_return'
+                    ? 'border-purple-500 bg-purple-50 text-purple-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                ⬆ سداد تغذية
+              </button>
             </div>
+            {transferType === 'cash_injection' && (
+              <p className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                تغذية رصيد: أموال خارجية تدخل إلى الحسابات لدعم التشغيل — تُضاف إلى رصيد البنك وتُحتسب في معادلة التحقق كمصدر أموال.
+              </p>
+            )}
+            {transferType === 'injection_return' && (
+              <p className="mt-2 text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded-lg p-2">
+                سداد تغذية: إرجاع أموال التغذية لصاحبها — تُخصم من رصيد البنك. سعر الصرف قد يختلف عن سعر التغذية الأصلي.
+              </p>
+            )}
           </div>
 
           {/* Conditional partner/beneficiary fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {transferType === 'drawings' ? (
+            {(transferType === 'drawings' || isInjectionType) ? (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">الشريك</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {transferType === 'cash_injection' ? 'الشريك (مصدر التغذية)' : transferType === 'injection_return' ? 'الشريك (المستلم)' : 'الشريك'}
+                </label>
                 <SearchableSelect
                   required
                   value={partnerId}
                   onChange={(val) => setPartnerId(val)}
-                  options={operatingPartners.map(p => ({ value: p.id, label: p.name }))}
+                  options={(isInjectionType ? state.partners : operatingPartners).map(p => ({ value: p.id, label: p.name }))}
                   placeholder={t('select')}
                 />
               </div>
@@ -497,7 +546,7 @@ export default function GeneralTransfers() {
           {/* Bank accounts section */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-slate-700">دفع من الحسابات</label>
+              <label className="block text-sm font-medium text-slate-700">{transferType === 'cash_injection' ? 'إيداع إلى الحسابات' : 'دفع من الحسابات'}</label>
               <button
                 type="button"
                 onClick={handleAddSplit}
@@ -612,13 +661,20 @@ export default function GeneralTransfers() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500">
-                  {showViewModal.transferType === 'drawings' ? 'الشريك' : showViewModal.transferType === 'profit_payment' ? 'المستفيد (أرباح)' : 'المستفيد (إرجاع رأس مال)'}
+                  {showViewModal.transferType === 'drawings' ? 'الشريك'
+                    : showViewModal.transferType === 'cash_injection' ? 'الشريك (مصدر التغذية)'
+                    : showViewModal.transferType === 'injection_return' ? 'الشريك (المستلم)'
+                    : showViewModal.transferType === 'profit_payment' ? 'المستفيد (أرباح)' : 'المستفيد (إرجاع رأس مال)'}
                 </label>
                 <p className="font-medium">
                   {(showViewModal.transferType === 'capital_return' || showViewModal.transferType === 'capital' || showViewModal.transferType === 'profit_payment')
                     ? state.partners.find(p => p.id === (showViewModal.beneficiaryPartnerId || showViewModal.partnerId))?.name
                     : state.partners.find(p => p.id === showViewModal.partnerId)?.name}
                 </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500">{t('exchangeRate')}</label>
+                <p className="font-medium">{showViewModal.exchangeRate}</p>
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500">{t('description')}</label>
